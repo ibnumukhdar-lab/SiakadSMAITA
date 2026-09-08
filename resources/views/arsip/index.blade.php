@@ -13,7 +13,7 @@
         qrImageUrl: '',
         qrDownloadName: ''
     }">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
             
             <div class="mb-6 flex flex-col md:flex-row justify-between items-end gap-4">
                 <div>
@@ -28,71 +28,86 @@
             <form action="#" method="POST" id="bulkActionForm">
                 @csrf
                 <input type="hidden" name="_method" :value="bulkMethod">
-                
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 mb-6 shadow-sm flex flex-col lg:flex-row items-center gap-4">
-                    
-                    <div class="flex items-center gap-2 w-full lg:w-[25%]">
-                        <select name="bulk_action_type" id="bulkActionType" class="border-slate-300 rounded-lg py-2.5 px-3 text-sm focus:ring-blue-500 w-[65%] shadow-sm" required>
-                            <option value="">Pilih Aksi...</option>
-                            <option value="delete">🗑️ Hapus</option>
-                            <option value="export">📊 Ekspor Excel</option> 
-                        </select>
-                        <button type="button" @click="
-                            let action = document.getElementById('bulkActionType').value;
-                            if (action === '') {
-                                alert('Silakan pilih aksi terlebih dahulu.');
-                                return;
-                            }
-                            let checked = document.querySelectorAll('.arsip-checkbox:checked');
-                            if (checked.length === 0) {
-                                alert('Silakan centang minimal satu data terlebih dahulu.');
-                                return;
-                            }
-                            
-                            let form = document.getElementById('bulkActionForm');
-                            if (action === 'delete') {
-                                selectedItems = Array.from(checked).map(cb => cb.getAttribute('data-identitas'));
-                                form.action = '{{ route('arsip.destroyBulk') }}';
-                                bulkMethod = 'DELETE'; // Ubah ke DELETE untuk aksi hapus
-                                deleteBulkModalOpen = true;
-                            } else if (action === 'export') {
-                                form.action = '{{ route('arsip.exportBulk') }}';
-                                bulkMethod = 'POST'; // Kembalikan ke POST untuk export
-                                form.submit();
-                            }
-                        " class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-3 rounded-lg text-sm transition shadow-sm w-[35%] text-center">
-                            Terapkan
-                        </button>
-                    </div>
 
-                    <div class="w-full lg:w-[30%]">
-                        <input type="text" x-model="search" placeholder="🔍 Cari Perihal / No. Surat..." class="border-slate-300 rounded-lg py-2.5 px-4 text-sm w-full focus:ring-blue-500 shadow-sm">
-                    </div>
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm mb-6">
+                    <div class="p-4 sm:p-5 flex flex-col gap-4">
+                        {{-- Baris 1: pencarian + aksi massal --}}
+                        <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:gap-5">
+                            <div class="flex-1 min-w-0">
+                                <label for="cariSurat" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Cari Surat</label>
+                                <input type="text" id="cariSurat" x-model="search" placeholder="Perihal / No. surat..." class="w-full h-10 rounded-lg border border-slate-300 bg-slate-50/40 px-3.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:bg-white outline-none transition">
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-end gap-2.5">
+                                <div class="w-full sm:w-[210px]">
+                                    <label for="bulkActionType" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Aksi Massal</label>
+                                    <select name="bulk_action_type" id="bulkActionType" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" required>
+                                        <option value="">Pilih aksi...</option>
+                                        <option value="delete">🗑️ Hapus terpilih</option>
+                                        <option value="export">📊 Ekspor Excel</option>
+                                    </select>
+                                </div>
+                                <button type="button" @click="
+                                    let action = document.getElementById('bulkActionType').value;
+                                    if (action === '') {
+                                        alert('Silakan pilih aksi terlebih dahulu.');
+                                        return;
+                                    }
+                                    let checked = document.querySelectorAll('.arsip-checkbox:checked');
+                                    if (checked.length === 0) {
+                                        alert('Silakan centang minimal satu data terlebih dahulu.');
+                                        return;
+                                    }
+                                    
+                                    let form = document.getElementById('bulkActionForm');
+                                    if (action === 'delete') {
+                                        selectedItems = Array.from(checked).map(cb => cb.getAttribute('data-identitas'));
+                                        form.action = '{{ route('arsip.destroyBulk') }}';
+                                        bulkMethod = 'DELETE'; // Ubah ke DELETE untuk aksi hapus
+                                        deleteBulkModalOpen = true;
+                                    } else if (action === 'export') {
+                                        form.action = '{{ route('arsip.exportBulk') }}';
+                                        bulkMethod = 'POST'; // Kembalikan ke POST untuk export
+                                        form.submit();
+                                    }
+                                " class="h-10 px-5 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-sm font-semibold shadow-sm transition whitespace-nowrap">
+                                    Terapkan
+                                </button>
+                            </div>
+                        </div>
 
-                    <div class="flex flex-row items-center gap-2 w-full lg:w-[45%]">
-                        <select x-model="filterJenis" class="border-slate-300 rounded-lg py-2.5 px-3 text-sm focus:ring-blue-500 shadow-sm w-1/3">
-                            <option value="">Kategori</option>
-                            <option value="Surat Masuk">Masuk</option>
-                            <option value="Surat Keluar">Keluar</option>
-                        </select>
-                        
-                        <select x-model="filterBulan" class="border-slate-300 rounded-lg py-2.5 px-3 text-sm focus:ring-blue-500 shadow-sm w-1/3">
-                            <option value="">Bulan</option>
-                            <option value="01">Jan</option><option value="02">Feb</option>
-                            <option value="03">Mar</option><option value="04">Apr</option>
-                            <option value="05">Mei</option><option value="06">Jun</option>
-                            <option value="07">Jul</option><option value="08">Agu</option>
-                            <option value="09">Sep</option><option value="10">Okt</option>
-                            <option value="11">Nov</option><option value="12">Des</option>
-                        </select>
-                        
-                        <select x-model="filterTahun" class="border-slate-300 rounded-lg py-2.5 px-3 text-sm focus:ring-blue-500 shadow-sm w-1/3">
-                            <option value="">Tahun</option>
-                            @php $tahunSekarang = date('Y'); @endphp
-                            @for($i = $tahunSekarang; $i >= $tahunSekarang - 5; $i--)
-                                <option value="{{ $i }}">{{ $i }}</option>
-                            @endfor
-                        </select>
+                        {{-- Baris 2: filter kategori / bulan / tahun --}}
+                        <div class="flex flex-wrap items-end gap-x-4 gap-y-3 border-t border-slate-100 pt-4">
+                            <div class="w-[150px]">
+                                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Kategori</label>
+                                <select x-model="filterJenis" class="w-full h-9 rounded-lg border border-slate-300 bg-white px-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
+                                    <option value="">Semua</option>
+                                    <option value="Surat Masuk">Masuk</option>
+                                    <option value="Surat Keluar">Keluar</option>
+                                </select>
+                            </div>
+                            <div class="w-[150px]">
+                                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Bulan</label>
+                                <select x-model="filterBulan" class="w-full h-9 rounded-lg border border-slate-300 bg-white px-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
+                                    <option value="">Semua</option>
+                                    <option value="01">Jan</option><option value="02">Feb</option>
+                                    <option value="03">Mar</option><option value="04">Apr</option>
+                                    <option value="05">Mei</option><option value="06">Jun</option>
+                                    <option value="07">Jul</option><option value="08">Agu</option>
+                                    <option value="09">Sep</option><option value="10">Okt</option>
+                                    <option value="11">Nov</option><option value="12">Des</option>
+                                </select>
+                            </div>
+                            <div class="w-[150px]">
+                                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tahun</label>
+                                <select x-model="filterTahun" class="w-full h-9 rounded-lg border border-slate-300 bg-white px-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
+                                    <option value="">Semua</option>
+                                    @php $tahunSekarang = date('Y'); @endphp
+                                    @for($i = $tahunSekarang; $i >= $tahunSekarang - 5; $i--)
+                                        <option value="{{ $i }}">{{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -118,37 +133,29 @@
                                             (!filterBulan || '{{ \Carbon\Carbon::parse($arsip->tanggal_surat)->format('m') }}' == filterBulan) &&
                                             (!filterTahun || '{{ \Carbon\Carbon::parse($arsip->tanggal_surat)->format('Y') }}' == filterTahun)">
                                     
-                                    <td class="p-5 text-center">
+                                    <td class="px-5 py-3.5 text-center">
                                         <input type="checkbox" name="arsip_ids[]" value="{{ $arsip->id }}" data-identitas="{{ $arsip->nomor_surat }} ({{ Str::limit($arsip->perihal, 30) }})" class="rounded border-slate-400 text-blue-600 focus:ring-blue-500 arsip-checkbox w-4 h-4">
                                     </td>
                                     
-                                    <td class="p-5 text-sm text-slate-700 text-center font-medium">{{ $index + 1 }}</td>
-                                    <td class="p-5 text-sm">
+                                    <td class="px-5 py-3.5 text-sm text-slate-700 text-center font-medium">{{ $index + 1 }}</td>
+                                    <td class="px-5 py-3.5 text-sm">
                                         <span class="px-4 py-1.5 text-xs font-bold rounded-full shadow-sm border {{ $arsip->jenis_surat == 'Surat Masuk' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}">
                                             {{ $arsip->jenis_surat }}
                                         </span>
                                     </td>
-                                    <td class="p-5 text-sm font-bold text-slate-800">{{ $arsip->nomor_surat }}</td>
-                                    <td class="p-5 text-sm text-slate-600 font-medium">{{ $arsip->perihal }}</td>
-                                    <td class="p-5 text-sm text-slate-600 font-medium whitespace-nowrap">{{ \Carbon\Carbon::parse($arsip->tanggal_surat)->format('d M Y') }}</td>
-                                    <td class="p-5">
-                                        <div class="flex justify-center gap-2">
+                                    <td class="px-5 py-3.5 text-sm font-bold text-slate-800">{{ $arsip->nomor_surat }}</td>
+                                    <td class="px-5 py-3.5 text-sm text-slate-600 font-medium">{{ $arsip->perihal }}</td>
+                                    <td class="px-5 py-3.5 text-sm text-slate-600 font-medium whitespace-nowrap">{{ \Carbon\Carbon::parse($arsip->tanggal_surat)->format('d M Y') }}</td>
+                                    <td class="px-5 py-3.5">
+                                        <div class="flex justify-center gap-1.5">
                                             
-                                            <button type="button" @click="qrImageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ urlencode(route('arsip.show', $arsip->id)) }}'; qrDownloadName = '{{ preg_replace('/[^A-Za-z0-9\-]/', '_', $arsip->nomor_surat) }}'; qrModalOpen = true;" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-4 py-2 rounded-lg text-xs font-bold border border-indigo-300 shadow-sm transition flex items-center gap-1">
-                                                📱 QR
-                                            </button>
+                                            <button type="button" title="QR Code" @click="qrImageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ urlencode(route('arsip.show', $arsip->id)) }}'; qrDownloadName = '{{ preg_replace('/[^A-Za-z0-9\\-]/', '_', $arsip->nomor_surat) }}'; qrModalOpen = true;" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition">📱</button>
 
-                                            <a href="{{ route('arsip.show', $arsip->id) }}" class="bg-white text-slate-700 hover:bg-slate-100 hover:text-blue-600 px-4 py-2 rounded-lg text-xs font-bold border border-slate-300 shadow-sm transition flex items-center gap-1">
-                                                👁️ Cek
-                                            </a>
+                                            <a href="{{ route('arsip.show', $arsip->id) }}" title="Cek Detail" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-700 hover:bg-blue-50 transition">👁️</a>
                                             
-                                            <a href="{{ route('arsip.edit', $arsip->id) }}" class="bg-amber-50 text-amber-700 hover:bg-amber-100 px-4 py-2 rounded-lg text-xs font-bold border border-amber-300 shadow-sm transition flex items-center gap-1">
-                                                ✏️ Edit
-                                            </a>
+                                            <a href="{{ route('arsip.edit', $arsip->id) }}" title="Edit" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition">✏️</a>
                                             
-                                            <button type="button" @click="deleteSingleUrl = '{{ route('arsip.destroy', $arsip->id) }}'; deleteSingleModalOpen = true;" class="bg-rose-50 text-rose-700 hover:bg-rose-100 px-4 py-2 rounded-lg text-xs font-bold border border-rose-300 shadow-sm transition flex items-center gap-1">
-                                                🗑️ Hapus
-                                            </button>
+                                            <button type="button" title="Hapus" @click="deleteSingleUrl = '{{ route('arsip.destroy', $arsip->id) }}'; deleteSingleModalOpen = true;" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">🗑️</button>
                                         </div>
                                     </td>
                                 </tr>

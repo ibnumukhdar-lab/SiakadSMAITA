@@ -56,17 +56,20 @@
         $watch('limit', () => updateVisibility());
         updateVisibility();
     ">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white p-4 sm:p-6 shadow-sm sm:rounded-2xl border border-slate-200 relative">
- 
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                    <h3 class="text-xl font-extrabold text-slate-900 tracking-tight w-full text-center md:text-left">📚 Data Induk Siswa</h3>
-                    
-                    <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                        <a href="{{ route('siswa.import') }}" style="background-color: #334155; color: #ffffff;" class="font-bold py-3 px-5 rounded-lg shadow hover:opacity-80 transition duration-200 text-center w-full sm:w-auto whitespace-nowrap">
+
+                <div class="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">📚 Data Induk Siswa</h3>
+                        <p class="text-sm text-slate-500 mt-0.5">Master data siswa &amp; alumni SMA IT Arafah</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto">
+                        <a href="{{ route('siswa.import') }}" style="background-color: #334155; color: #ffffff;" class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-lg text-sm shadow-sm hover:opacity-90 transition duration-200 whitespace-nowrap gap-1.5">
                             📥 Impor Data
                         </a>
-                        <a href="{{ route('siswa.create') }}" style="background-color: #1e40af; color: #ffffff;" class="font-bold py-3 px-5 rounded-lg shadow-lg hover:opacity-80 transition duration-200 text-center w-full sm:w-auto whitespace-nowrap">
+                        <a href="{{ route('siswa.create') }}" style="background-color: #1e3a8a; color: #ffffff;" class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-lg text-sm shadow-sm hover:bg-blue-800 hover:opacity-95 transition duration-200 whitespace-nowrap gap-1.5">
                             ➕ Tambah Siswa Baru
                         </a>
                     </div>
@@ -112,16 +115,16 @@
                 </div>
 
                 <!-- TEKS RINGKASAN DINAMIS -->
-                <div class="mb-5 text-sm font-medium text-slate-700 bg-sky-50/50 p-3.5 rounded-lg border border-sky-100 flex items-start gap-2 shadow-sm">
-                    <span class="text-sky-500 mt-0.5">ℹ️</span>
+                <div class="mb-5 text-[13px] font-medium text-slate-600 bg-white p-3 rounded-lg border border-slate-200 flex items-start gap-2">
+                    <span class="text-slate-400 mt-0.5">ℹ️</span>
                     <span>
                         Berikut data 
-                        <strong class="text-sky-700 text-base" x-text="limit === 'all' ? visibleCount : Math.min(visibleCount, limit)"></strong> 
+                        <strong class="text-slate-700 text-base" x-text="limit === 'all' ? visibleCount : Math.min(visibleCount, limit)"></strong> 
                         siswa
-                        <template x-if="filterKelas"><span> kelas <strong class="text-sky-700" x-text="filterKelas"></strong></span></template>
-                        <template x-if="filterJk"><span> (<strong class="text-sky-700" x-text="filterJk"></strong>)</span></template>
-                        <template x-if="filterAngkatan"><span> angkatan <strong class="text-sky-700" x-text="filterAngkatan"></strong></span></template>
-                        <template x-if="search"><span> dengan pencarian "<strong class="text-sky-700" x-text="search"></strong>"</span></template>
+                        <template x-if="filterKelas"><span> kelas <strong class="text-slate-700" x-text="filterKelas"></strong></span></template>
+                        <template x-if="filterJk"><span> (<strong class="text-slate-700" x-text="filterJk"></strong>)</span></template>
+                        <template x-if="filterAngkatan"><span> angkatan <strong class="text-slate-700" x-text="filterAngkatan"></strong></span></template>
+                        <template x-if="search"><span> dengan pencarian "<strong class="text-slate-700" x-text="search"></strong>"</span></template>
                         
                         <span class="text-slate-500 ml-1">
                             (Total cocok: <span x-text="visibleCount"></span> data).
@@ -161,72 +164,70 @@
                     <div class="overflow-x-auto border border-slate-200 rounded-lg">
                         <table class="w-full text-left border-collapse min-w-[900px]">
                             <thead>
-                                <tr class="bg-blue-50/70 border-b border-blue-100">
-                                    <th class="p-4 w-10 text-center"><input type="checkbox" id="selectAll" class="rounded border-gray-400"></th>
-                                    <th class="p-4 text-sm font-semibold tracking-wide text-slate-700 text-center">No</th>
-                                    <th class="p-4 text-sm font-semibold tracking-wide text-slate-700">NISN</th>
-                                    <th class="p-4 text-sm font-semibold tracking-wide text-slate-700">Nama Lengkap</th>
-                                    <th class="p-4 text-sm font-semibold tracking-wide text-slate-700 text-center">Gender</th> <!-- Tambahan indikator kolom Gender -->
-                                    <th class="p-4 text-sm font-semibold tracking-wide text-slate-700 text-center">Kelas</th>
-                                    <th class="p-4 text-sm font-semibold tracking-wide text-slate-700 text-center">Status</th>
-                                    <th class="p-4 text-sm font-semibold tracking-wide text-slate-700 text-center">Aksi</th>
+                                <tr class="bg-slate-50/80 border-b border-slate-200">
+                                    <th class="px-4 py-3.5 w-10 text-center"><input type="checkbox" id="selectAll" class="rounded border-slate-300"></th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">No</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">NISN</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Nama Lengkap</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Gender</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Kelas</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Status</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @if(count($siswas) == 0)
                                     <tr>
-                                        <td colspan="8" class="p-8 text-center text-slate-500 font-medium bg-slate-50">
+                                        <td colspan="8" class="p-10 text-center text-slate-500 font-medium">
+                                            <span class="text-3xl block mb-2">📭</span>
                                             Belum ada data siswa di sistem. Silakan tambah data baru atau lakukan impor CSV.
                                         </td>
                                     </tr>
                                 @else
                                     @foreach ($siswas as $index => $siswa)
                                     <!-- Data atribut dibiarkan apa adanya, pembersihan dilakukan di JS -->
-                                    <tr class="border-b border-slate-100 hover:bg-slate-50 transition duration-150 siswa-row"
+                                    <tr class="border-b border-slate-100 hover:bg-slate-50/70 transition duration-150 siswa-row"
                                         data-text="{{ strtolower($siswa->nama_lengkap ?? '') }}"
                                         data-kelas="{{ $siswa->kelas ?? '' }}"
                                         data-jk="{{ $siswa->jk ?? '' }}"
                                         data-angkatan="{{ $siswa->thn_masuk ?? '' }}">
                                         
-                                        <td class="p-4 text-center">
-                                            <input type="checkbox" name="siswa_ids[]" value="{{ $siswa->id }}" class="rounded border-gray-400">
+                                        <td class="px-4 py-3 text-center">
+                                            <input type="checkbox" name="siswa_ids[]" value="{{ $siswa->id }}" class="rounded border-slate-300">
                                         </td>
-                                        <td class="p-4 text-sm text-slate-700 text-center">{{ $index + 1 }}</td>
-                                        <td class="p-4 text-sm text-slate-700 font-mono">{{ $siswa->nisn }}</td>
-                                        <td class="p-4 text-sm font-bold text-sky-600">{{ $siswa->nama_lengkap }}</td>
-                                        <td class="p-4 text-xs font-bold text-slate-500 text-center">
+                                        <td class="px-4 py-3 text-sm text-slate-500 text-center">{{ $index + 1 }}</td>
+                                        <td class="px-4 py-3 text-sm text-slate-600 font-mono">{{ $siswa->nisn }}</td>
+                                        <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ $siswa->nama_lengkap }}</td>
+                                        <td class="px-4 py-3 text-xs font-bold text-slate-500 text-center">
                                              {{ substr($siswa->jk, 0, 1) }} <!-- Menampilkan inisial L/P saja agar ringkas -->
                                         </td>
-                                        <td class="p-4 text-sm text-slate-700 text-center font-bold">{{ $siswa->kelas ?? '-' }}</td>
-                                        <td class="p-4 text-sm text-center">
+                                        <td class="px-4 py-3 text-sm text-slate-700 text-center font-bold">{{ $siswa->kelas ?? '-' }}</td>
+                                        <td class="px-4 py-3 text-sm text-center">
                                             @if($siswa->status == 'Aktif')
-                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 shadow-sm border border-green-200">Aktif</span>
+                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-green-50 text-green-700 border border-green-200">Aktif</span>
                                             @elseif($siswa->status == 'Alumni')
-                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-sky-100 text-sky-800 shadow-sm border border-sky-200">Alumni</span>
+                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-sky-50 text-sky-700 border border-sky-200">Alumni</span>
                                             @elseif($siswa->status == 'Pindah')
-                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800 shadow-sm border border-amber-200">Pindah</span>
+                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200">Pindah</span>
                                             @else
-                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800 shadow-sm border border-red-200">{{ $siswa->status }}</span>
+                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-red-50 text-red-700 border border-red-200">{{ $siswa->status }}</span>
                                             @endif
                                         </td>
-                                        <td class="p-4">
-                                            <div class="flex justify-center gap-2">
+                                        <td class="px-4 py-3">
+                                            <div class="flex justify-center gap-1.5">
                                                 <button type="button" 
                                                     @click="qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ urlencode(route('siswa.public', $siswa->nisn)) }}'; qrName = '{{ addslashes($siswa->nama_lengkap) }}'; qrNisn = '{{ $siswa->nisn }}'; qrModalOpen = true" 
                                                     title="Tampilkan QR Code" 
-                                                    style="background-color: #1f2937; color: #ffffff;" 
-                                                    class="px-3 py-2 rounded hover:opacity-80 text-xs font-bold shadow-sm">
-                                                    📱 QR
+                                                    class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">📱
                                                 </button>
                                                 
-                                                <a href="{{ route('siswa.show', $siswa->id) }}" title="Lihat Profil" style="background-color: #2563eb; color: #ffffff;" class="px-3 py-2 rounded hover:opacity-80 text-xs font-bold shadow-sm">👁️ Lihat</a>
+                                                <a href="{{ route('siswa.show', $siswa->id) }}" title="Lihat Profil" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-700 hover:bg-blue-50 transition">👁️</a>
                                                 
-                                                <a href="{{ route('siswa.edit', $siswa->id) }}" title="Edit Data" style="background-color: #f59e0b; color: #ffffff;" class="px-3 py-2 rounded hover:opacity-80 text-xs font-bold shadow-sm">✏️ Edit</a>
+                                                <a href="{{ route('siswa.edit', $siswa->id) }}" title="Edit Data" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition">✏️</a>
                                                 
                                                 <button type="button" 
                                                     @click="deleteFormId = 'delete-form-{{ $siswa->id }}'; deleteStudentName = '{{ addslashes($siswa->nama_lengkap) }}'; deleteModalOpen = true" 
-                                                    title="Hapus" style="background-color: #dc2626; color: #ffffff;" class="px-3 py-2 rounded hover:opacity-80 text-xs font-bold shadow-sm">
-                                                    🗑️ Hapus
+                                                    title="Hapus" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">🗑️
                                                 </button>
                                             </div>
                                         </td>
@@ -235,7 +236,7 @@
 
                                     <!-- BARIS JIKA PENCARIAN TIDAK DITEMUKAN -->
                                     <tr x-show="visibleCount === 0" style="display: none;">
-                                        <td colspan="8" class="p-8 text-center text-slate-500 font-medium bg-slate-50">
+                                        <td colspan="8" class="p-10 text-center text-slate-500 font-medium">
                                             Tidak ada data siswa yang cocok dengan filter atau pencarian Anda.
                                         </td>
                                     </tr>
@@ -364,16 +365,16 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            background-color: #f8fafc;
+            background-color: #ffffff;
             padding: 16px;
-            border-radius: 12px;
+            border-radius: 14px;
             border: 1px solid #e2e8f0;
             margin-bottom: 16px;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
         }
         
         .custom-bulk-action-panel {
-            background-color: #f1f5f9;
+            background-color: #fbfcfd;
             border: 1px dashed #cbd5e1;
         }
 
@@ -381,29 +382,40 @@
         @media (min-width: 768px) {
             .custom-filter-panel, .custom-bulk-action-panel {
                 flex-direction: row;
+                flex-wrap: wrap;
                 align-items: center;
             }
         }
 
         .custom-filter-input {
-            flex: 1;
-            min-width: 130px;
-            padding: 10px 14px;
-            border-radius: 8px;
+            flex: 1 1 150px;
+            min-width: 140px;
+            height: 40px;
+            padding: 0 12px;
+            border-radius: 10px;
             border: 1px solid #cbd5e1;
             font-size: 14px;
             color: #334155;
+            background-color: #ffffff;
             outline: none;
             transition: all 0.2s ease;
         }
 
         .custom-filter-input:focus {
-            border-color: #0ea5e9;
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
         }
 
-        .custom-search-bar {
-            flex: 2;
+        /* Kotak pencarian lebih dominan di baris filter */
+        @media (min-width: 768px) {
+            .custom-search-bar {
+                flex: 2 1 260px;
+            }
+        }
+
+        .custom-filter-input:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
         }
 
         .bold-text {
