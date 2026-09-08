@@ -1,0 +1,17 @@
+{
+    "name": "SIAKAD SMAIT Arafah",
+    "short_name": "SIAKAD",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#f8fafc",
+    "theme_color": "#1e3a8a",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
