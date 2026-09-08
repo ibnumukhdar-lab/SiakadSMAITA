@@ -34,6 +34,10 @@ ssh -o ConnectTimeout=20 -o BatchMode=yes nizhom "
   mv siakad.smaitarafah.sch.id_tmp siakad.smaitarafah.sch.id &&
   cd siakad.smaitarafah.sch.id &&
   chmod -R u+rwX storage bootstrap/cache &&
+  mkdir -p storage/framework/views storage/framework/cache/data storage/framework/sessions storage/logs &&
+  touch storage/framework/views/.gitignore storage/logs/.gitignore &&
+  # Upload (storage/app) tidak pernah ikut tar -> salin dari folder lama setelah swap
+  cp -a ../siakad.smaitarafah.sch.id_old_\$TS/storage/app/. storage/app/ &&
   echo \"   backup lama: siakad.smaitarafah.sch.id_old_\$TS\"
 "
 
