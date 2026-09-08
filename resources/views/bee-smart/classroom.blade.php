@@ -76,6 +76,10 @@
                 <button onclick="playAllCurrentSlide()" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold py-2 px-6 rounded-full flex items-center gap-2 transition border border-indigo-200 shadow-sm">
                     <span>🔊</span> Baca Semua
                 </button>
+                <!-- Tombol Putar Otomatis (LOOP SEMUA SLIDE untuk jam istirahat) -->
+                <button id="btnAutoLoop" onclick="toggleAutoLoop()" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold py-2 px-6 rounded-full flex items-center gap-2 transition border border-emerald-300 shadow-sm">
+                    <span>🔁</span> <span id="btnAutoLabel">Putar Otomatis (Loop)</span>
+                </button>
                 <button onclick="toggleFullScreen()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-5 rounded-full flex items-center gap-2 transition shadow-sm" title="Layar Penuh (F11)">
                     ⛶ Fullscreen
                 </button>
@@ -160,6 +164,7 @@
             <div class="text-center">
                 <p class="font-bold text-lg"><span id="current-index" class="text-amber-400">1</span> / {{ $activeWeek->vocabs->count() }}</p>
                 <p class="text-xs text-slate-400">Gunakan panah ⬅ ➡ di keyboard</p>
+                <p id="autoBadge" class="hidden text-xs font-black text-emerald-300 mt-1 uppercase tracking-widest">🔁 Auto-loop sedang berjalan…</p>
             </div>
             
             <button onclick="nextSlide()" class="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition shadow-lg border border-blue-500">
@@ -196,8 +201,92 @@
                 document.getElementById('current-index').innerText = currentSlide + 1;
             }
 
-            function nextSlide() { showSlide(currentSlide + 1); }
-            function prevSlide() { showSlide(currentSlide - 1); }
+            function nextSlide() { stopAutoLoop(); showSlide(currentSlide + 1); }
+            function prevSlide() { stopAutoLoop(); showSlide(currentSlide - 1); }
+
+            // ================= AUTO-LOOP (MODE ISTIRAHAT) =================
+            let autoLoop = false;
+            let autoTimer = null;
+            // Penyetelan tempo (ms): jeda sebelum mulai, jeda antar suara, jeda antar slide
+            const AUTO_DELAY_BEFORE = 1200;
+            const AUTO_DELAY_BETWEEN = 900;
+            const AUTO_DELAY_AFTER = 2400;
+
+            function delay(ms) { return new Promise(r => { autoTimer = setTimeout(r, ms); }); }
+
+            // Hentikan loop & kembalikan UI
+            function stopAutoLoop() {
+                if (!autoLoop) return;
+                autoLoop = false;
+                clearTimeout(autoTimer);
+                // Hentikan audio yang mungkin sedang berbunyi
+                document.querySelectorAll('audio').forEach(a => { a.pause(); a.currentTime = 0; });
+                document.querySelectorAll('.btn-audio').forEach(b => b.classList.remove('playing'));
+                const btn = document.getElementById('btnAutoLoop');
+                if (btn) { btn.classList.remove('bg-emerald-600','text-white','border-emerald-500'); btn.classList.add('bg-emerald-100','text-emerald-700','border-emerald-300'); }
+                const lbl = document.getElementById('btnAutoLabel');
+                if (lbl) lbl.innerText = 'Putar Otomatis (Loop)';
+                const badge = document.getElementById('autoBadge');
+                if (badge) badge.classList.add('hidden');
+            }
+
+            function toggleAutoLoop() {
+                if (autoLoop) { stopAutoLoop(); return; }
+
+                autoLoop = true;
+                const btn = document.getElementById('btnAutoLoop');
+                if (btn) { btn.classList.remove('bg-emerald-100','text-emerald-700','border-emerald-300'); btn.classList.add('bg-emerald-600','text-white','border-emerald-500'); }
+                const lbl = document.getElementById('btnAutoLabel');
+                if (lbl) lbl.innerText = '⏹ Stop Loop';
+                const badge = document.getElementById('autoBadge');
+                if (badge) badge.classList.remove('hidden');
+
+                runAutoLoop();
+            }
+
+            // Inti loop: slide saat ini dibaca dulu, lalu maju, berulang tanpa henti
+            async function runAutoLoop() {
+                while (autoLoop) {
+                    await playSlideSequence(currentSlide);
+                    if (!autoLoop) break;
+                    await delay(AUTO_DELAY_AFTER);
+                    if (!autoLoop) break;
+                    showSlide(currentSlide + 1);
+                }
+            }
+
+            // Baca semua audio yang TERSEDIA pada satu slide, berurutan (EN kata → EN kalimat → AR kata → AR kalimat)
+            async function playSlideSequence(slideIndex) {
+                const candidates = [
+                    { id: `audio-en-word-${slideIndex}` },
+                    { id: `audio-en-sent-${slideIndex}` },
+                    { id: `audio-ar-word-${slideIndex}` },
+                    { id: `audio-ar-sent-${slideIndex}` }
+                ];
+                // jeda sejenak supaya slide terlihat dulu sebelum suara mulai
+                await delay(AUTO_DELAY_BEFORE);
+                for (let item of candidates) {
+                    if (!autoLoop) return;
+                    const audio = document.getElementById(item.id);
+                    if (!audio) continue;
+                    const btn = audio.previousElementSibling;
+                    if (btn) btn.classList.add('playing');
+                    try {
+                        await new Promise(resolve => {
+                            audio.onended = () => {
+                                if (btn) btn.classList.remove('playing');
+                                resolve();
+                            };
+                            audio.onerror = () => { if (btn) btn.classList.remove('playing'); resolve(); };
+                            audio.play().catch(() => { if (btn) btn.classList.remove('playing'); resolve(); });
+                        });
+                    } catch (e) {
+                        if (btn) btn.classList.remove('playing');
+                    }
+                    if (!autoLoop) return;
+                    await delay(AUTO_DELAY_BETWEEN);
+                }
+            }
 
             // NAVIGASI KEYBOARD (Panah Kiri / Kanan)
             document.addEventListener('keydown', function(event) {
@@ -238,6 +327,7 @@
             // FUNGSI BACA SEMUA (Urut dalam 1 slide)
             async function playAllCurrentSlide() {
                 if(isPlayingSequence) return; // Mencegah double klik
+                stopAutoLoop(); // Mode loop dimatikan dulu agar tidak bentrok
                 isPlayingSequence = true;
 
                 let slide = document.getElementById('slide-' + currentSlide);
