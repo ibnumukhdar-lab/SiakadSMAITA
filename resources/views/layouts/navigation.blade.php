@@ -1,344 +1,124 @@
 @php
     $pengaturan = \App\Models\Pengaturan::first();
+    $nama = $pengaturan->nama_sekolah ?? 'SMA IT Arafah';
+    $motto = $pengaturan->motto ?? 'Cerdas & Beradab';
+    $logoUrl = ($pengaturan && $pengaturan->logo_path) ? url('berkas/' . $pengaturan->logo_path) : null;
 @endphp
+<style>[x-cloak]{display:none!important}</style>
 
-<!-- ================= BANNER PERINGATAN IMPERSONATE ================= -->
-@if(session()->has('impersonate_by'))
-    <div class="bg-red-600 text-white text-center py-2 px-4 font-bold shadow-md relative z-50 flex flex-col sm:flex-row justify-center items-center gap-3">
-        <span>🕵️‍♂️ PERHATIAN: Anda sedang menyamar sebagai <strong>{{ Auth::user()->name }}</strong>.</span>
-        <a href="{{ route('impersonate.leave') }}" class="bg-white text-red-600 px-4 py-1 rounded-full text-sm hover:bg-gray-100 transition shadow">
-            Kembali ke Akun Admin
-        </a>
-    </div>
-@endif
-<!-- =============================================================== -->
-
-<nav x-data="{ open: false }" class="bg-white shadow-md sticky top-0 z-40">
-    
-    <!-- ================= BARIS 1: BRANDING & PROFIL (TOP BAR) ================= -->
-    <div class="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-3">
-                
-                <!-- KIRI: Branding Sekolah -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" class="flex items-center gap-3 hover:opacity-85 transition duration-150">
-                        @if($pengaturan && $pengaturan->logo_path)
-                            <!-- JALUR DIUBAH KE /BERKAS/ AGAR MENEMBUS BLOKIR CPANEL -->
-                            <img src="{{ url('berkas/' . $pengaturan->logo_path) }}" class="h-10 w-auto rounded object-contain drop-shadow-md bg-white/90 p-0.5" style="max-height: 45px;">
-                        @else
-                            <div class="w-10 h-10 bg-white text-blue-900 rounded-lg flex items-center justify-center font-bold text-xl shadow-md shrink-0">
-                                {{ substr($pengaturan->nama_sekolah ?? 'S', 0, 1) }}
-                            </div>
-                        @endif
-
-                        <div class="flex flex-col justify-center">
-                            <span class="font-black text-white text-base md:text-lg leading-none tracking-tight whitespace-nowrap uppercase">{{ $pengaturan->nama_sekolah ?? 'SMA IT ARAFAH' }}</span>
-                            <span class="hidden sm:block text-[11px] text-blue-200 font-bold tracking-widest mt-1 uppercase">{{ $pengaturan->motto ?? 'Cerdas & Beradab' }}</span>
-                        </div>
-                    </a>
+{{-- ============ MOBILE: top bar + drawer (satu scope x-data) ============ --}}
+<div class="lg:hidden" x-data="{ open: false }">
+    {{-- Top bar --}}
+    <div class="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 flex justify-between items-center">
+            <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 min-w-0">
+                @if($logoUrl)
+                    <img src="{{ $logoUrl }}" class="h-9 w-auto rounded bg-white/90 p-0.5 shrink-0" alt="Logo">
+                @else
+                    <div class="h-9 w-9 bg-white text-blue-900 rounded-lg flex items-center justify-center font-black shrink-0">{{ mb_substr($nama, 0, 1) }}</div>
+                @endif
+                <div class="leading-tight min-w-0">
+                    <div class="font-black text-white text-[13px] uppercase tracking-tight truncate">{{ $nama }}</div>
+                    <div class="text-[10px] text-blue-200 font-bold tracking-widest uppercase truncate">{{ $motto }}</div>
                 </div>
-
-                <!-- KANAN: Settings Dropdown (Desktop) -->
-                <div class="hidden sm:flex sm:items-center sm:ms-6 shrink-0">
-                    <x-dropdown align="right" width="48">
-                        <x-slot name="trigger">
-                            <button class="inline-flex items-center px-3 py-2 border border-blue-300 text-sm leading-4 font-bold rounded-full text-blue-900 bg-white hover:text-blue-700 hover:bg-blue-50 focus:outline-none transition ease-in-out duration-150 shadow">
-                                <div class="hidden md:block mr-1">👤 {{ Auth::user()->name }}</div>
-                                <div class="block md:hidden text-lg">👤</div>
-                                <div class="ms-1">
-                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                            </button>
-                        </x-slot>
-
-                        <x-slot name="content">
-                            @can('buka-menu-pengaturan')
-                            <x-dropdown-link :href="route('pengaturan.edit')" class="text-blue-600 font-bold border-b border-gray-100">
-                                ⚙️ {{ __('Pengaturan Lembaga') }}
-                            </x-dropdown-link>
-                            @endcan
-                            <x-dropdown-link :href="route('profile.edit')">
-                                {{ __('Profile Saya') }}
-                            </x-dropdown-link>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">
-                                    <span class="text-red-600 font-bold">{{ __('Log Out') }}</span>
-                                </x-dropdown-link>
-                            </form>
-                        </x-slot>
-                    </x-dropdown>
-                </div>
-
-                <!-- Hamburger (Hanya untuk Mobile/HP) -->
-                <div class="-me-2 flex items-center sm:hidden">
-                    <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-white/90 hover:text-white hover:bg-white/10 focus:outline-none focus:bg-white/10 focus:text-white transition duration-150 ease-in-out">
-                        <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                            <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                            <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-            </div>
+            </a>
+            <button @click="open = !open" class="inline-flex items-center justify-center p-2 rounded-lg text-white hover:bg-white/10 transition" aria-label="Menu">
+                <svg class="h-6 w-6" :class="{ 'hidden': open }" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <svg class="h-6 w-6 hidden" :class="{ 'hidden': !open }" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         </div>
     </div>
 
-    <!-- ================= BARIS 2: MENU NAVIGASI UTAMA (MENGGUNAKAN CSS MURNI) ================= -->
-    <div class="custom-nav-bar">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="custom-nav-container">
-                
-                <div class="custom-nav-item">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="whitespace-nowrap h-full">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
-                </div>
-                
-                @can('buka-menu-arsip')
-                <div class="custom-nav-item">
-                    <x-nav-link :href="route('arsip.index')" :active="request()->routeIs('arsip.*')" class="whitespace-nowrap h-full">
-                        {{ __('Data E-Arsip') }}
-                    </x-nav-link>
-                </div>
-                @endcan
+    {{-- Backdrop --}}
+    <div x-show="open" x-transition.opacity @click="open = false" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50"></div>
 
-                @can('buka-menu-siswa')
-                <div class="custom-nav-item">
-                    <x-nav-link :href="route('siswa.index')" :active="request()->routeIs('siswa.*')" class="whitespace-nowrap h-full">
-                        {{ __('Data Siswa') }}
-                    </x-nav-link>
+    {{-- Panel drawer --}}
+    <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full"
+         class="fixed inset-y-0 left-0 w-[290px] max-w-[85vw] bg-white shadow-2xl z-50 flex flex-col">
+        <div class="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 px-4 py-4 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+                @if($logoUrl)
+                    <img src="{{ $logoUrl }}" class="h-9 w-9 rounded bg-white/90 p-0.5 shrink-0" alt="Logo">
+                @else
+                    <div class="h-9 w-9 bg-white text-blue-900 rounded-lg flex items-center justify-center font-black shrink-0">{{ mb_substr($nama, 0, 1) }}</div>
+                @endif
+                <div class="leading-tight min-w-0">
+                    <div class="font-black text-white text-[12px] uppercase tracking-tight truncate">{{ $nama }}</div>
+                    <div class="text-[9px] text-blue-200 font-bold tracking-widest uppercase truncate">{{ $motto }}</div>
                 </div>
-                @endcan
-
-                <!-- MENU STUDENT ROOT -->
-                <div class="custom-nav-item">
-                    <x-dropdown align="left" width="48">
-                        <x-slot name="trigger">
-                            <button class="inline-flex items-center px-1 border-b-2 border-transparent text-sm font-bold leading-5 text-gray-600 hover:text-green-700 hover:border-green-300 focus:outline-none focus:text-green-700 focus:border-green-300 transition duration-150 ease-in-out h-full whitespace-nowrap {{ request()->routeIs('sr.*') ? 'navy-active' : '' }}">
-                                🌱 Student Root
-                                <svg class="ms-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </x-slot>
-                        <x-slot name="content">
-                            <x-dropdown-link :href="route('sr.poin.create')">📝 Input Poin Sikap</x-dropdown-link>
-                            <x-dropdown-link :href="route('sr.dashboard')">📊 Dashboard Karakter</x-dropdown-link>
-                            @can('buka-menu-grup-binaan')
-                            <x-dropdown-link :href="route('sr.mygroup')" class="text-green-700 font-extrabold border-t border-gray-100 bg-green-50">👥 Grup Binaan Saya</x-dropdown-link>
-                            @endcan
-                            @can('buka-menu-master-student-root')
-                            <div class="border-t border-gray-100"></div>
-                            <x-dropdown-link :href="route('sr.grup.index')">🏢 Manajemen Grup</x-dropdown-link>
-                            <x-dropdown-link :href="route('sr.kriteria.index')">⚙️ Master Kriteria</x-dropdown-link>
-                            <x-dropdown-link :href="route('sr.display.setting')">📺 Pengaturan Display TV</x-dropdown-link>
-                            @endcan
-                        </x-slot>
-                    </x-dropdown>
-                </div>
-
-                <!-- MENU ASRAMA (tampil hanya utk pemegang buka-menu-asrama) -->
-                @can('buka-menu-asrama')
-                <div class="custom-nav-item">
-                    <x-dropdown align="left" width="48">
-                        <x-slot name="trigger">
-                            <button class="inline-flex items-center px-1 border-b-2 border-transparent text-sm font-bold leading-5 text-gray-600 hover:text-blue-700 hover:border-blue-300 focus:outline-none focus:text-blue-700 focus:border-blue-300 transition duration-150 ease-in-out h-full whitespace-nowrap {{ request()->routeIs('asrama.*') ? 'navy-active' : '' }}">
-                                🛏️ Asrama
-                                <svg class="ms-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </x-slot>
-                        <x-slot name="content">
-                            <div class="px-4 py-2 text-[10px] font-black text-blue-600 bg-blue-50 border-b border-gray-100 uppercase tracking-widest">Modul Asrama</div>
-                            <x-dropdown-link :href="route('asrama.dashboard')" class="font-bold border-b border-gray-100">📊 Dashboard Asrama</x-dropdown-link>
-                            <x-dropdown-link :href="route('asrama.kamar.binaan')" class="text-blue-700 font-extrabold bg-blue-50 border-b border-gray-100">🏠 Kamar Binaan Saya</x-dropdown-link>
-                            @can('buka-menu-manajemen-kamar')
-                            <x-dropdown-link :href="route('asrama.kamar.index')">🏢 Manajemen Kamar</x-dropdown-link>
-                            @endcan
-                            <x-dropdown-link :href="route('asrama.penilaian.hariIni')">📝 Inspeksi Hari Ini</x-dropdown-link>
-                            <x-dropdown-link :href="route('asrama.penilaian.index')">📚 Histori Inspeksi</x-dropdown-link>
-                        </x-slot>
-                    </x-dropdown>
-                </div>
-                @endcan
-
-                <!-- MENU BEE SMART -->
-                <div class="custom-nav-item">
-                    <x-dropdown align="left" width="48">
-                        <x-slot name="trigger">
-                            <button class="inline-flex items-center px-1 border-b-2 border-transparent text-sm font-bold leading-5 text-gray-600 hover:text-yellow-600 hover:border-yellow-400 focus:outline-none focus:text-yellow-600 focus:border-yellow-400 transition duration-150 ease-in-out h-full whitespace-nowrap {{ request()->routeIs('bee.*') ? 'navy-active' : '' }}">
-                                🐝 BEE Smart
-                                <svg class="ms-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </x-slot>
-                        <x-slot name="content">
-                            <div class="px-4 py-2 text-[10px] font-black text-yellow-600 bg-yellow-50 border-b border-gray-100 uppercase tracking-widest">Bahasa & Gamifikasi</div>
-                            <x-dropdown-link :href="route('bee.index')" class="font-bold">📊 Dashboard Modul</x-dropdown-link>
-                            <x-dropdown-link :href="route('bee.classroom')" target="_blank" class="font-bold text-blue-600">👨‍🏫 Mode Kelas (TV)</x-dropdown-link>
-                            <x-dropdown-link :href="route('bee.buku-saku')" target="_blank" class="font-bold text-emerald-600">📱 Buku Saku Siswa</x-dropdown-link>
-                        </x-slot>
-                    </x-dropdown>
-                </div>
-                
-                @role('Super Admin')
-                <div class="custom-nav-item">
-                    <x-nav-link :href="route('kelola-akun.index')" :active="request()->routeIs('kelola-akun.*')" class="whitespace-nowrap font-bold text-indigo-600 h-full">
-                        🛡️ Kelola Akun
-                    </x-nav-link>
-                </div>
-                @endrole
-
             </div>
-        </div>
-    </div>
-
-    <!-- ================= RESPONSIVE MENU (MOBILE/HP TETAP MENGGUNAKAN BAWAAN) ================= -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden bg-white shadow-lg absolute w-full z-50 border-b border-gray-200">
-        <div class="pt-2 pb-3 space-y-1 max-h-[70vh] overflow-y-auto">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
-            
-            @can('buka-menu-arsip')
-            <x-responsive-nav-link :href="route('arsip.index')" :active="request()->routeIs('arsip.*')">
-                {{ __('Data E-Arsip') }}
-            </x-responsive-nav-link>
-            @endcan
-            
-            @can('buka-menu-siswa')
-            <x-responsive-nav-link :href="route('siswa.index')" :active="request()->routeIs('siswa.*')">
-                {{ __('Data Siswa') }}
-            </x-responsive-nav-link>
-            @endcan
-
-            <div class="pt-4 pb-2 border-t border-gray-100 bg-green-50/40">
-                <div class="px-4 text-[10px] font-black text-green-600 uppercase tracking-widest mb-1">🌱 Student Root</div>
-                <x-responsive-nav-link :href="route('sr.poin.create')">📝 Input Poin Sikap</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('sr.dashboard')">📊 Dashboard Karakter</x-responsive-nav-link>
-                @can('buka-menu-grup-binaan')
-                <x-responsive-nav-link :href="route('sr.mygroup')" class="text-green-700 font-bold bg-green-100 border-y border-green-200">👥 Grup Binaan Saya</x-responsive-nav-link>
-                @endcan
-                @can('buka-menu-master-student-root')
-                <x-responsive-nav-link :href="route('sr.grup.index')">🏢 Manajemen Grup</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('sr.kriteria.index')">⚙️ Master Kriteria</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('sr.display.setting')">📺 Pengaturan Display TV</x-responsive-nav-link>
-                @endcan
-            </div>
-
-            @can('buka-menu-asrama')
-            <div class="pt-4 pb-2 border-t border-gray-100 bg-blue-50/40">
-                <div class="px-4 text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">🛏️ Modul Asrama</div>
-                <x-responsive-nav-link :href="route('asrama.dashboard')" class="font-bold">📊 Dashboard Asrama</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('asrama.kamar.binaan')" class="text-blue-700 font-bold bg-blue-100 border-y border-blue-200">🏠 Kamar Binaan Saya</x-responsive-nav-link>
-                @can('buka-menu-manajemen-kamar')
-                <x-responsive-nav-link :href="route('asrama.kamar.index')">🏢 Manajemen Kamar</x-responsive-nav-link>
-                @endcan
-                <x-responsive-nav-link :href="route('asrama.penilaian.hariIni')">📝 Inspeksi Hari Ini</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('asrama.penilaian.index')">📚 Histori Inspeksi</x-responsive-nav-link>
-            </div>
-            @endcan
-
-            <div class="pt-4 pb-2 border-t border-gray-100 bg-yellow-50/40">
-                <div class="px-4 text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-1">🐝 Modul BEE Smart</div>
-                <x-responsive-nav-link :href="route('bee.index')" :active="request()->routeIs('bee.*')" class="font-bold border-l-4 border-yellow-500 text-yellow-700 bg-yellow-100">
-                    📊 Dashboard Modul
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('bee.classroom')" target="_blank" class="font-bold text-blue-600">
-                    👨‍🏫 Mode Kelas (TV)
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('bee.buku-saku')" target="_blank" class="font-bold text-emerald-600">
-                    📱 Buku Saku Siswa
-                </x-responsive-nav-link>
-            </div>
-            
-            @role('Super Admin')
-            <div class="border-t border-gray-100 mt-2"></div>
-            <x-responsive-nav-link :href="route('kelola-akun.index')" :active="request()->routeIs('kelola-akun.*')" class="font-bold text-indigo-700">
-                🛡️ {{ __('Kelola Akun') }}
-            </x-responsive-nav-link>
-            @endrole
+            <button @click="open = false" class="text-white/90 hover:text-white p-1 rounded-lg hover:bg-white/10 text-xl leading-none" aria-label="Tutup">&times;</button>
         </div>
 
-        <div class="pt-4 pb-4 border-t border-gray-200 bg-gray-50">
-            <div class="px-4 flex items-center gap-3">
-                <div class="bg-white border border-gray-300 shadow-sm w-10 h-10 rounded-full flex items-center justify-center font-bold text-gray-700">👤</div>
-                <div>
-                    <div class="font-bold text-base text-gray-900">{{ Auth::user()->name }}</div>
-                    <div class="font-medium text-xs text-gray-500">{{ Auth::user()->email }}</div>
+        <nav class="flex-1 overflow-y-auto px-3 py-4">
+            @include('layouts.partials._nav-links')
+        </nav>
+
+        <div class="border-t border-gray-200 px-4 py-3 space-y-2 bg-gray-50">
+            <div class="flex items-center gap-3">
+                <div class="h-9 w-9 rounded-full bg-blue-900 text-white flex items-center justify-center font-black text-sm shrink-0">{{ mb_substr(Auth::user()->name, 0, 1) }}</div>
+                <div class="min-w-0 leading-tight">
+                    <div class="text-[13px] font-bold text-slate-800 truncate">{{ Auth::user()->name }}</div>
+                    <div class="text-[11px] text-slate-500 truncate">{{ Auth::user()->email }}</div>
                 </div>
             </div>
-
-            <div class="mt-4 space-y-1">
-                @can('buka-menu-pengaturan')
-                <x-responsive-nav-link :href="route('pengaturan.edit')" :active="request()->routeIs('pengaturan.*')" class="text-blue-600 font-bold">
-                    ⚙️ {{ __('Pengaturan Lembaga') }}
-                </x-responsive-nav-link>
-                @endcan
-                
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile Saya') }}
-                </x-responsive-nav-link>
-
-                <form method="POST" action="{{ route('logout') }}">
+            <div class="flex gap-2">
+                <a href="{{ route('profile.edit') }}" class="flex-1 text-center text-[12px] font-bold text-blue-900 bg-white border border-gray-200 rounded-lg py-1.5 hover:bg-blue-50 transition">Profile</a>
+                <form method="POST" action="{{ route('logout') }}" class="flex-1">
                     @csrf
-                    <x-responsive-nav-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">
-                        <span class="text-red-600 font-bold">{{ __('Log Out') }}</span>
-                    </x-responsive-nav-link>
+                    <button type="submit" class="w-full text-[12px] font-bold text-red-600 bg-white border border-gray-200 rounded-lg py-1.5 hover:bg-red-50 transition">Log Out</button>
                 </form>
             </div>
         </div>
     </div>
-</nav>
+</div>
 
-<!-- INJEKSI CSS MURNI ANTI-GAGAL UNTUK BARIS KE-2 -->
-<style>
-    .custom-nav-bar {
-        display: none; /* Disembunyikan di layar HP, karena digantikan menu hamburger */
-        background-color: #ffffff;
-        border-bottom: 1px solid #e5e7eb;
-    }
-    
-    @media (min-width: 640px) {
-        .custom-nav-bar {
-            display: block !important;
-        }
-        .custom-nav-container {
-            display: flex !important;
-            flex-direction: row !important;
-            align-items: center !important;
-            gap: 1.5rem !important; /* Jarak antar menu */
-            min-height: 55px !important; /* Pakai min-height, bukan height mati */
-            flex-wrap: wrap !important; /* Jika menu kepanjangan, otomatis turun ke baris baru dengan rapi */
-        }
-        
-        .custom-nav-item {
-            display: flex;
-            align-items: center;
-            height: 55px; /* Menjaga tinggi area klik menu */
-        }
-    }
+{{-- ============ SIDEBAR DESKTOP (lg ke atas) ============ --}}
+<aside class="hidden lg:flex lg:flex-col lg:sticky lg:top-0 lg:h-screen lg:self-start w-72 shrink-0 bg-white border-r border-gray-200">
+    {{-- Brand --}}
+    <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-5 py-4 bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800">
+        @if($logoUrl)
+            <img src="{{ $logoUrl }}" class="h-11 w-auto max-w-[52px] rounded object-contain bg-white/90 p-1 shrink-0" alt="Logo">
+        @else
+            <div class="h-11 w-11 bg-white text-blue-900 rounded-xl flex items-center justify-center font-black text-lg shrink-0">{{ mb_substr($nama, 0, 1) }}</div>
+        @endif
+        <div class="leading-tight min-w-0">
+            <div class="font-black text-white text-[15px] uppercase tracking-tight truncate">{{ $nama }}</div>
+            <div class="text-[10px] text-blue-200 font-bold tracking-[0.18em] uppercase truncate">{{ $motto }}</div>
+        </div>
+    </a>
 
-    /* ===== SERAGAM: aksen navigasi → navy (kalibrasi 2026-09) ===== */
-    .custom-nav-bar .custom-nav-item a,
-    .custom-nav-bar .inline-flex {
-        color: #475569 !important;
-    }
-    .custom-nav-item a:hover,
-    .custom-nav-bar .inline-flex:hover {
-        color: #1e3a8a !important;
-        border-color: #1e3a8a !important;
-    }
-    .custom-nav-bar .navy-active,
-    .custom-nav-bar .navy-active:hover,
-    .custom-nav-item a.border-indigo-400 {
-        color: #1e3a8a !important;
-        border-color: #1e3a8a !important;
-    }
-</style>
+    {{-- Menu --}}
+    <nav class="flex-1 overflow-y-auto px-3 py-5">
+        @include('layouts.partials._nav-links')
+    </nav>
+
+    {{-- Footer profil --}}
+    <div class="border-t border-gray-200 px-4 py-3 flex items-center gap-3">
+        <div class="h-9 w-9 rounded-full bg-blue-900 text-white flex items-center justify-center font-black text-sm shrink-0">{{ mb_substr(Auth::user()->name, 0, 1) }}</div>
+        <div class="min-w-0 flex-1 leading-tight">
+            <div class="text-[13px] font-bold text-slate-800 truncate">{{ Auth::user()->name }}</div>
+            <div class="text-[11px] text-slate-400 truncate">{{ Auth::user()->email }}</div>
+        </div>
+        <div class="relative" x-data="{ userMenu: false }">
+            <button @click="userMenu = !userMenu" class="text-slate-500 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100" aria-label="Menu akun">
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+            </button>
+            <div x-show="userMenu" @click.outside="userMenu = false" x-transition class="absolute bottom-full right-0 mb-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-50">
+                @can('buka-menu-pengaturan')
+                <a href="{{ route('pengaturan.edit') }}" class="block px-4 py-2 text-[13px] font-semibold text-slate-700 hover:bg-slate-50">⚙️ Pengaturan Lembaga</a>
+                @endcan
+                <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-[13px] font-semibold text-slate-700 hover:bg-slate-50">👤 Profile Saya</a>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="w-full text-left px-4 py-2 text-[13px] font-bold text-red-600 hover:bg-red-50">🚪 Log Out</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</aside>

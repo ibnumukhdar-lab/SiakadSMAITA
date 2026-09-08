@@ -37,22 +37,36 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
+        <!-- ================= BANNER PERINGATAN IMPERSONATE ================= -->
+        @if(session()->has('impersonate_by'))
+            <div class="bg-red-600 text-white text-center py-2 px-4 font-bold shadow-md relative z-[60] flex flex-col sm:flex-row justify-center items-center gap-3">
+                <span>🕵️‍♂️ PERHATIAN: Anda sedang menyamar sebagai <strong>{{ Auth::user()->name }}</strong>.</span>
+                <a href="{{ route('impersonate.leave') }}" class="bg-white text-red-600 px-4 py-1 rounded-full text-sm hover:bg-gray-100 transition shadow shrink-0">
+                    Kembali ke Akun Admin
+                </a>
+            </div>
+        @endif
+        <!-- =============================================================== -->
+
+        <div class="min-h-screen bg-gray-100 lg:flex">
             @include('layouts.navigation')
 
-            <!-- Page Heading -->
-            @isset($header)
-                <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endisset
+            <!-- Konten utama: sidebar di kiri (desktop), konten di kanan -->
+            <div class="flex-1 min-w-0 flex flex-col">
+                <!-- Page Heading -->
+                @isset($header)
+                    <header class="bg-white shadow-sm border-b border-gray-200">
+                        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                            {{ $header }}
+                        </div>
+                    </header>
+                @endisset
 
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
+                <!-- Page Content -->
+                <main class="flex-1">
+                    {{ $slot }}
+                </main>
+            </div>
         </div>
 
         <!-- ================= PWA SERVICE WORKER ================= -->
