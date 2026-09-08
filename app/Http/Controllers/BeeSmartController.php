@@ -221,50 +221,65 @@ class BeeSmartController extends Controller
     public function claimPoint(Request $request, $id)
     {
         $request->validate(['nisn' => 'required']);
-        
+
         $siswa = \App\Models\Siswa::where('nisn', $request->nisn)->orWhere('nis', $request->nisn)->first();
-        
+
         if (!$siswa) {
             return response()->json(['success' => false, 'message' => 'Siswa dengan NIS / NISN tersebut tidak ditemukan.']);
         }
 
         $week = BeeWeek::findOrFail($id);
-        $keterangan = "Menyelesaikan Kuis BEE Smart: " . $week->judul;
+        $catatan = "Menyelesaikan Kuis Bee Smart: " . $week->judul;
 
+        // 1. Pastikan master kriteria "Kuis Bee Smart" tersedia (dibuat sekali, poin +1).
+        //    CATATAN 2026-09: sebelumnya kode memakai kolom 'keterangan'/'tanggal' &
+        //    kolom cache 'total_poin' yang TIDAK ADA di DB -> klaim selalu gagal.
+        $kriteria = \App\Models\SrPointCriteria::firstOrCreate(
+            [
+                'nama_perilaku' => 'Menyelesaikan Kuis Bee Smart',
+                'kategori'      => 'positif',
+                'poin'          => 1,
+            ],
+            [
+                'deskripsi' => 'Poin otomatis saat siswa menyelesaikan kuis BEE Smart di Buku Saku (klaim mandiri via NISN).',
+                'tingkat'   => null,
+                'status'    => 'aktif',
+            ]
+        );
+
+        // 2. Cegah klaim ganda: satu siswa hanya sekali per modul (kriteria + catatan sama)
         $sudahKlaim = \Illuminate\Support\Facades\DB::table('sr_point_entries')
             ->where('student_id', $siswa->id)
-            ->where('keterangan', $keterangan)
+            ->where('criteria_id', $kriteria->id)
+            ->where('catatan', $catatan)
+            ->whereNull('deleted_at')
             ->exists();
 
         if ($sudahKlaim) {
             return response()->json(['success' => false, 'message' => 'Ups! Kamu sudah mengklaim poin untuk modul ini sebelumnya.']);
         }
 
+        // 3. Snapshot grup aktif siswa saat ini (kalau belum masuk grup -> null)
         $anggota = \Illuminate\Support\Facades\DB::table('sr_group_members')
             ->where('student_id', $siswa->id)
             ->whereNull('tanggal_keluar')
             ->first();
         $groupId = $anggota ? $anggota->group_id : null;
 
+        // 4. Simpan entri poin (input_by = NULL karena ini klaim mandiri siswa;
+        //    kolom input_by sudah dibuat nullable lewat migrasi 2026_09_08)
         \Illuminate\Support\Facades\DB::table('sr_point_entries')->insert([
-            'student_id' => $siswa->id,
-            'group_id' => $groupId,
-            'poin' => 1,
-            'keterangan' => $keterangan,
-            'tanggal' => now()->toDateString(),
-            'created_at' => now(),
-            'updated_at' => now()
+            'id'                => (string) \Illuminate\Support\Str::uuid(),
+            'student_id'        => $siswa->id,
+            'group_id'          => $groupId,
+            'criteria_id'       => $kriteria->id,
+            'poin'              => 1,
+            'catatan'           => $catatan,
+            'input_by'          => null,
+            'tanggal_kejadian'  => now()->toDateString(),
+            'created_at'        => now(),
+            'updated_at'        => now(),
         ]);
-
-        $totalSiswa = \Illuminate\Support\Facades\DB::table('sr_point_entries')->where('student_id', $siswa->id)->sum('poin');
-        $siswa->update(['total_poin' => $totalSiswa]);
-
-        if ($groupId) {
-            $studentIds = \Illuminate\Support\Facades\DB::table('sr_group_members')
-                ->where('group_id', $groupId)->whereNull('tanggal_keluar')->pluck('student_id');
-            $totalGrup = \App\Models\Siswa::whereIn('id', $studentIds)->sum('total_poin');
-            \Illuminate\Support\Facades\DB::table('sr_groups')->where('id', $groupId)->update(['total_poin' => $totalGrup]);
-        }
 
         return response()->json(['success' => true, 'message' => 'Selamat! +1 Poin Karakter berhasil ditambahkan ke akunmu!']);
     }

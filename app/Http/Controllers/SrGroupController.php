@@ -60,7 +60,7 @@ class SrGroupController extends Controller
             'mentor_id.unique' => 'Guru ini sudah menjadi mentor di grup lain! Silakan pilih guru yang berbeda.'
         ]);
 
-        $group->update($request->all());
+        $group->update($request->only(['nama_grup', 'mentor_id', 'tahun_ajaran_mulai', 'status']));
 
         return back()->with('success', '✅ Informasi grup berhasil diperbarui!');
     }

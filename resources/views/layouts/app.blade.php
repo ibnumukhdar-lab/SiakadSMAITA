@@ -15,7 +15,7 @@
 
         <!-- 2. Favicon (Ikon Kecil di Tab Browser) Dinamis -->
         @if($pengaturan && $pengaturan->logo_path)
-            <link rel="icon" href="{{ asset('storage/' . $pengaturan->logo_path) }}">
+            <link rel="icon" href="{{ asset('berkas/' . $pengaturan->logo_path) }}">
         @else
             <!-- Ikon bawaan jika logo belum diupload -->
             <link rel="icon" href="https://laravel.com/img/favicon/favicon-32x32.png">

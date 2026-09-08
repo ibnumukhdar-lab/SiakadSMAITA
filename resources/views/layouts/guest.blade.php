@@ -11,7 +11,7 @@
         <title>{{ $pengaturan->nama_sekolah ?? config('app.name', 'SIAKAD') }}</title>
 
         @if($pengaturan && $pengaturan->logo_path)
-            <link rel="icon" type="image/png" href="{{ asset('storage/' . $pengaturan->logo_path) }}">
+            <link rel="icon" type="image/png" href="{{ asset('berkas/' . $pengaturan->logo_path) }}">
         @else
             <link rel="icon" type="image/png" href="{{ asset('favicon.ico') }}">
         @endif

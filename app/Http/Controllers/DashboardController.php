@@ -19,12 +19,16 @@ class DashboardController extends Controller
         $total_siswa = Siswa::count();
 
         // 3. Menghitung rincian demografi siswa berdasarkan kelas
-        $siswa_x   = Siswa::where('kelas', 'X')->count();
-        $siswa_xi  = Siswa::where('kelas', 'XI')->count();
-        $siswa_xii = Siswa::where('kelas', 'XII')->count();
-        
-        // Nah, bagian ini yang kita perbaiki! Mencari "Lulus" di kolom "kelas"
-        $alumni    = Siswa::where('kelas', 'Lulus')->count();
+        //    (2026-09: hanya status Aktif; alumni disimpan sbg status 'Alumni')
+        $siswa_x   = Siswa::where('status', 'Aktif')->where('kelas', 'X')->count();
+        $siswa_xi  = Siswa::where('status', 'Aktif')->where('kelas', 'XI')->count();
+        $siswa_xii = Siswa::where('status', 'Aktif')->where('kelas', 'XII')->count();
+
+        // Alumni terdeteksi dari status 'Alumni' ATAU kelas 'Lulus' (dua-duanya diakomodasi)
+        $alumni    = Siswa::where(function ($q) {
+                        $q->where('status', 'Alumni')
+                          ->orWhere('kelas', 'Lulus');
+                     })->count();
 
         // 4. Mengirim semua hasil hitungan ke halaman dashboard
         return view('dashboard', compact(

@@ -22,7 +22,8 @@ ssh -o ConnectTimeout=20 -o BatchMode=yes nizhom "
   mkdir -p siakad.smaitarafah.sch.id_tmp &&
   tar xzf - -C siakad.smaitarafah.sch.id_tmp &&
   cp -a siakad.smaitarafah.sch.id/.env siakad.smaitarafah.sch.id_tmp/.env &&
-  cp -a siakad.smaitarafah.sch.id/.htaccess siakad.smaitarafah.sch.id_tmp/.htaccess
+  cp -a siakad.smaitarafah.sch.id/.htaccess siakad.smaitarafah.sch.id_tmp/.htaccess &&
+  if [ -e siakad.smaitarafah.sch.id/.well-known ]; then cp -a siakad.smaitarafah.sch.id/.well-known siakad.smaitarafah.sch.id_tmp/.well-known; fi
 " < /tmp/siakad-deploy.tar.gz
 
 echo "== 3/5 tukar folder (folder lama -> _old_<timestamp>) =="

@@ -55,7 +55,7 @@
         <div class="flex items-center gap-6">
             <div class="shrink-0 relative group cursor-pointer" onclick="document.getElementById('avatar').click()">
                 @if(Auth::user()->avatar)
-                    <img class="h-24 w-24 object-cover rounded-full shadow-md border-2" style="border-color: #1e3a8a;" src="{{ url('storage/' . Auth::user()->avatar) }}" alt="Foto Profil" />
+                    <img class="h-24 w-24 object-cover rounded-full shadow-md border-2" style="border-color: #1e3a8a;" src="{{ url('berkas/' . Auth::user()->avatar) }}" alt="Foto Profil" />
                 @else
                     <div class="h-24 w-24 rounded-full text-white flex items-center justify-center font-bold text-3xl shadow-md border-2" style="background-color: #1e3a8a; border-color: #1e3a8a;">
                         {{ substr(Auth::user()->name, 0, 1) }}

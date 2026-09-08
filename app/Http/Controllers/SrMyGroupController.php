@@ -5,11 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 use App\Models\SrGroup;
 use App\Models\SrPointEntry; // Ditambahkan untuk akses riwayat poin
-use App\Models\Siswa; // Ditambahkan untuk akses update poin siswa
 
 class SrMyGroupController extends Controller
 {
@@ -100,23 +98,12 @@ class SrMyGroupController extends Controller
             $studentId = $riwayat->student_id;
 
             // 2. Eksekusi hapus data riwayat
+            //    CATATAN 2026-09: tidak ada kolom cache total_poin di siswas — semua rekap
+            //    menghitung SUM live, jadi cukup hapus entri poinnya.
             $riwayat->delete();
 
-            // 3. Kalkulasi ulang total poin siswa (Mencegah error/selisih perhitungan)
-            // Menjumlahkan seluruh sisa poin yang ada di tabel point_entries untuk siswa ini
-            $totalPoinBaru = SrPointEntry::where('student_id', $studentId)->sum('poin');
-
-            // 4. Update kolom total_poin di tabel siswas (Jika Anda menyimpan cache total poin)
-            $siswa = Siswa::find($studentId);
-            if ($siswa) {
-                // Asumsi nama kolom Anda di tabel siswas adalah 'total_poin'
-                // Jika namanya berbeda, silakan disesuaikan
-                $siswa->total_poin = $totalPoinBaru;
-                $siswa->save();
-            }
-
-            // 5. Kembalikan halaman dengan notifikasi sukses
-            return back()->with('success', 'Riwayat aktivitas berhasil dihapus. Total poin siswa telah disesuaikan otomatis.');
+            // 3. Kembalikan halaman dengan notifikasi sukses
+            return back()->with('success', 'Riwayat aktivitas berhasil dihapus.');
 
         } catch (\Exception $e) {
             // Jika terjadi kegagalan sistem
@@ -139,29 +126,14 @@ class SrMyGroupController extends Controller
             // 1. Temukan datanya
             $riwayat = SrPointEntry::findOrFail($id);
             
-            // 2. Simpan nilai baru
+            // 2. Simpan nilai baru (kolom asli DB = 'catatan'; tidak ada kolom 'keterangan')
             $riwayat->poin = $request->poin;
-            
-            // Cek nama kolom database Anda (apakah 'catatan' atau 'keterangan')
-            if (Schema::hasColumn('sr_point_entries', 'keterangan')) {
-                $riwayat->keterangan = $request->catatan;
-            } else {
-                $riwayat->catatan = $request->catatan;
-            }
+            $riwayat->catatan = $request->catatan;
             $riwayat->save();
 
-            // 3. Kalkulasi ulang total poin siswa
-            $studentId = $riwayat->student_id;
-            $totalPoinBaru = SrPointEntry::where('student_id', $studentId)->sum('poin');
-
-            // 4. Update data siswa
-            $siswa = Siswa::find($studentId);
-            if ($siswa) {
-                $siswa->total_poin = $totalPoinBaru;
-                $siswa->save();
-            }
-
-            return back()->with('success', 'Riwayat aktivitas berhasil diperbarui! Total poin siswa telah disesuaikan otomatis.');
+            // 3. CATATAN 2026-09: total poin siswa TIDAK disimpan sebagai kolom cache
+            //    (SUM live), jadi tidak ada update kolom total_poin di sini.
+            return back()->with('success', 'Riwayat aktivitas berhasil diperbarui!');
 
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());

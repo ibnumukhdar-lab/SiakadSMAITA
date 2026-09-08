@@ -267,25 +267,31 @@ class AsramaPenilaianController extends Controller
                 $anggotaKamar = AsramaMember::where('kamar_id', $kamar_id)->get();
                 
                 $namaKriteria = ($poin > 0) ? 'Kamar Terbersih Asrama' : 'Kamar Terkotor Asrama';
-                
+                $kategoriKriteria = ($poin > 0) ? 'positif' : 'negatif';
+
+                // Cari kriteria sesuai kolom ASLI DB (kategori positif/negatif).
+                // CATATAN 2026-09: sebelumnya memakai kolom 'jenis' yang tidak ada
+                // => selalu jatuh ke fallback kriteria pertama (criteria_id SALAH).
                 $kriteriaAsrama = DB::table('sr_point_criteria')
-                    ->where('nama_perilaku', 'LIKE', '%Asrama%')
+                    ->where('nama_perilaku', $namaKriteria)
+                    ->where('kategori', $kategoriKriteria)
                     ->where('poin', $poin)
                     ->first();
 
                 if (!$kriteriaAsrama) {
-                    try {
-                        $kriteriaIdBaru = DB::table('sr_point_criteria')->insertGetId([
-                            'nama_perilaku' => $namaKriteria,
-                            'poin' => $poin,
-                            'jenis' => ($poin > 0) ? 'prestasi' : 'pelanggaran',
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                        $kriteriaValid = $kriteriaIdBaru;
-                    } catch (\Throwable $e) {
-                        $kriteriaValid = DB::table('sr_point_criteria')->value('id');
-                    }
+                    $kriteriaIdBaru = Str::uuid()->toString();
+                    DB::table('sr_point_criteria')->insert([
+                        'id'             => $kriteriaIdBaru,
+                        'nama_perilaku'  => $namaKriteria,
+                        'kategori'       => $kategoriKriteria,
+                        'deskripsi'      => 'Poin otomatis hasil inspeksi kebersihan asrama (finalisasi harian).',
+                        'poin'           => $poin,
+                        'tingkat'        => null,
+                        'status'         => 'aktif',
+                        'created_at'     => now(),
+                        'updated_at'     => now(),
+                    ]);
+                    $kriteriaValid = $kriteriaIdBaru;
                 } else {
                     $kriteriaValid = $kriteriaAsrama->id;
                 }
