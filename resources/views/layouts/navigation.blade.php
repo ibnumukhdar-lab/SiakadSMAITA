@@ -141,7 +141,8 @@
                     </x-dropdown>
                 </div>
 
-                <!-- MENU ASRAMA -->
+                <!-- MENU ASRAMA (tampil hanya utk pemegang buka-menu-asrama) -->
+                @can('buka-menu-asrama')
                 <div class="custom-nav-item">
                     <x-dropdown align="left" width="48">
                         <x-slot name="trigger">
@@ -156,12 +157,15 @@
                             <div class="px-4 py-2 text-[10px] font-black text-blue-600 bg-blue-50 border-b border-gray-100 uppercase tracking-widest">Modul Asrama</div>
                             <x-dropdown-link :href="route('asrama.dashboard')" class="font-bold border-b border-gray-100">📊 Dashboard Asrama</x-dropdown-link>
                             <x-dropdown-link :href="route('asrama.kamar.binaan')" class="text-blue-700 font-extrabold bg-blue-50 border-b border-gray-100">🏠 Kamar Binaan Saya</x-dropdown-link>
+                            @can('buka-menu-manajemen-kamar')
                             <x-dropdown-link :href="route('asrama.kamar.index')">🏢 Manajemen Kamar</x-dropdown-link>
+                            @endcan
                             <x-dropdown-link :href="route('asrama.penilaian.hariIni')">📝 Inspeksi Hari Ini</x-dropdown-link>
                             <x-dropdown-link :href="route('asrama.penilaian.index')">📚 Histori Inspeksi</x-dropdown-link>
                         </x-slot>
                     </x-dropdown>
                 </div>
+                @endcan
 
                 <!-- MENU BEE SMART -->
                 <div class="custom-nav-item">
@@ -228,14 +232,18 @@
                 @endcan
             </div>
 
+            @can('buka-menu-asrama')
             <div class="pt-4 pb-2 border-t border-gray-100 bg-blue-50/40">
                 <div class="px-4 text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">🛏️ Modul Asrama</div>
                 <x-responsive-nav-link :href="route('asrama.dashboard')" class="font-bold">📊 Dashboard Asrama</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('asrama.kamar.binaan')" class="text-blue-700 font-bold bg-blue-100 border-y border-blue-200">🏠 Kamar Binaan Saya</x-responsive-nav-link>
+                @can('buka-menu-manajemen-kamar')
                 <x-responsive-nav-link :href="route('asrama.kamar.index')">🏢 Manajemen Kamar</x-responsive-nav-link>
+                @endcan
                 <x-responsive-nav-link :href="route('asrama.penilaian.hariIni')">📝 Inspeksi Hari Ini</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('asrama.penilaian.index')">📚 Histori Inspeksi</x-responsive-nav-link>
             </div>
+            @endcan
 
             <div class="pt-4 pb-2 border-t border-gray-100 bg-yellow-50/40">
                 <div class="px-4 text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-1">🐝 Modul BEE Smart</div>

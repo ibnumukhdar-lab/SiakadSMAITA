@@ -256,9 +256,11 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/poin/{id}', [App\Http\Controllers\SrMyGroupController::class, 'update'])->name('poin.update');
     
     // ==========================================
-    // MODUL ASRAMA
+    // MODUL ASRAMA (permission sesuai matriks Kelola Akun:
+    // buka-menu-asrama = Musyrif & Kepala Diniyah;
+    // buka-menu-manajemen-kamar = Kepala Diniyah saja)
     // ==========================================
-    Route::prefix('asrama')->name('asrama.')->group(function () {
+    Route::prefix('asrama')->name('asrama.')->middleware('permission:buka-menu-asrama')->group(function () {
         
         // --- Dashboard Asrama ---
         Route::get('dashboard', [App\Http\Controllers\AsramaDashboardController::class, 'index'])->name('dashboard');
@@ -266,10 +268,13 @@ Route::middleware(['auth'])->group(function () {
         // 0. Kamar Binaan Saya (Khusus Musyrif)
         Route::get('kamar-binaan', [App\Http\Controllers\AsramaKamarController::class, 'kamarBinaan'])->name('kamar.binaan');
 
-        // 1. Manajemen Kamar
-        Route::resource('kamar', App\Http\Controllers\AsramaKamarController::class);
-        Route::post('kamar/{id}/add-member', [App\Http\Controllers\AsramaKamarController::class, 'addMember'])->name('kamar.addMember');
-        Route::put('kamar/member/{id}/remove', [App\Http\Controllers\AsramaKamarController::class, 'removeMember'])->name('kamar.removeMember');
+        // 1. Manajemen Kamar (hanya pemegang buka-menu-manajemen-kamar)
+        Route::resource('kamar', App\Http\Controllers\AsramaKamarController::class)
+            ->middleware('permission:buka-menu-manajemen-kamar');
+        Route::post('kamar/{id}/add-member', [App\Http\Controllers\AsramaKamarController::class, 'addMember'])
+            ->name('kamar.addMember')->middleware('permission:buka-menu-manajemen-kamar');
+        Route::put('kamar/member/{id}/remove', [App\Http\Controllers\AsramaKamarController::class, 'removeMember'])
+            ->name('kamar.removeMember')->middleware('permission:buka-menu-manajemen-kamar');
 
         // 2. Penilaian Harian (Inspeksi)
         Route::get('penilaian', [App\Http\Controllers\AsramaPenilaianController::class, 'index'])->name('penilaian.index'); // Histori Penilaian
