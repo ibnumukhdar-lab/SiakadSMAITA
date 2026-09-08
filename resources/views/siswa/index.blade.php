@@ -1,12 +1,6 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Database Siswa & Alumni') }}
-        </h2>
-    </x-slot>
-
     <!-- LOGIKA ALPINE JS SUPER CERDAS (KEBAL HURUF BESAR/KECIL/SPASI/TYPO EXCEL) -->
-    <div class="py-12" x-data="{ 
+    <div class="py-8" x-data="{ 
         qrModalOpen: false, qrUrl: '', qrName: '', qrNisn: '',
         deleteModalOpen: false, deleteFormId: '', deleteStudentName: '',
         search: '', filterKelas: '', filterJk: '', filterAngkatan: '', limit: '30', visibleCount: 0,
@@ -63,10 +57,10 @@
         updateVisibility();
     ">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white p-4 sm:p-6 shadow-sm sm:rounded-lg border border-gray-200 relative">
-                
+            <div class="bg-white p-4 sm:p-6 shadow-sm sm:rounded-2xl border border-slate-200 relative">
+ 
                 <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                    <h3 class="text-2xl font-extrabold text-slate-800 w-full text-center md:text-left">📚 Data Induk Siswa</h3>
+                    <h3 class="text-xl font-extrabold text-slate-900 tracking-tight w-full text-center md:text-left">📚 Data Induk Siswa</h3>
                     
                     <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                         <a href="{{ route('siswa.import') }}" style="background-color: #334155; color: #ffffff;" class="font-bold py-3 px-5 rounded-lg shadow hover:opacity-80 transition duration-200 text-center w-full sm:w-auto whitespace-nowrap">
@@ -167,7 +161,7 @@
                     <div class="overflow-x-auto border border-slate-200 rounded-lg">
                         <table class="w-full text-left border-collapse min-w-[900px]">
                             <thead>
-                                <tr class="bg-slate-100 border-b-2 border-slate-200">
+                                <tr class="bg-blue-50/70 border-b border-blue-100">
                                     <th class="p-4 w-10 text-center"><input type="checkbox" id="selectAll" class="rounded border-gray-400"></th>
                                     <th class="p-4 text-sm font-semibold tracking-wide text-slate-700 text-center">No</th>
                                     <th class="p-4 text-sm font-semibold tracking-wide text-slate-700">NISN</th>

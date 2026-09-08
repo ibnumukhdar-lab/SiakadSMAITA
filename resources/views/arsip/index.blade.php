@@ -1,11 +1,5 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Data Arsip Surat') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12" x-data="{ 
+    <div class="py-8" x-data="{ 
         search: '', 
         filterJenis: '', 
         filterBulan: '', 
@@ -21,9 +15,12 @@
     }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
-            <div class="mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                <h3 class="text-2xl font-extrabold text-slate-800 text-center md:text-left w-full">Daftar Arsip Surat SMA IT Arafah</h3>
-                <a href="{{ route('arsip.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-md transition duration-300 w-full md:w-auto text-center whitespace-nowrap">
+            <div class="mb-6 flex flex-col md:flex-row justify-between items-end gap-4">
+                <div>
+                    <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">Data Arsip Surat</h3>
+                    <p class="text-sm text-slate-500 mt-0.5">Kelola arsip surat masuk &amp; keluar</p>
+                </div>
+                <a href="{{ route('arsip.create') }}" class="bg-blue-900 hover:bg-blue-800 text-white font-bold py-2.5 px-5 rounded-xl shadow-sm transition duration-200 w-full md:w-auto text-center whitespace-nowrap">
                     ➕ Tambah Surat Baru
                 </a>
             </div>
@@ -103,14 +100,14 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200">
-                                    <th class="p-5 w-12 text-center"><input type="checkbox" id="selectAll" class="rounded border-slate-400 text-blue-600 focus:ring-blue-500 w-4 h-4"></th>
-                                    <th class="p-5 text-sm font-bold tracking-wide text-slate-600 w-12 text-center">No</th>
-                                    <th class="p-5 text-sm font-bold tracking-wide text-slate-600">Kategori</th>
-                                    <th class="p-5 text-sm font-bold tracking-wide text-slate-600">No. Surat</th>
-                                    <th class="p-5 text-sm font-bold tracking-wide text-slate-600">Perihal</th>
-                                    <th class="p-5 text-sm font-bold tracking-wide text-slate-600">Tanggal</th>
-                                    <th class="p-5 text-sm font-bold tracking-wide text-slate-600 text-center">Aksi</th>
+                                <tr class="bg-blue-50/70 border-b border-blue-100">
+                                    <th class="p-4 w-12 text-center"><input type="checkbox" id="selectAll" class="rounded border-slate-300 text-blue-900 focus:ring-blue-600 w-4 h-4"></th>
+                                    <th class="p-4 text-xs font-bold tracking-wider uppercase text-slate-600 w-12 text-center">No</th>
+                                    <th class="p-4 text-xs font-bold tracking-wider uppercase text-slate-600">Kategori</th>
+                                    <th class="p-4 text-xs font-bold tracking-wider uppercase text-slate-600">No. Surat</th>
+                                    <th class="p-4 text-xs font-bold tracking-wider uppercase text-slate-600">Perihal</th>
+                                    <th class="p-4 text-xs font-bold tracking-wider uppercase text-slate-600">Tanggal</th>
+                                    <th class="p-4 text-xs font-bold tracking-wider uppercase text-slate-600 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
