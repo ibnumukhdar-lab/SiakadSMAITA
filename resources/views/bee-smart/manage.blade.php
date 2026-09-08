@@ -52,6 +52,9 @@
                                 <button type="button" id="btn_stop_vocab_en" onclick="stopRecording('vocab_en')" class="bee-btn-stop" style="display:none;">⏹ Berhenti & Simpan</button>
                                 <audio id="preview_vocab_en" controls class="bee-audio-preview" style="display:none;"></audio>
                                 <input type="file" name="audio_vocab_en" id="file_vocab_en" accept="audio/*" class="bee-input-file">
+                                <input type="hidden" name="generated_audio_vocab_en" id="gen_vocab_en">
+                                <button type="button" id="btn_gen_vocab_en" onclick="generateAdd('vocab_en')" class="bee-btn-gen">✨ Generate Suara</button>
+                                <span id="status_gen_vocab_en" class="bee-gen-status"></span>
                             </div>
                             
                             <!-- Sentence EN -->
@@ -63,6 +66,9 @@
                                 <button type="button" id="btn_stop_sentence_en" onclick="stopRecording('sentence_en')" class="bee-btn-stop" style="display:none;">⏹ Berhenti & Simpan</button>
                                 <audio id="preview_sentence_en" controls class="bee-audio-preview" style="display:none;"></audio>
                                 <input type="file" name="audio_sentence_en" id="file_sentence_en" accept="audio/*" class="bee-input-file">
+                                <input type="hidden" name="generated_audio_sentence_en" id="gen_sentence_en">
+                                <button type="button" id="btn_gen_sentence_en" onclick="generateAdd('sentence_en')" class="bee-btn-gen">✨ Generate Suara</button>
+                                <span id="status_gen_sentence_en" class="bee-gen-status"></span>
                             </div>
                         </div>
 
@@ -79,6 +85,9 @@
                                 <button type="button" id="btn_stop_mufrodat_ar" onclick="stopRecording('mufrodat_ar')" class="bee-btn-stop" style="display:none;">⏹ Berhenti & Simpan</button>
                                 <audio id="preview_mufrodat_ar" controls class="bee-audio-preview" style="display:none;"></audio>
                                 <input type="file" name="audio_mufrodat_ar" id="file_mufrodat_ar" accept="audio/*" class="bee-input-file">
+                                <input type="hidden" name="generated_audio_mufrodat_ar" id="gen_mufrodat_ar">
+                                <button type="button" id="btn_gen_mufrodat_ar" onclick="generateAdd('mufrodat_ar')" class="bee-btn-gen">✨ Generate Suara</button>
+                                <span id="status_gen_mufrodat_ar" class="bee-gen-status"></span>
                             </div>
                             
                             <!-- Jumlah AR -->
@@ -90,6 +99,9 @@
                                 <button type="button" id="btn_stop_jumlah_ar" onclick="stopRecording('jumlah_ar')" class="bee-btn-stop" style="display:none;">⏹ Berhenti & Simpan</button>
                                 <audio id="preview_jumlah_ar" controls class="bee-audio-preview" style="display:none;"></audio>
                                 <input type="file" name="audio_jumlah_ar" id="file_jumlah_ar" accept="audio/*" class="bee-input-file">
+                                <input type="hidden" name="generated_audio_jumlah_ar" id="gen_jumlah_ar">
+                                <button type="button" id="btn_gen_jumlah_ar" onclick="generateAdd('jumlah_ar')" class="bee-btn-gen">✨ Generate Suara</button>
+                                <span id="status_gen_jumlah_ar" class="bee-gen-status"></span>
                             </div>
                         </div>
 
@@ -100,17 +112,38 @@
             </div>
         </div>
 
+        <!-- PENGATURAN TARGET JUMLAH KATA (bebas kustom 1-500) -->
+        <div class="bee-card no-print" style="padding: 1.2rem 2rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between;">
+            <div>
+                <strong style="font-size: 1.05rem; color: #111827;">🎯 Target Jumlah Kata Modul Ini</strong>
+                <div style="color: #6b7280; font-size: 0.85rem; margin-top: 2px;">
+                    Bebas diubah 1–500, hanya informasi (tidak memblokir). Mau 20 kata? Set Maks = 20.
+                </div>
+            </div>
+            <form method="POST" action="{{ route('bee.updateBatas', $week->id) }}" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                @csrf @method('PUT')
+                <label style="font-size: 0.8rem; font-weight: 800; color: #374151;">Min</label>
+                <input type="number" name="batas_min" min="1" max="500" value="{{ $week->batas_min }}" style="width: 80px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                <label style="font-size: 0.8rem; font-weight: 800; color: #374151;">Maks</label>
+                <input type="number" name="batas_maks" min="1" max="500" value="{{ $week->batas_maks }}" style="width: 80px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                <button class="bee-btn-submit" style="padding: 7px 16px; font-size: 0.85rem;">💾 Simpan Target</button>
+            </form>
+        </div>
+
         <!-- AREA TABEL KOSAKATA (BAWAH) -->
         <div class="bee-card" id="print-area">
             <div class="bee-card-header" style="background: #1f2937;">
                 <div class="bee-header-text">
                     <h3 style="color: white; margin: 0;">Daftar Kosakata: {{ $week->judul }}</h3>
-                    <p style="color: #9ca3af; margin: 5px 0 0 0;">Total: {{ $week->vocabs->count() }} / 10 Kata</p>
+                    <p style="color: #9ca3af; margin: 5px 0 0 0;">Total: {{ $week->vocabs->count() }} Kata · Target modul: {{ $week->batas_min }} – {{ $week->batas_maks }}</p>
                 </div>
                 
                 <!-- TOMBOL CETAK PDF -->
                 <button type="button" class="no-print" onclick="window.print()" style="background: #f59e0b; color: #78350f; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     🖨️ Cetak Modul PDF
+                </button>
+                <button type="button" id="btnGenMissing" class="no-print" onclick="generateMissingAll()" style="background: #d1fae5; color: #065f46; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    ⚡ Generate Audio yang Belum Ada
                 </button>
             </div>
             
@@ -221,6 +254,9 @@
                         <button type="button" id="btn_stop_edit_audio_vocab_en" onclick="stopRecording('edit_audio_vocab_en')" class="bee-btn-stop text-xs" style="display:none;">⏹ Berhenti & Simpan</button>
                         <audio id="preview_edit_audio_vocab_en" controls class="bee-audio-preview" style="display:none;"></audio>
                         <input type="file" name="audio_vocab_en" id="file_edit_audio_vocab_en" accept="audio/*" class="bee-input-file">
+                        <input type="hidden" name="generated_audio_vocab_en" id="gen_edit_vocab_en">
+                        <button type="button" id="btn_gen_edit_vocab_en" onclick="generateEdit('vocab_en')" class="bee-btn-gen text-xs">✨ Generate Suara</button>
+                        <span id="status_gen_edit_vocab_en" class="bee-gen-status"></span>
                     </div>
 
                     <!-- Bahasa Inggris: Sentence -->
@@ -231,6 +267,9 @@
                         <button type="button" id="btn_stop_edit_audio_sentence_en" onclick="stopRecording('edit_audio_sentence_en')" class="bee-btn-stop text-xs" style="display:none;">⏹ Berhenti & Simpan</button>
                         <audio id="preview_edit_audio_sentence_en" controls class="bee-audio-preview" style="display:none;"></audio>
                         <input type="file" name="audio_sentence_en" id="file_edit_audio_sentence_en" accept="audio/*" class="bee-input-file">
+                        <input type="hidden" name="generated_audio_sentence_en" id="gen_edit_sentence_en">
+                        <button type="button" id="btn_gen_edit_sentence_en" onclick="generateEdit('sentence_en')" class="bee-btn-gen text-xs">✨ Generate Suara</button>
+                        <span id="status_gen_edit_sentence_en" class="bee-gen-status"></span>
                     </div>
 
                     <!-- Bahasa Arab: Mufrodat -->
@@ -241,6 +280,9 @@
                         <button type="button" id="btn_stop_edit_audio_mufrodat_ar" onclick="stopRecording('edit_audio_mufrodat_ar')" class="bee-btn-stop text-xs" style="display:none;">⏹ Berhenti & Simpan</button>
                         <audio id="preview_edit_audio_mufrodat_ar" controls class="bee-audio-preview" style="display:none;"></audio>
                         <input type="file" name="audio_mufrodat_ar" id="file_edit_audio_mufrodat_ar" accept="audio/*" class="bee-input-file">
+                        <input type="hidden" name="generated_audio_mufrodat_ar" id="gen_edit_mufrodat_ar">
+                        <button type="button" id="btn_gen_edit_mufrodat_ar" onclick="generateEdit('mufrodat_ar')" class="bee-btn-gen text-xs">✨ Generate Suara</button>
+                        <span id="status_gen_edit_mufrodat_ar" class="bee-gen-status"></span>
                     </div>
 
                     <!-- Bahasa Arab: Jumlah -->
@@ -251,6 +293,9 @@
                         <button type="button" id="btn_stop_edit_audio_jumlah_ar" onclick="stopRecording('edit_audio_jumlah_ar')" class="bee-btn-stop text-xs" style="display:none;">⏹ Berhenti & Simpan</button>
                         <audio id="preview_edit_audio_jumlah_ar" controls class="bee-audio-preview" style="display:none;"></audio>
                         <input type="file" name="audio_jumlah_ar" id="file_edit_audio_jumlah_ar" accept="audio/*" class="bee-input-file">
+                        <input type="hidden" name="generated_audio_jumlah_ar" id="gen_edit_jumlah_ar">
+                        <button type="button" id="btn_gen_edit_jumlah_ar" onclick="generateEdit('jumlah_ar')" class="bee-btn-gen text-xs">✨ Generate Suara</button>
+                        <span id="status_gen_edit_jumlah_ar" class="bee-gen-status"></span>
                     </div>
 
                     <div style="display: flex; gap: 10px; justify-content: flex-end;">
@@ -282,6 +327,10 @@
         .bee-btn-record { background: #ffffff; border: 2px solid #3b82f6; color: #2563eb; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; align-self: flex-start; }
         .bee-btn-record:hover { background: #eff6ff; }
         .bee-btn-stop { background: #fef2f2; border: 2px solid #ef4444; color: #dc2626; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; animation: pulse 1.5s infinite; align-self: flex-start; }
+        .bee-btn-gen { background: #ecfdf5; border: 2px solid #10b981; color: #047857; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; align-self: flex-start; }
+        .bee-btn-gen:hover:not(:disabled) { background: #d1fae5; }
+        .bee-btn-gen:disabled { opacity: .6; cursor: wait; }
+        .bee-gen-status { font-size: .75rem; font-weight: 700; color: #047857; }
         .bee-audio-preview { width: 100%; height: 35px; border-radius: 6px; }
         .bee-input-file { width: 100%; font-size: 0.75rem; color: #6b7280; }
         .bee-input-file::file-selector-button { background: #e5e7eb; color: #374151; font-weight: bold; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; margin-right: 10px; transition: 0.2s; font-size: 0.75rem; }
@@ -457,6 +506,16 @@
                 document.getElementById('btn_stop_' + field).style.display = 'none';
             });
             
+            // Bersihkan juga hasil "Generate Suara" dari sesi modal sebelumnya
+            ['gen_edit_vocab_en', 'gen_edit_sentence_en', 'gen_edit_mufrodat_ar', 'gen_edit_jumlah_ar'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            ['status_gen_edit_vocab_en', 'status_gen_edit_sentence_en', 'status_gen_edit_mufrodat_ar', 'status_gen_edit_jumlah_ar'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = '';
+            });
+            
             // Atur URL tujuan form submit
             document.getElementById('formEditVocab').action = "{{ url('bee-smart/kosakata') }}/" + id;
             
@@ -466,6 +525,12 @@
 
         function closeEditModal() {
             document.getElementById('modalEdit').style.display = 'none';
+            ['vocab_en', 'sentence_en', 'mufrodat_ar', 'jumlah_ar'].forEach(slot => {
+                const h = document.getElementById('gen_edit_' + slot);
+                if (h) h.value = '';
+                const s = document.getElementById('status_gen_edit_' + slot);
+                if (s) s.textContent = '';
+            });
         }
 
         // --- LOGIKA REKAM SUARA ---
@@ -521,5 +586,96 @@
                 recordBtn.innerText = '🔄 Rekam Ulang'; 
             }
         }
+    // ======================================================
+    // GENERATE AUDIO (TTS) — 2026-09
+    // ======================================================
+    function beeLang(slot) { return slot.endsWith('_ar') ? 'ar' : 'en'; }
+
+    async function beeGenerate(payload, btn, statusEl) {
+        const token = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : '';
+        const labelLama = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = '⏳ Membuat suara...';
+        if (statusEl) statusEl.textContent = '';
+        try {
+            const r = await fetch('{{ url('bee-smart/generate-audio') }}', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const j = await r.json();
+            if (!j.ok) throw new Error(j.message || 'Gagal membuat audio');
+            return j;
+        } finally {
+            btn.disabled = false;
+            btn.innerText = labelLama;
+        }
+    }
+
+    // Form TAMBAH kosakata: slot = vocab_en / sentence_en / mufrodat_ar / jumlah_ar
+    async function generateAdd(slot) {
+        const teks = document.getElementById(slot).value.trim();
+        const btn = document.getElementById('btn_gen_' + slot);
+        const status = document.getElementById('status_gen_' + slot);
+        if (!teks) { alert('Isi dulu teksnya di kolom atas, lalu tekan Generate Suara.'); return; }
+        try {
+            const j = await beeGenerate({ teks: teks, lang: beeLang(slot) }, btn, status);
+            document.getElementById('gen_' + slot).value = j.path;
+            const pv = document.getElementById('preview_' + slot);
+            if (pv) { pv.src = j.url; pv.style.display = 'block'; }
+            if (status) status.textContent = '✨ Suara dibuat ✓ (bisa diganti lewat Rekam)';
+        } catch (e) {
+            alert('Gagal membuat audio: ' + e.message + '\nCoba lagi beberapa saat, atau pakai 🎤 Rekam Suara / pilih file audio.');
+        }
+    }
+
+    // Modal EDIT kosakata: slot sama seperti di atas
+    async function generateEdit(slot) {
+        const teks = document.getElementById('edit_' + slot).value.trim();
+        const btn = document.getElementById('btn_gen_edit_' + slot);
+        const status = document.getElementById('status_gen_edit_' + slot);
+        if (!teks) { alert('Isi dulu teksnya di kolom atas, lalu tekan Generate Suara.'); return; }
+        try {
+            const j = await beeGenerate({ teks: teks, lang: beeLang(slot) }, btn, status);
+            document.getElementById('gen_edit_' + slot).value = j.path;
+            const pv = document.getElementById('preview_edit_audio_' + slot);
+            if (pv) { pv.src = j.url; pv.style.display = 'block'; }
+            if (status) status.textContent = '✨ Suara dibuat ✓';
+        } catch (e) {
+            alert('Gagal membuat audio: ' + e.message + '\nCoba lagi beberapa saat, atau pakai 🎤 Rekam Suara / pilih file audio.');
+        }
+    }
+
+    // Isi otomatis semua audio yang belum ada pada modul ini (12 audio per panggilan)
+    async function generateMissingAll() {
+        const btn = document.getElementById('btnGenMissing');
+        const token = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : '';
+        btn.disabled = true;
+        btn.innerText = '⏳ Mengisi audio (bisa 1–2 menit)...';
+        try {
+            for (let i = 0; i < 40; i++) {
+                const r = await fetch('{{ url('bee-smart/minggu') }}/{{ $week->id }}/generate-missing', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                    body: '{}',
+                });
+                const j = await r.json();
+                if (!j.ok) { alert('Gagal: ' + (j.message || 'coba lagi nanti')); return; }
+                if (j.gagal > 0) {
+                    alert('Berhenti sementara: ' + j.gagal + ' audio gagal (kemungkinan batas Google). Sisa ' + j.sisa + '. Tekan lagi beberapa saat lagi.');
+                    return;
+                }
+                if (j.sisa <= 0) {
+                    alert('Selesai! ' + j.berhasil + ' audio berhasil dibuat.');
+                    location.reload();
+                    return;
+                }
+            }
+            alert('Masih ada sisa audio. Tekan tombol ini lagi untuk melanjutkan.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '⚡ Generate Audio yang Belum Ada';
+        }
+    }
     </script>
 </x-app-layout>

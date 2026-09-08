@@ -103,6 +103,9 @@ class BeeSmartController extends Controller
         foreach ($audio_fields as $field) {
             if ($request->hasFile($field)) {
                 $data[$field] = $request->file($field)->store('bee_audios', 'public');
+            } elseif ($request->filled('generated_' . $field)) {
+                // Audio hasil tombol "✨ Generate Suara" (TTS) — file sudah tersimpan di disk public
+                $data[$field] = $request->input('generated_' . $field);
             }
         }
 
@@ -156,12 +159,170 @@ class BeeSmartController extends Controller
                 }
                 // Simpan file audio yang baru direkam
                 $data[$field] = $request->file($field)->store('bee_audios', 'public');
+            } elseif ($request->filled('generated_' . $field)) {
+                // Audio hasil tombol "✨ Generate Suara" (TTS)
+                $genPath = $request->input('generated_' . $field);
+                if ($vocab->$field && $vocab->$field !== $genPath) {
+                    Storage::disk('public')->delete($vocab->$field);
+                }
+                $data[$field] = $genPath;
             }
         }
 
         $vocab->update($data);
 
         return back()->with('success', 'Teks kosakata dan Audio berhasil diperbarui!');
+    }
+
+    // =========================================================
+    // GENERATE AUDIO TTS (2026-09) — dipakai tombol "✨ Generate Suara"
+    // =========================================================
+    protected function tts($teks, $lang)
+    {
+        $url = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=' . $lang . '&q=' . rawurlencode($teks);
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        ]);
+        $data = curl_exec($ch);
+        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err  = curl_error($ch);
+        curl_close($ch);
+
+        if ($code !== 200 || strlen($data) < 500) {
+            throw new \RuntimeException('Gagal membuat audio (HTTP ' . $code . ')' . ($err !== '' ? ' - ' . $err : ''));
+        }
+
+        $nama = 'bee_audios/tts_' . \Illuminate\Support\Str::uuid() . '.mp3';
+        Storage::disk('public')->put($nama, $data);
+
+        return $nama;
+    }
+
+    protected function bahasaDariField($field)
+    {
+        return str_ends_with($field, '_ar') ? 'ar' : 'en';
+    }
+
+    // Endpoint untuk form tambah/edit: teks -> file audio (belum disimpan ke kosakata)
+    public function generateAudio(Request $request)
+    {
+        $request->validate([
+            'teks' => 'required|string|max:500',
+            'lang' => 'required|in:en,ar',
+        ]);
+
+        try {
+            $path = $this->tts($request->teks, $request->lang);
+
+            return response()->json(['ok' => true, 'path' => $path, 'url' => url('berkas/' . $path)]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    // Endpoint untuk kosakata yang sudah tersimpan: generate + simpan langsung ke DB
+    public function generateVocabAudio($id, $field)
+    {
+        $map = [
+            'audio_vocab_en'    => 'vocab_en',
+            'audio_sentence_en' => 'sentence_en',
+            'audio_mufrodat_ar' => 'mufrodat_ar',
+            'audio_jumlah_ar'   => 'jumlah_ar',
+        ];
+
+        if (!isset($map[$field])) {
+            return response()->json(['ok' => false, 'message' => 'Slot audio tidak dikenali.'], 422);
+        }
+
+        $vocab = BeeVocab::findOrFail($id);
+        $teks = trim((string) $vocab->{$map[$field]});
+
+        if ($teks === '') {
+            return response()->json(['ok' => false, 'message' => 'Teks masih kosong — isi dulu teksnya.'], 422);
+        }
+
+        try {
+            $path = $this->tts($teks, $this->bahasaDariField($field));
+
+            if ($vocab->$field && $vocab->$field !== $path) {
+                Storage::disk('public')->delete($vocab->$field);
+            }
+            $vocab->update([$field => $path]);
+
+            return response()->json(['ok' => true, 'path' => $path, 'url' => url('berkas/' . $path)]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    // Isi otomatis semua audio yang belum ada dalam satu modul (dipanggil berulang dari JS,
+    // maksimal 12 per panggilan agar aman dari batas kewajaran Google TTS)
+    public function generateMissingAudio($id)
+    {
+        $week = BeeWeek::with('vocabs')->findOrFail($id);
+
+        $map = [
+            'audio_vocab_en'    => 'vocab_en',
+            'audio_sentence_en' => 'sentence_en',
+            'audio_mufrodat_ar' => 'mufrodat_ar',
+            'audio_jumlah_ar'   => 'jumlah_ar',
+        ];
+
+        $antrian = [];
+        foreach ($week->vocabs as $vocab) {
+            foreach ($map as $field => $teksCol) {
+                if (!$vocab->$field && trim((string) $vocab->{$teksCol}) !== '') {
+                    $antrian[] = ['vocab' => $vocab, 'field' => $field];
+                }
+            }
+        }
+
+        $diproses = array_slice($antrian, 0, 12);
+        $berhasil = 0;
+        $gagal    = 0;
+
+        foreach ($diproses as $item) {
+            try {
+                $teks  = (string) $item['vocab']->{$map[$item['field']]};
+                $path  = $this->tts($teks, $this->bahasaDariField($item['field']));
+                $item['vocab']->update([$item['field'] => $path]);
+                $berhasil++;
+            } catch (\Throwable $e) {
+                // Kemungkinan kena batas rate Google -> berhenti, sisanya bisa ditekan lagi
+                $gagal++;
+                break;
+            }
+        }
+
+        return response()->json([
+            'ok'       => true,
+            'berhasil' => $berhasil,
+            'gagal'    => $gagal,
+            'sisa'     => count($antrian) - count($diproses),
+            'total'    => count($antrian),
+        ]);
+    }
+
+    // Simpan target jumlah kata modul (batas_min / batas_maks)
+    public function updateBatas($id, Request $request)
+    {
+        $request->validate([
+            'batas_min'  => 'required|integer|min:1|max:500',
+            'batas_maks' => 'required|integer|min:1|max:500',
+        ]);
+
+        if ((int) $request->batas_min > (int) $request->batas_maks) {
+            return back()->with('error', 'Batas minimal tidak boleh lebih besar dari batas maksimal.');
+        }
+
+        BeeWeek::findOrFail($id)->update($request->only(['batas_min', 'batas_maks']));
+
+        return back()->with('success', "🎯 Target kata modul diperbarui: {$request->batas_min} – {$request->batas_maks} kata.");
     }
 
     // --- UPDATE: MODE PRESENTASI KELAS (DENGAN PILIHAN DROPDOWN) ---

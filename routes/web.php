@@ -312,6 +312,12 @@ Route::middleware(['auth'])->group(function () {
         // --- Edit Teks Kosakata ---
         Route::put('/kosakata/{id}', [App\Http\Controllers\BeeSmartController::class, 'updateVocab'])->name('updateVocab');
 
+        // --- GENERATE AUDIO (TTS) & TARGET KATA (2026-09) ---
+        Route::post('/generate-audio', [App\Http\Controllers\BeeSmartController::class, 'generateAudio'])->name('generateAudio');
+        Route::post('/minggu/{id}/generate-missing', [App\Http\Controllers\BeeSmartController::class, 'generateMissingAudio'])->name('generateMissingAudio')->where('id', '[0-9]+');
+        Route::post('/vocab/{id}/audio/{field}', [App\Http\Controllers\BeeSmartController::class, 'generateVocabAudio'])->name('generateVocabAudio')->where('id', '[0-9]+')->where('field', '[A-Za-z_]+');
+        Route::put('/batas/{id}', [App\Http\Controllers\BeeSmartController::class, 'updateBatas'])->name('updateBatas')->where('id', '[0-9]+');
+
         // --- Mode Presentasi Kelas (Interaktif) ---
         Route::get('/classroom', [App\Http\Controllers\BeeSmartController::class, 'classroom'])->name('classroom');
     });
