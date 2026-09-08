@@ -16,25 +16,25 @@
 <nav x-data="{ open: false }" class="bg-white shadow-md sticky top-0 z-40">
     
     <!-- ================= BARIS 1: BRANDING & PROFIL (TOP BAR) ================= -->
-    <div class="bg-slate-50 border-b border-gray-200">
+    <div class="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-3">
                 
                 <!-- KIRI: Branding Sekolah -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" class="flex items-center gap-3 hover:opacity-80 transition duration-150">
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-3 hover:opacity-85 transition duration-150">
                         @if($pengaturan && $pengaturan->logo_path)
                             <!-- JALUR DIUBAH KE /BERKAS/ AGAR MENEMBUS BLOKIR CPANEL -->
-                            <img src="{{ url('berkas/' . $pengaturan->logo_path) }}" class="h-10 w-auto rounded object-contain drop-shadow-sm" style="max-height: 45px;">
+                            <img src="{{ url('berkas/' . $pengaturan->logo_path) }}" class="h-10 w-auto rounded object-contain drop-shadow-md bg-white/90 p-0.5" style="max-height: 45px;">
                         @else
-                            <div class="w-10 h-10 bg-gradient-to-br from-blue-700 to-blue-900 text-white rounded-lg flex items-center justify-center font-bold text-xl shadow-md shrink-0">
+                            <div class="w-10 h-10 bg-white text-blue-900 rounded-lg flex items-center justify-center font-bold text-xl shadow-md shrink-0">
                                 {{ substr($pengaturan->nama_sekolah ?? 'S', 0, 1) }}
                             </div>
                         @endif
 
                         <div class="flex flex-col justify-center">
-                            <span class="font-black text-gray-900 text-base md:text-lg leading-none tracking-tight whitespace-nowrap uppercase">{{ $pengaturan->nama_sekolah ?? 'SMA IT ARAFAH' }}</span>
-                            <span class="hidden sm:block text-[11px] text-blue-600 font-bold tracking-widest mt-1 uppercase">{{ $pengaturan->motto ?? 'Cerdas & Beradab' }}</span>
+                            <span class="font-black text-white text-base md:text-lg leading-none tracking-tight whitespace-nowrap uppercase">{{ $pengaturan->nama_sekolah ?? 'SMA IT ARAFAH' }}</span>
+                            <span class="hidden sm:block text-[11px] text-blue-200 font-bold tracking-widest mt-1 uppercase">{{ $pengaturan->motto ?? 'Cerdas & Beradab' }}</span>
                         </div>
                     </a>
                 </div>
@@ -43,7 +43,7 @@
                 <div class="hidden sm:flex sm:items-center sm:ms-6 shrink-0">
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
-                            <button class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-bold rounded-full text-gray-700 bg-white hover:text-blue-700 hover:bg-blue-50 focus:outline-none transition ease-in-out duration-150 shadow-sm">
+                            <button class="inline-flex items-center px-3 py-2 border border-blue-300 text-sm leading-4 font-bold rounded-full text-blue-900 bg-white hover:text-blue-700 hover:bg-blue-50 focus:outline-none transition ease-in-out duration-150 shadow">
                                 <div class="hidden md:block mr-1">👤 {{ Auth::user()->name }}</div>
                                 <div class="block md:hidden text-lg">👤</div>
                                 <div class="ms-1">
@@ -75,7 +75,7 @@
 
                 <!-- Hamburger (Hanya untuk Mobile/HP) -->
                 <div class="-me-2 flex items-center sm:hidden">
-                    <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
+                    <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-white/90 hover:text-white hover:bg-white/10 focus:outline-none focus:bg-white/10 focus:text-white transition duration-150 ease-in-out">
                         <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                             <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                             <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -118,7 +118,7 @@
                 <div class="custom-nav-item">
                     <x-dropdown align="left" width="48">
                         <x-slot name="trigger">
-                            <button class="inline-flex items-center px-1 border-b-2 border-transparent text-sm font-bold leading-5 text-gray-600 hover:text-green-700 hover:border-green-300 focus:outline-none focus:text-green-700 focus:border-green-300 transition duration-150 ease-in-out h-full whitespace-nowrap">
+                            <button class="inline-flex items-center px-1 border-b-2 border-transparent text-sm font-bold leading-5 text-gray-600 hover:text-green-700 hover:border-green-300 focus:outline-none focus:text-green-700 focus:border-green-300 transition duration-150 ease-in-out h-full whitespace-nowrap {{ request()->routeIs('sr.*') ? 'navy-active' : '' }}">
                                 🌱 Student Root
                                 <svg class="ms-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -146,7 +146,7 @@
                 <div class="custom-nav-item">
                     <x-dropdown align="left" width="48">
                         <x-slot name="trigger">
-                            <button class="inline-flex items-center px-1 border-b-2 border-transparent text-sm font-bold leading-5 text-gray-600 hover:text-blue-700 hover:border-blue-300 focus:outline-none focus:text-blue-700 focus:border-blue-300 transition duration-150 ease-in-out h-full whitespace-nowrap">
+                            <button class="inline-flex items-center px-1 border-b-2 border-transparent text-sm font-bold leading-5 text-gray-600 hover:text-blue-700 hover:border-blue-300 focus:outline-none focus:text-blue-700 focus:border-blue-300 transition duration-150 ease-in-out h-full whitespace-nowrap {{ request()->routeIs('asrama.*') ? 'navy-active' : '' }}">
                                 🛏️ Asrama
                                 <svg class="ms-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -171,7 +171,7 @@
                 <div class="custom-nav-item">
                     <x-dropdown align="left" width="48">
                         <x-slot name="trigger">
-                            <button class="inline-flex items-center px-1 border-b-2 border-transparent text-sm font-bold leading-5 text-gray-600 hover:text-yellow-600 hover:border-yellow-400 focus:outline-none focus:text-yellow-600 focus:border-yellow-400 transition duration-150 ease-in-out h-full whitespace-nowrap {{ request()->routeIs('bee.*') ? 'border-yellow-400 text-yellow-600' : '' }}">
+                            <button class="inline-flex items-center px-1 border-b-2 border-transparent text-sm font-bold leading-5 text-gray-600 hover:text-yellow-600 hover:border-yellow-400 focus:outline-none focus:text-yellow-600 focus:border-yellow-400 transition duration-150 ease-in-out h-full whitespace-nowrap {{ request()->routeIs('bee.*') ? 'navy-active' : '' }}">
                                 🐝 BEE Smart
                                 <svg class="ms-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -323,5 +323,22 @@
             align-items: center;
             height: 55px; /* Menjaga tinggi area klik menu */
         }
+    }
+
+    /* ===== SERAGAM: aksen navigasi → navy (kalibrasi 2026-09) ===== */
+    .custom-nav-bar .custom-nav-item a,
+    .custom-nav-bar .inline-flex {
+        color: #475569 !important;
+    }
+    .custom-nav-item a:hover,
+    .custom-nav-bar .inline-flex:hover {
+        color: #1e3a8a !important;
+        border-color: #1e3a8a !important;
+    }
+    .custom-nav-bar .navy-active,
+    .custom-nav-bar .navy-active:hover,
+    .custom-nav-item a.border-indigo-400 {
+        color: #1e3a8a !important;
+        border-color: #1e3a8a !important;
     }
 </style>
