@@ -1,14 +1,4 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                👥 Kelola Anggota Grup: <span class="font-extrabold text-blue-700">{{ $group->nama_grup }}</span>
-            </h2>
-            <a href="{{ route('sr.grup.index') }}" class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">
-                ⬅️ Kembali ke Daftar Grup
-            </a>
-        </div>
-    </x-slot>
 
     <!-- MEMANGGIL CSS TOM SELECT -->
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.default.min.css" rel="stylesheet">
@@ -49,13 +39,22 @@
         }
     </style>
 
-    <div class="py-12">
+    <div class="py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            
+
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
+                <div>
+                    <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">👥 Kelola Anggota Grup</h3>
+                    <p class="text-sm text-slate-500 mt-0.5">Grup {{ $group->nama_grup }} — kelola keanggotaan &amp; histori binaan</p>
+                </div>
+                <a href="{{ route('sr.grup.index') }}" class="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 text-sm font-semibold shadow-sm transition whitespace-nowrap">
+                    ⬅️ Kembali ke Daftar Grup
+                </a>
+            </div>
             <!-- Info Mentor & Notifikasi -->
-            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded shadow-sm">
-                <p class="text-blue-800"><strong>Guru Mentor:</strong> {{ $group->mentor->name ?? '-' }} (Mulai: {{ $group->tahun_ajaran_mulai }})</p>
-                <p class="text-sm text-blue-600 mt-1">Siswa yang dikeluarkan dari grup tidak akan terhapus dari sistem, namun hanya akan tercatat tanggal keluarnya untuk keperluan histori pembinaan 3 tahun.</p>
+            <div class="bg-sky-50 border border-sky-200 rounded-xl px-5 py-4 mb-6">
+                <p class="text-sky-900 font-medium text-sm"><strong>Guru Mentor:</strong> {{ $group->mentor->name ?? '-' }} (Mulai: {{ $group->tahun_ajaran_mulai }})</p>
+                <p class="text-xs text-sky-700 mt-1">Siswa yang dikeluarkan dari grup tidak akan terhapus dari sistem, namun hanya akan tercatat tanggal keluarnya untuk keperluan histori pembinaan 3 tahun.</p>
             </div>
 
             @if(session('success'))
@@ -70,11 +69,14 @@
             @endif
 
             <!-- Form Tambah Anggota -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm mb-6 overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100">
+                    <h4 class="text-[15px] font-bold text-slate-800">➕ Tambah Anggota Baru</h4>
+                </div>
                 <!-- Penambahan items-start agar form tidak berantakan saat kotak pencarian meninggi ke bawah -->
-                <form action="{{ route('sr.grup.addMember', $group->id) }}" method="POST" class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                <form action="{{ route('sr.grup.addMember', $group->id) }}" method="POST" class="flex flex-col md:flex-row gap-4 items-start md:items-center p-5 sm:p-6">
                     @csrf
-                    <label class="font-extrabold text-gray-800 whitespace-nowrap md:mt-0">➕ Masukkan Siswa:</label>
+                    <label class="text-sm font-bold text-slate-700 whitespace-nowrap md:mt-0">Masukkan Siswa:</label>
                     
                     <div class="w-full md:flex-1">
                         <!-- PERUBAHAN: Ditambahkan name="student_id[]" dan atribut multiple -->
@@ -85,49 +87,49 @@
                         </select>
                     </div>
 
-                    <button type="submit" style="background-color: #1e293b; color: white;" class="px-6 py-3 rounded-lg text-sm font-bold shadow-sm hover:opacity-90 w-full md:w-auto whitespace-nowrap flex items-center justify-center h-full">Tambahkan Terpilih</button>
+                    <button type="submit" class="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-sm font-semibold shadow-sm transition whitespace-nowrap w-full md:w-auto">Tambahkan Terpilih</button>
                 </form>
             </div>
 
             <!-- Tabel Daftar Anggota -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[820px]">
                     <thead>
-                        <tr class="bg-gray-100 border-b-2 border-gray-200">
-                            <th class="p-4 text-sm font-bold">Nama Siswa</th>
-                            <th class="p-4 text-sm font-bold">Kelas Saat Ini</th>
-                            <th class="p-4 text-sm font-bold text-center">Tanggal Gabung</th>
-                            <th class="p-4 text-sm font-bold text-center">Status Keanggotaan</th>
-                            <th class="p-4 text-sm font-bold text-center">Aksi</th>
+                        <tr class="bg-slate-50/80 border-b border-slate-200">
+                            <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Nama Siswa</th>
+                            <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Kelas Saat Ini</th>
+                            <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Tanggal Gabung</th>
+                            <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Status Keanggotaan</th>
+                            <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($members as $member)
-                        <tr class="border-b border-gray-100 hover:bg-gray-50 {{ $member->tanggal_keluar ? 'opacity-60 bg-gray-50' : '' }}">
-                            <td class="p-4 font-bold text-gray-800">{{ $member->student->nama_lengkap ?? 'Siswa Dihapus' }}</td>
-                            <td class="p-4">{{ $member->student->kelas ?? '-' }}</td>
-                            <td class="p-4 text-center">{{ \Carbon\Carbon::parse($member->tanggal_gabung)->translatedFormat('d M Y') }}</td>
-                            <td class="p-4 text-center">
+                        <tr class="border-b border-slate-100 hover:bg-slate-50/70 transition {{ $member->tanggal_keluar ? 'opacity-60 bg-slate-50' : '' }}">
+                            <td class="px-4 py-3 text-sm font-bold text-slate-800">{{ $member->student->nama_lengkap ?? 'Siswa Dihapus' }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-600">{{ $member->student->kelas ?? '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-600 text-center">{{ \Carbon\Carbon::parse($member->tanggal_gabung)->translatedFormat('d M Y') }}</td>
+                            <td class="px-4 py-3 text-center">
                                 @if($member->tanggal_keluar)
-                                    <span class="bg-gray-200 text-gray-700 text-xs font-bold px-2 py-1 rounded">Keluar: {{ \Carbon\Carbon::parse($member->tanggal_keluar)->translatedFormat('d M Y') }}</span>
+                                    <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">Keluar: {{ \Carbon\Carbon::parse($member->tanggal_keluar)->translatedFormat('d M Y') }}</span>
                                 @else
-                                    <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">Aktif di Grup</span>
+                                    <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">Aktif di Grup</span>
                                 @endif
                             </td>
-                            <td class="p-4 text-center">
+                            <td class="px-4 py-3 text-center">
                                 @if(!$member->tanggal_keluar)
                                 <form action="{{ route('sr.grup.removeMember', $member->id) }}" method="POST" onsubmit="return confirm('Keluarkan siswa ini dari grup? Histori gabungnya akan tetap disimpan.');">
                                     @csrf @method('PUT')
-                                    <button type="submit" class="bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 rounded text-xs font-bold hover:bg-red-200 transition">Keluarkan</button>
+                                    <button type="submit" class="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 text-xs font-bold transition whitespace-nowrap">Keluarkan</button>
                                 </form>
                                 @else
-                                    <span class="text-xs text-gray-400 italic">Tidak ada aksi</span>
+                                    <span class="text-xs text-slate-400 italic">Tidak ada aksi</span>
                                 @endif
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="p-4 text-center text-gray-500 italic">Belum ada siswa di grup ini.</td>
+                            <td colspan="5" class="px-4 py-12 text-center text-slate-500 italic">Belum ada siswa di grup ini.</td>
                         </tr>
                         @endforelse
                     </tbody>

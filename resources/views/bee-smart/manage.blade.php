@@ -1,19 +1,23 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="bee-page-title">
-            <a href="{{ route('bee.index') }}" style="color: #6b7280; text-decoration: none;">🐝 BEE Smart</a> 
-            <span style="margin: 0 10px; color: #d1d5db;">/</span> 
-            <span style="color: #1f2937;">Kelola: {{ $week->judul }}</span>
-        </h2>
-    </x-slot>
+    
 
     <div class="bee-container">
+        <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <h3 class="text-xl font-extrabold tracking-tight text-slate-900">Kelola Modul</h3>
+                <p class="mt-0.5 text-sm text-slate-500">
+                    <a href="{{ route('bee.index') }}" class="font-semibold text-blue-900 hover:underline">🐝 BEE Smart</a>
+                    <span class="mx-1.5 text-slate-300">/</span>
+                    <span class="font-semibold text-slate-700">{{ $week->judul }}</span>
+                </p>
+            </div>
+        </div>
         @if(session('success'))
             <div class="bee-alert-success">{{ session('success') }}</div>
         @endif
         
         @if($errors->any())
-            <div style="background: #fee2e2; border-left: 5px solid #ef4444; color: #b91c1c; padding: 1rem; margin-bottom: 1.5rem; border-radius: 6px; font-weight: bold;">
+            <div class="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
                 ❌ Gagal menyimpan! Pastikan format file sesuai dan ukuran audio tidak lebih dari 5MB.
             </div>
         @endif
@@ -27,14 +31,14 @@
                 </div>
             </div>
             
-            <div style="padding: 2rem;">
+            <div class="p-5 sm:p-6">
                 <form action="{{ route('bee.storeVocab', $week->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     
                     <!-- 1. Bahasa Indonesia -->
                     <div style="margin-bottom: 2rem;">
                         <label style="font-weight: 800; color: #374151; display: block; margin-bottom: 8px; font-size: 1.1rem;">🇮🇩 Bahasa Indonesia (Kata Dasar)</label>
-                        <input type="text" name="kosakata_id" required placeholder="Contoh: Sekolah" class="bee-input-full" style="border-color: #ef4444; border-width: 2px;">
+                        <input type="text" name="kosakata_id" required placeholder="Contoh: Sekolah" class="bee-input-full">
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
@@ -45,7 +49,7 @@
                             
                             <!-- Vocab EN -->
                             <label style="font-size: 0.9rem; font-weight: 800; color: #15803d; display: block; margin-bottom: 6px;">Vocabulary</label>
-                            <input type="text" name="vocab_en" placeholder="School" class="bee-input-full" style="margin-bottom: 8px; border-color: #86efac;">
+                            <input type="text" name="vocab_en" placeholder="School" class="bee-input-full" style="margin-bottom: 8px;">
                             
                             <div class="bee-recorder-area">
                                 <button type="button" id="btn_record_vocab_en" onclick="startRecording('vocab_en')" class="bee-btn-record">🎤 Rekam Suara</button>
@@ -59,7 +63,7 @@
                             
                             <!-- Sentence EN -->
                             <label style="font-size: 0.9rem; font-weight: 800; color: #15803d; display: block; margin-bottom: 6px; margin-top: 1.5rem;">Sentence (Kalimat)</label>
-                            <textarea name="sentence_en" rows="2" placeholder="I go to school everyday." class="bee-input-full" style="margin-bottom: 8px; border-color: #86efac;"></textarea>
+                            <textarea name="sentence_en" rows="2" placeholder="I go to school everyday." class="bee-input-full" style="margin-bottom: 8px;"></textarea>
                             
                             <div class="bee-recorder-area">
                                 <button type="button" id="btn_record_sentence_en" onclick="startRecording('sentence_en')" class="bee-btn-record">🎤 Rekam Suara</button>
@@ -78,7 +82,7 @@
                             
                             <!-- Mufrodat AR -->
                             <label style="font-size: 0.9rem; font-weight: 800; color: #1d4ed8; display: block; margin-bottom: 6px;">Mufrodat</label>
-                            <input type="text" name="mufrodat_ar" placeholder="مَدْرَسَةٌ" class="bee-input-full text-right" style="margin-bottom: 8px; border-color: #93c5fd; font-size: 1.2rem;" dir="rtl">
+                            <input type="text" name="mufrodat_ar" placeholder="مَدْرَسَةٌ" class="bee-input-full text-right" style="margin-bottom: 8px; font-size: 1.2rem;" dir="rtl">
                             
                             <div class="bee-recorder-area">
                                 <button type="button" id="btn_record_mufrodat_ar" onclick="startRecording('mufrodat_ar')" class="bee-btn-record">🎤 Rekam Suara</button>
@@ -92,7 +96,7 @@
                             
                             <!-- Jumlah AR -->
                             <label style="font-size: 0.9rem; font-weight: 800; color: #1d4ed8; display: block; margin-bottom: 6px; margin-top: 1.5rem;">Al Jumlah (Kalimat)</label>
-                            <textarea name="jumlah_ar" rows="2" placeholder="أَذْهَبُ إِلَى الْمَدْرَسَةِ كُلَّ يَوْمٍ" class="bee-input-full text-right" style="margin-bottom: 8px; border-color: #93c5fd; font-size: 1.2rem;" dir="rtl"></textarea>
+                            <textarea name="jumlah_ar" rows="2" placeholder="أَذْهَبُ إِلَى الْمَدْرَسَةِ كُلَّ يَوْمٍ" class="bee-input-full text-right" style="margin-bottom: 8px; font-size: 1.2rem;" dir="rtl"></textarea>
                             
                             <div class="bee-recorder-area">
                                 <button type="button" id="btn_record_jumlah_ar" onclick="startRecording('jumlah_ar')" class="bee-btn-record">🎤 Rekam Suara</button>
@@ -113,7 +117,7 @@
         </div>
 
         <!-- PENGATURAN TARGET JUMLAH KATA (bebas kustom 1-500) -->
-        <div class="bee-card no-print" style="padding: 1.2rem 2rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between;">
+        <div class="bee-card no-print flex flex-wrap items-center justify-between gap-4 p-5">
             <div>
                 <strong style="font-size: 1.05rem; color: #111827;">🎯 Target Jumlah Kata Modul Ini</strong>
                 <div style="color: #6b7280; font-size: 0.85rem; margin-top: 2px;">
@@ -132,19 +136,15 @@
 
         <!-- AREA TABEL KOSAKATA (BAWAH) -->
         <div class="bee-card" id="print-area">
-            <div class="bee-card-header" style="background: #1f2937;">
+            <div class="bee-card-header">
                 <div class="bee-header-text">
-                    <h3 style="color: white; margin: 0;">Daftar Kosakata: {{ $week->judul }}</h3>
-                    <p style="color: #9ca3af; margin: 5px 0 0 0;">Total: {{ $week->vocabs->count() }} Kata · Target modul: {{ $week->batas_min }} – {{ $week->batas_maks }}</p>
+                    <h3>Daftar Kosakata: {{ $week->judul }}</h3>
+                    <p>Total: {{ $week->vocabs->count() }} Kata · Target modul: {{ $week->batas_min }} – {{ $week->batas_maks }}</p>
                 </div>
                 
                 <!-- TOMBOL CETAK PDF -->
-                <button type="button" class="no-print" onclick="window.print()" style="background: #f59e0b; color: #78350f; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    🖨️ Cetak Modul PDF
-                </button>
-                <button type="button" id="btnGenMissing" class="no-print" onclick="generateMissingAll()" style="background: #d1fae5; color: #065f46; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    ⚡ Generate Audio yang Belum Ada
-                </button>
+                <button type="button" class="no-print inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 text-sm font-semibold shadow-sm transition whitespace-nowrap" onclick="window.print()">🖨️ Cetak Modul PDF</button>
+                <button type="button" id="btnGenMissing" class="no-print inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition whitespace-nowrap" onclick="generateMissingAll()">⚡ Generate Audio yang Belum Ada</button>
             </div>
             
             <div class="bee-table-responsive">
@@ -202,14 +202,14 @@
                             </td>
                             
                             <td style="vertical-align: middle;" class="no-print">
-                                <div style="display: flex; gap: 8px; justify-content: center; flex-direction: column;">
+                                <div class="flex items-center justify-center gap-1.5">
                                     <!-- Tombol Edit -->
-                                    <button type="button" onclick="openEditModal({{ $v->id }}, '{{ addslashes($v->kosakata_id) }}', '{{ addslashes($v->vocab_en) }}', '{{ addslashes($v->sentence_en) }}', '{{ addslashes($v->mufrodat_ar) }}', '{{ addslashes($v->jumlah_ar) }}')" style="background: #e0f2fe; color: #1e40af; border: 1px solid #bfdbfe; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%;">✏️ Edit</button>
+                                    <button type="button" onclick="openEditModal({{ $v->id }}, '{{ addslashes($v->kosakata_id) }}', '{{ addslashes($v->vocab_en) }}', '{{ addslashes($v->sentence_en) }}', '{{ addslashes($v->mufrodat_ar) }}', '{{ addslashes($v->jumlah_ar) }}')" title="Edit Kosakata &amp; Audio" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition">✏️</button>
                                     
                                     <!-- Tombol Hapus -->
-                                    <form action="{{ route('bee.destroyVocab', $v->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus kata beserta audionya?');" style="margin: 0; width: 100%;">
+                                    <form action="{{ route('bee.destroyVocab', $v->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus kata beserta audionya?');" class="m-0">
                                         @csrf @method('DELETE')
-                                        <button type="submit" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%;">🗑️ Hapus</button>
+                                        <button type="submit" title="Hapus Kosakata" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">🗑️</button>
                                     </form>
                                 </div>
                             </td>
@@ -218,7 +218,7 @@
                         
                         @if($week->vocabs->isEmpty())
                         <tr>
-                            <td colspan="5" style="padding: 4rem !important; text-align: center; color: #9ca3af; font-weight: bold;">
+                            <td colspan="5" class="px-4 py-12 text-center font-semibold text-slate-400">
                                 📭 Belum ada kosakata. Silakan input kata pertama di form atas!
                             </td>
                         </tr>
@@ -248,7 +248,7 @@
 
                     <!-- Bahasa Inggris: Vocab -->
                     <label style="font-weight: 800; color: #15803d; display: block; margin-bottom: 6px;">🇬🇧 English (Vocabulary)</label>
-                    <input type="text" name="vocab_en" id="edit_vocab_en" required class="bee-input-full" style="margin-bottom: 8px; border-color: #86efac;">
+                    <input type="text" name="vocab_en" id="edit_vocab_en" required class="bee-input-full" style="margin-bottom: 8px;">
                     <div class="bee-recorder-area" style="margin-bottom: 1.5rem; background: #f0fdf4;">
                         <button type="button" id="btn_record_edit_audio_vocab_en" onclick="startRecording('edit_audio_vocab_en')" class="bee-btn-record text-xs">🎤 Rekam Audio Baru</button>
                         <button type="button" id="btn_stop_edit_audio_vocab_en" onclick="stopRecording('edit_audio_vocab_en')" class="bee-btn-stop text-xs" style="display:none;">⏹ Berhenti & Simpan</button>
@@ -261,7 +261,7 @@
 
                     <!-- Bahasa Inggris: Sentence -->
                     <label style="font-weight: 800; color: #15803d; display: block; margin-bottom: 6px;">🇬🇧 English (Sentence)</label>
-                    <textarea name="sentence_en" id="edit_sentence_en" rows="2" class="bee-input-full" style="margin-bottom: 8px; border-color: #86efac;"></textarea>
+                    <textarea name="sentence_en" id="edit_sentence_en" rows="2" class="bee-input-full" style="margin-bottom: 8px;"></textarea>
                     <div class="bee-recorder-area" style="margin-bottom: 1.5rem; background: #f0fdf4;">
                         <button type="button" id="btn_record_edit_audio_sentence_en" onclick="startRecording('edit_audio_sentence_en')" class="bee-btn-record text-xs">🎤 Rekam Audio Baru</button>
                         <button type="button" id="btn_stop_edit_audio_sentence_en" onclick="stopRecording('edit_audio_sentence_en')" class="bee-btn-stop text-xs" style="display:none;">⏹ Berhenti & Simpan</button>
@@ -274,7 +274,7 @@
 
                     <!-- Bahasa Arab: Mufrodat -->
                     <label style="font-weight: 800; color: #1d4ed8; display: block; margin-bottom: 6px; text-align: right;">🇸🇦 العربية (Mufrodat)</label>
-                    <input type="text" name="mufrodat_ar" id="edit_mufrodat_ar" dir="rtl" required class="bee-input-full text-right" style="margin-bottom: 8px; border-color: #93c5fd; font-family: 'Amiri', serif; font-size: 1.2rem;">
+                    <input type="text" name="mufrodat_ar" id="edit_mufrodat_ar" dir="rtl" required class="bee-input-full text-right" style="margin-bottom: 8px; font-family: 'Amiri', serif; font-size: 1.2rem;">
                     <div class="bee-recorder-area" style="margin-bottom: 1.5rem; background: #eff6ff;">
                         <button type="button" id="btn_record_edit_audio_mufrodat_ar" onclick="startRecording('edit_audio_mufrodat_ar')" class="bee-btn-record text-xs">🎤 Rekam Audio Baru</button>
                         <button type="button" id="btn_stop_edit_audio_mufrodat_ar" onclick="stopRecording('edit_audio_mufrodat_ar')" class="bee-btn-stop text-xs" style="display:none;">⏹ Berhenti & Simpan</button>
@@ -287,7 +287,7 @@
 
                     <!-- Bahasa Arab: Jumlah -->
                     <label style="font-weight: 800; color: #1d4ed8; display: block; margin-bottom: 6px; text-align: right;">🇸🇦 العربية (Jumlah)</label>
-                    <textarea name="jumlah_ar" id="edit_jumlah_ar" dir="rtl" rows="2" class="bee-input-full text-right" style="margin-bottom: 8px; border-color: #93c5fd; font-family: 'Amiri', serif; font-size: 1.2rem;"></textarea>
+                    <textarea name="jumlah_ar" id="edit_jumlah_ar" dir="rtl" rows="2" class="bee-input-full text-right" style="margin-bottom: 8px; font-family: 'Amiri', serif; font-size: 1.2rem;"></textarea>
                     <div class="bee-recorder-area" style="margin-bottom: 2rem; background: #eff6ff;">
                         <button type="button" id="btn_record_edit_audio_jumlah_ar" onclick="startRecording('edit_audio_jumlah_ar')" class="bee-btn-record text-xs">🎤 Rekam Audio Baru</button>
                         <button type="button" id="btn_stop_edit_audio_jumlah_ar" onclick="stopRecording('edit_audio_jumlah_ar')" class="bee-btn-stop text-xs" style="display:none;">⏹ Berhenti & Simpan</button>
@@ -311,23 +311,22 @@
     <!-- CSS EKSKLUSIF & PENGATURAN CETAK PDF       -->
     <!-- ========================================== -->
     <style>
-        .bee-page-title { font-family: 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: 1.25rem; color: #1f2937; margin: 0; }
-        .bee-container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .bee-alert-success { background-color: #dcfce7; border-left: 5px solid #22c55e; color: #15803d; padding: 1rem 1.5rem; margin-bottom: 1.5rem; border-radius: 6px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .bee-container { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1rem; }
+        .bee-alert-success { background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; padding: 0.85rem 1.25rem; margin-bottom: 1.5rem; border-radius: 12px; font-weight: 600; font-size: 0.9rem; }
         
-        .bee-card { background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; overflow: hidden; margin-bottom: 2rem; }
-        .bee-card-header { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05);}
-        .bee-header-text h3 { margin: 0; font-size: 1.5rem; font-weight: 900; color: #111827; letter-spacing: -0.025em; }
-        .bee-header-text p { margin: 5px 0 0 0; color: rgba(17, 24, 39, 0.7); font-weight: 600; font-size: 0.9rem; }
+        .bee-card { background-color: #ffffff; border-radius: 1rem; box-shadow: 0 1px 2px rgba(15,23,42,0.05); border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 1.5rem; }
+        .bee-card-header { background: #ffffff; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; border-bottom: 1px solid #f1f5f9; }
+        .bee-header-text h3 { margin: 0; font-size: 1rem; font-weight: 800; color: #1e293b; letter-spacing: -0.01em; }
+        .bee-header-text p { margin: 3px 0 0 0; color: #64748b; font-weight: 500; font-size: 0.85rem; }
         
-        .bee-input-full { width: 100%; padding: 0.8rem 1.2rem; border-radius: 8px; border: 1px solid #d1d5db; background: #ffffff; font-weight: 600; color: #111827; box-sizing: border-box; outline: none; transition: all 0.2s; }
-        .bee-input-full:focus { border-color: #f59e0b !important; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); }
+        .bee-input-full { width: 100%; padding: 0.55rem 0.85rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; background: #ffffff; font-weight: 500; font-size: 0.9rem; color: #334155; box-sizing: border-box; outline: none; transition: all 0.15s; }
+        .bee-input-full:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
         
-        .bee-recorder-area { background: rgba(255,255,255,0.6); padding: 10px; border-radius: 8px; border: 1px dashed rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 8px; }
-        .bee-btn-record { background: #ffffff; border: 2px solid #3b82f6; color: #2563eb; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; align-self: flex-start; }
-        .bee-btn-record:hover { background: #eff6ff; }
-        .bee-btn-stop { background: #fef2f2; border: 2px solid #ef4444; color: #dc2626; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; animation: pulse 1.5s infinite; align-self: flex-start; }
-        .bee-btn-gen { background: #ecfdf5; border: 2px solid #10b981; color: #047857; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; align-self: flex-start; }
+        .bee-recorder-area { background: rgba(255,255,255,0.75); padding: 10px 12px; border-radius: 10px; border: 1px dashed #cbd5e1; display: flex; flex-direction: column; gap: 8px; }
+        .bee-btn-record { background: #ffffff; border: 1px solid #cbd5e1; color: #475569; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.15s; align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; }
+        .bee-btn-record:hover { background: #f1f5f9; border-color: #94a3b8; }
+        .bee-btn-stop { background: #fff1f2; border: 1px solid #fda4af; color: #e11d48; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; animation: pulse 1.5s infinite; align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; }
+        .bee-btn-gen { background: #ecfdf5; border: 1px solid #6ee7b7; color: #047857; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.15s; align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; }
         .bee-btn-gen:hover:not(:disabled) { background: #d1fae5; }
         .bee-btn-gen:disabled { opacity: .6; cursor: wait; }
         .bee-gen-status { font-size: .75rem; font-weight: 700; color: #047857; }
@@ -337,21 +336,21 @@
 
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-        .bee-btn-submit { background-color: #111827; color: #ffffff; border: none; padding: 1rem 1.5rem; border-radius: 8px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 1.05rem; }
-        .bee-btn-submit:hover { background-color: #374151; transform: translateY(-2px); }
+        .bee-btn-submit { background-color: #1e3a8a; color: #ffffff; border: none; padding: 0.65rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(15,23,42,0.08); display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        .bee-btn-submit:hover { background-color: #1e40af; }
 
-        .bee-btn-play { background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; cursor: pointer; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .bee-btn-play:hover { background: #e5e7eb; transform: scale(1.1); }
+        .bee-btn-play { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+        .bee-btn-play:hover { background: #e2e8f0; transform: scale(1.05); }
 
         .bee-table-responsive { overflow-x: auto; width: 100%; }
         .bee-table { width: 100%; border-collapse: collapse; min-width: 750px; }
-        .bee-table th { background-color: #f9fafb; padding: 1.2rem 1rem; font-size: 0.8rem; font-weight: 800; color: #6b7280; text-transform: uppercase; border-bottom: 2px solid #e5e7eb; text-align: center; }
+        .bee-table th { background-color: rgba(248,250,252,0.8); padding: 0.9rem 1rem; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: #94a3b8; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; text-align: center; }
         .bee-table th.text-left { text-align: left; }
         .bee-table th.text-right { text-align: right; }
-        .bee-table td { padding: 1.5rem 1rem; border-bottom: 1px solid #f3f4f6; text-align: center; vertical-align: top; }
+        .bee-table td { padding: 1.1rem 1rem; border-bottom: 1px solid #f1f5f9; text-align: center; vertical-align: top; }
         .bee-table td.text-left { text-align: left; }
         .bee-table td.text-right { text-align: right; }
-        .bee-table tbody tr:hover { background-color: #fefce8; }
+        .bee-table tbody tr:hover { background-color: #f8fafc; }
 
         /* =======================================================
            STYLE KHUSUS CETAK PDF (HANYA AKTIF SAAT PRINT / SAVE PDF)

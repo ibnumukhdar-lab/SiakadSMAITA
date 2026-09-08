@@ -1,23 +1,20 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                📊 Dashboard Karakter & Rekap Poin
-            </h2>
-            
-            <!-- TOMBOL SAPU JAGAT (HANYA BISA DILIHAT OLEH SUPER ADMIN) -->
-            @can('buka-menu-kelola-akun')
-            <button onclick="openSyncModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md transition flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                Sinkronkan Data (Sapu Jagat)
-            </button>
-            @endcan
-        </div>
-    </x-slot>
-
-    <div class="py-12 bg-gray-50/50 relative">
+    <div class="py-8 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            
+
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                <div>
+                    <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">📊 Dashboard Karakter &amp; Rekap Poin</h3>
+                    <p class="text-sm text-slate-500 mt-0.5">Rekap poin Student Root seluruh grup &amp; siswa</p>
+                </div>
+                @can('buka-menu-kelola-akun')
+                <button onclick="openSyncModal()" class="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-sm font-semibold shadow-sm transition whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Sinkronkan Data
+                </button>
+                @endcan
+            </div>
+
             <!-- CUSTOM CSS UNTUK KARTU AGREGATOR (TANPA TAILWIND) -->
             <style>
                 .aggregator-container {
@@ -208,15 +205,15 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 mt-4 pt-8 border-t border-gray-200">
                 
                 <!-- Top 5 Prestasi (Poin Positif) -->
-                <div class="bg-white rounded-xl shadow-sm border border-green-200 overflow-hidden">
-                    <div class="bg-green-50 px-6 py-4 border-b border-green-100">
-                        <h3 class="text-lg font-extrabold text-green-800">🏆 Top 5 Prestasi Tertinggi</h3>
-                        <p class="text-xs text-green-600">Siswa dengan akumulasi poin positif terbanyak</p>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="bg-green-50/70 px-5 py-4 border-b border-slate-100">
+                        <h3 class="text-[15px] font-bold text-green-800">🏆 Top 5 Prestasi Tertinggi</h3>
+                        <p class="text-xs text-green-600 mt-0.5">Siswa dengan akumulasi poin positif terbanyak</p>
                     </div>
                     <div class="p-0">
                         <ul class="divide-y divide-gray-100">
                             @forelse($top_prestasi as $index => $siswa)
-                                <li class="px-6 py-4 flex justify-between items-center hover:bg-gray-50 transition">
+                                <li class="px-6 py-4 flex justify-between items-center hover:bg-slate-50/70 transition">
                                     <div class="flex items-center gap-4">
                                         <div class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-sm">
                                             #{{ $index + 1 }}
@@ -226,7 +223,7 @@
                                             <p class="text-xs text-gray-500">Kelas {{ $siswa->kelas }}</p>
                                         </div>
                                     </div>
-                                    <span class="font-extrabold text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm">+{{ $siswa->total_poin }}</span>
+                                    <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">+{{ $siswa->total_poin }}</span>
                                 </li>
                             @empty
                                 <li class="px-6 py-6 text-center text-sm text-gray-500 italic">Belum ada data poin prestasi yang tercatat.</li>
@@ -236,15 +233,15 @@
                 </div>
 
                 <!-- Top 5 Pelanggaran (Poin Negatif) -->
-                <div class="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden">
-                    <div class="bg-red-50 px-6 py-4 border-b border-red-100">
-                        <h3 class="text-lg font-extrabold text-red-800">⚠️ Top 5 Perlu Perhatian Khusus</h3>
-                        <p class="text-xs text-red-600">Siswa dengan akumulasi poin negatif terbanyak</p>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="bg-red-50/70 px-5 py-4 border-b border-slate-100">
+                        <h3 class="text-[15px] font-bold text-red-800">⚠️ Top 5 Perlu Perhatian Khusus</h3>
+                        <p class="text-xs text-red-600 mt-0.5">Siswa dengan akumulasi poin negatif terbanyak</p>
                     </div>
                     <div class="p-0">
                         <ul class="divide-y divide-gray-100">
                             @forelse($top_pelanggaran as $index => $siswa)
-                                <li class="px-6 py-4 flex justify-between items-center hover:bg-gray-50 transition">
+                                <li class="px-6 py-4 flex justify-between items-center hover:bg-slate-50/70 transition">
                                     <div class="flex items-center gap-4">
                                         <div class="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-bold text-sm">
                                             #{{ $index + 1 }}
@@ -254,7 +251,7 @@
                                             <p class="text-xs text-gray-500">Kelas {{ $siswa->kelas }}</p>
                                         </div>
                                     </div>
-                                    <span class="font-extrabold text-red-700 bg-red-100 px-3 py-1 rounded-full text-sm">{{ $siswa->total_poin }}</span>
+                                    <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200">{{ $siswa->total_poin }}</span>
                                 </li>
                             @empty
                                 <li class="px-6 py-6 text-center text-sm text-gray-500 italic">Alhamdulillah, belum ada data pelanggaran berat.</li>
@@ -266,18 +263,18 @@
             </div>
 
             <!-- TABEL REKAP KESELURUHAN SISWA -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4 px-5 py-4 border-b border-slate-100">
                     <div>
-                        <h3 class="text-lg font-extrabold text-gray-800">📋 Rekapitulasi Seluruh Siswa</h3>
-                        <p class="text-xs text-gray-500">Menampilkan peringkat berdasarkan akumulasi total poin tertinggi.</p>
+                        <h3 class="text-[15px] font-bold text-slate-800">📋 Rekapitulasi Seluruh Siswa</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Peringkat berdasarkan akumulasi total poin tertinggi.</p>
                     </div>
                     
                     <!-- Fitur Pencarian -->
                     <form action="{{ route('sr.dashboard') }}" method="GET" class="w-full md:w-1/3">
                         <div class="relative">
-                            <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama atau kelas..." class="w-full border-gray-300 rounded-lg text-sm p-2.5 pr-10 focus:ring-blue-500 focus:border-blue-500">
-                            <button type="submit" class="absolute right-2 top-2 text-gray-400 hover:text-blue-600">
+                            <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama atau kelas..." class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3.5 pr-10 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
+                            <button type="submit" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-blue-600">
                                 🔍
                             </button>
                         </div>
@@ -285,41 +282,41 @@
                 </div>
 
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-left border-collapse min-w-[860px]">
                         <thead>
-                            <tr class="bg-gray-100 border-b-2 border-gray-200">
-                                <th class="p-4 text-sm font-bold text-gray-700">No. Peringkat</th>
-                                <th class="p-4 text-sm font-bold text-gray-700">NISN</th>
-                                <th class="p-4 text-sm font-bold text-gray-700">Nama Lengkap</th>
-                                <th class="p-4 text-sm font-bold text-gray-700">Kelas</th>
-                                <th class="p-4 text-sm font-bold text-center text-gray-700">Total Akumulasi Poin</th>
-                                <th class="p-4 text-sm font-bold text-center text-gray-700">Detail</th>
+                            <tr class="bg-slate-50/80 border-b border-slate-200">
+                                <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">No. Peringkat</th>
+                                <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">NISN</th>
+                                <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Nama Lengkap</th>
+                                <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Kelas</th>
+                                <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Total Akumulasi Poin</th>
+                                <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Detail</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($rekap_siswa as $index => $siswa)
-                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <tr class="border-b border-slate-100 hover:bg-slate-50/70 transition">
                                 <!-- Menghitung urutan peringkat berdasarkan pagination -->
-                                <td class="p-4 text-sm font-bold text-gray-500">{{ ($rekap_siswa->currentPage() - 1) * $rekap_siswa->perPage() + $loop->iteration }}</td>
-                                <td class="p-4 text-sm">{{ $siswa->nisn }}</td>
-                                <td class="p-4 text-sm font-bold text-gray-800">{{ $siswa->nama_lengkap }}</td>
-                                <td class="p-4 text-sm">{{ $siswa->kelas }}</td>
-                                <td class="p-4 text-center">
+                                <td class="px-4 py-3 text-sm font-bold text-slate-500">{{ ($rekap_siswa->currentPage() - 1) * $rekap_siswa->perPage() + $loop->iteration }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-600">{{ $siswa->nisn }}</td>
+                                <td class="px-4 py-3 text-sm font-bold text-slate-800">{{ $siswa->nama_lengkap }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-600">{{ $siswa->kelas }}</td>
+                                <td class="px-4 py-3 text-center">
                                     @if($siswa->total_poin > 0)
-                                        <span class="inline-block min-w-[3rem] font-extrabold text-green-700 bg-green-100 px-3 py-1.5 rounded text-sm">+{{ $siswa->total_poin }}</span>
+                                        <span class="inline-block min-w-[3rem] text-xs font-bold px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">+{{ $siswa->total_poin }}</span>
                                     @elseif($siswa->total_poin < 0)
-                                        <span class="inline-block min-w-[3rem] font-extrabold text-red-700 bg-red-100 px-3 py-1.5 rounded text-sm">{{ $siswa->total_poin }}</span>
+                                        <span class="inline-block min-w-[3rem] text-xs font-bold px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200">{{ $siswa->total_poin }}</span>
                                     @else
-                                        <span class="inline-block min-w-[3rem] font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded text-sm">0</span>
+                                        <span class="inline-block min-w-[3rem] text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">0</span>
                                     @endif
                                 </td>
-                                <td class="p-4 text-center">
-                                    <a href="{{ route('sr.poin.history', $siswa->id) }}" style="background-color: #1e3a8a;" class="inline-block text-white text-xs font-bold py-1.5 px-3 rounded shadow-sm hover:opacity-80 transition">Lihat History</a>
+                                <td class="px-4 py-3 text-center">
+                                    <a href="{{ route('sr.poin.history', $siswa->id) }}" title="Lihat Histori Poin" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-700 hover:bg-blue-50 transition">👁️</a>
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="p-8 text-center text-gray-500 italic">Data siswa tidak ditemukan atau belum ada siswa aktif.</td>
+                                <td colspan="6" class="px-4 py-12 text-center text-slate-500 italic">Data siswa tidak ditemukan atau belum ada siswa aktif.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -327,7 +324,7 @@
                 </div>
 
                 <!-- Menampilkan Link Paginasi -->
-                <div class="mt-6">
+                <div class="px-5 py-4 border-t border-slate-100">
                     {{ $rekap_siswa->links() }}
                 </div>
             </div>
@@ -364,7 +361,7 @@
                     <!-- List data akan disuntikkan ke sini -->
                 </div>
                 
-                <button onclick="closeSyncModalAndRefresh()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+                <button onclick="closeSyncModalAndRefresh()" class="inline-flex items-center justify-center gap-1.5 h-10 w-full px-4 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-sm font-semibold shadow-sm transition whitespace-nowrap">
                     Tutup & Muat Ulang Halaman
                 </button>
             </div>

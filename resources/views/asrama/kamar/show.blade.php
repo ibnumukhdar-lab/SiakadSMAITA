@@ -1,15 +1,4 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                🛏️ Kelola Penghuni: <span style="font-weight: 900; color: #1d4ed8;">{{ $kamar->nama_kamar }}</span>
-            </h2>
-            <a href="{{ route('asrama.kamar.index') }}" style="background-color: #e2e8f0; color: #1e293b; font-weight: bold; font-size: 14px; padding: 8px 16px; border-radius: 8px; text-decoration: none; transition: 0.2s;">
-                ⬅️ Kembali ke Daftar Kamar
-            </a>
-        </div>
-    </x-slot>
-
     <!-- MEMANGGIL CSS TOM SELECT -->
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.default.min.css" rel="stylesheet">
     <style>
@@ -20,80 +9,95 @@
         .ts-control .item { background: #e0e7ff !important; color: #1e40af !important; border-radius: 4px !important; border: 1px solid #bfdbfe !important; padding: 4px 8px !important; font-weight: bold !important; margin-bottom: 4px !important; }
     </style>
 
-    <div class="py-12 bg-gray-50/50">
+    <div class="py-8 bg-slate-50/50 min-h-screen">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            
+
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
+                <div>
+                    <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">🛏️ Kelola Penghuni: <span class="text-blue-900">{{ $kamar->nama_kamar }}</span></h3>
+                    <p class="text-sm text-slate-500 mt-0.5">Atur daftar siswa penghuni kamar {{ $kamar->nama_kamar }}</p>
+                </div>
+                <a href="{{ route('asrama.kamar.index') }}" class="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 text-sm font-semibold shadow-sm transition whitespace-nowrap">
+                    ⬅️ Kembali ke Daftar Kamar
+                </a>
+            </div>
+
             <!-- Info Musyrif Kamar -->
-            <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin-bottom: 24px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <p style="color: #1e40af; margin: 0;"><strong>Guru Musyrif:</strong> {{ $kamar->musyrif->name ?? 'Belum Ditentukan' }}</p>
-                <p style="font-size: 14px; color: #2563eb; margin: 4px 0 0 0;">Gunakan kotak di bawah ini untuk menambahkan penghuni baru. Siswa yang dikeluarkan dari daftar ini akan dihapus secara permanen dari kamar tanpa histori.</p>
+            <div class="bg-sky-50 border border-sky-200 rounded-xl px-4 py-3.5 mb-6">
+                <p class="text-sm font-bold text-blue-900 m-0">Guru Musyrif: {{ $kamar->musyrif->name ?? 'Belum Ditentukan' }}</p>
+                <p class="text-[13px] text-sky-900/70 mt-0.5 m-0">Gunakan kotak di bawah ini untuk menambahkan penghuni baru. Siswa yang dikeluarkan dari daftar ini akan dihapus secara permanen dari kamar tanpa histori.</p>
             </div>
 
             <!-- Notifikasi -->
             @if(session('success'))
-                <div style="background-color: #dcfce7; border-left: 4px solid #22c55e; color: #166534; padding: 16px; margin-bottom: 24px; border-radius: 8px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                    {{ session('success') }}
+                <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm font-semibold">
+                    ✅ {{ session('success') }}
                 </div>
             @endif
             @if(session('error'))
-                <div style="background-color: #fee2e2; border-left: 4px solid #ef4444; color: #991b1b; padding: 16px; margin-bottom: 24px; border-radius: 8px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                    {{ session('error') }}
+                <div class="mb-4 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm font-semibold">
+                    ❌ {{ session('error') }}
                 </div>
             @endif
 
             <!-- Form Tambah Penghuni Kamar -->
-            <div style="background-color: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; margin-bottom: 32px;">
-                <form action="{{ route('asrama.kamar.addMember', $kamar->id) }}" method="POST" style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 sm:p-6 mb-6">
+                <h4 class="text-[15px] font-bold text-slate-800 mb-4">➕ Tambah Penghuni Baru</h4>
+                <form action="{{ route('asrama.kamar.addMember', $kamar->id) }}" method="POST" class="flex flex-wrap items-end gap-4">
                     @csrf
-                    <label style="font-weight: 800; color: #1f2937; white-space: nowrap; margin: 0;">➕ Masukkan Siswa:</label>
-                    
-                    <div style="flex: 1; min-width: 250px;">
+                    <div class="flex-1 min-w-[260px]">
+                        <label for="cari-siswa" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Pilih Siswa</label>
                         <select id="cari-siswa" name="student_id[]" multiple required>
                             @foreach($students as $siswa)
                                 <option value="{{ $siswa->id }}">{{ $siswa->nama_lengkap }} (Kelas: {{ $siswa->kelas }})</option>
                             @endforeach
                         </select>
                     </div>
-
-                    <!-- TOMBOL YANG DIPERBAIKI -->
-                    <button type="submit" style="background-color: #1e3a8a; color: white; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap;">
-                        Tambahkan ke Kamar
+                    <button type="submit" class="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-sm font-semibold shadow-sm transition whitespace-nowrap">
+                        ➕ Tambahkan ke Kamar
                     </button>
                 </form>
             </div>
 
             <!-- Tabel Daftar Penghuni Kamar -->
-            <div style="background-color: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; overflow-x: auto;">
-                <h3 style="font-size: 18px; font-weight: 900; color: #1f2937; border-bottom: 2px solid #f3f4f6; padding-bottom: 12px; margin-top: 0; margin-bottom: 16px;">Daftar Penghuni Saat Ini</h3>
-                <table style="width: 100%; text-align: left; border-collapse: collapse; min-width: 600px;">
-                    <thead>
-                        <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-                            <th style="padding: 16px; font-size: 14px; font-weight: 800; color: #475569; text-transform: uppercase;">Nama Siswa</th>
-                            <th style="padding: 16px; font-size: 14px; font-weight: 800; color: #475569; text-transform: uppercase;">Kelas</th>
-                            <th style="padding: 16px; font-size: 14px; font-weight: 800; color: #475569; text-transform: uppercase; text-align: center;">Tanggal Masuk</th>
-                            <th style="padding: 16px; font-size: 14px; font-weight: 800; color: #475569; text-transform: uppercase; text-align: center;">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($members as $member)
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 16px; font-weight: bold; color: #1e293b;">{{ $member->student->nama_lengkap ?? 'Siswa Dihapus' }}</td>
-                            <td style="padding: 16px; color: #64748b;">{{ $member->student->kelas ?? '-' }}</td>
-                            <td style="padding: 16px; text-align: center; color: #64748b;">{{ \Carbon\Carbon::parse($member->tanggal_masuk)->translatedFormat('d M Y') }}</td>
-                            <td style="padding: 16px; text-align: center;">
-                                <form action="{{ route('asrama.kamar.removeMember', $member->id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Keluarkan siswa ini dari kamar? Data penghuni akan dihapus permanen dari daftar ini.');">
-                                    @csrf @method('PUT')
-                                    <button type="submit" style="background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 6px 16px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s;">Keluarkan</button>
-                                </form>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="4" style="padding: 30px; text-align: center; color: #94a3b8; font-style: italic;">Belum ada penghuni di kamar ini.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <div class="bg-white overflow-hidden border border-slate-200 rounded-2xl shadow-sm">
+                <div class="border-b border-slate-100 px-5 py-4">
+                    <h4 class="text-[15px] font-bold text-slate-800">Daftar Penghuni Saat Ini</h4>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[600px]">
+                        <thead>
+                            <tr class="bg-slate-50/80 border-b border-slate-200">
+                                <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Nama Siswa</th>
+                                <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Kelas</th>
+                                <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Tanggal Masuk</th>
+                                <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($members as $member)
+                            <tr class="border-b border-slate-100 hover:bg-slate-50/70 transition">
+                                <td class="px-4 py-3 text-sm font-bold text-slate-800">{{ $member->student->nama_lengkap ?? 'Siswa Dihapus' }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-600 font-medium">{{ $member->student->kelas ?? '-' }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-600 text-center font-medium">{{ \Carbon\Carbon::parse($member->tanggal_masuk)->translatedFormat('d M Y') }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    <form action="{{ route('asrama.kamar.removeMember', $member->id) }}" method="POST" class="m-0 inline-block" onsubmit="return confirm('Keluarkan siswa ini dari kamar? Data penghuni akan dihapus permanen dari daftar ini.');">
+                                        @csrf @method('PUT')
+                                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 px-3 py-1.5 text-xs font-bold transition">🚪 Keluarkan</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="p-12 text-center text-slate-500 font-medium">
+                                    <span class="text-4xl block mb-3">🛏️</span>
+                                    Belum ada penghuni di kamar ini.
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

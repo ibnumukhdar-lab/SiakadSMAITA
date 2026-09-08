@@ -17,20 +17,16 @@
         .delay-200 { animation-delay: 200ms; }
     </style>
 
-    <x-slot name="header">
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
-                <span class="text-2xl text-white">🛏️</span>
-            </div>
-            <h2 class="font-black text-2xl text-gray-800 tracking-tight">
-                {{ __('Dashboard Inspeksi Asrama') }}
-            </h2>
-        </div>
-    </x-slot>
-
     <div class="py-8 bg-slate-50 bg-pattern min-h-screen">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            
+
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
+                <div>
+                    <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">🛏️ Dashboard Inspeksi Asrama</h3>
+                    <p class="text-sm text-slate-500 mt-0.5">Pantau hasil sidak kebersihan kamar putra &amp; putri</p>
+                </div>
+            </div>
+
             <!-- ================= KONTROL NAVIGASI TAB ================= -->
             <div class="flex flex-col sm:flex-row justify-center gap-4 mb-8 animate-fade-up">
                 <!-- Tombol Putra -->

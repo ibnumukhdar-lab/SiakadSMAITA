@@ -1,9 +1,4 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            📝 Input Poin Sikap Siswa
-        </h2>
-    </x-slot>
 
     <!-- Memanggil CSS Tom Select -->
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.default.min.css" rel="stylesheet">
@@ -33,8 +28,15 @@
         }
     </style>
 
-    <div class="py-12 relative">
+    <div class="py-8 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
+                <div>
+                    <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">Input Poin Sikap Siswa</h3>
+                    <p class="text-sm text-slate-500 mt-0.5">Catat perilaku positif &amp; negatif beserta riwayat input terakhir</p>
+                </div>
+            </div>
 
             <!-- Alert Messages -->
             @if(session('success'))
@@ -54,13 +56,15 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Bagian Form Input (Kiri) -->
-                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 self-start">
-                    <h3 class="text-lg font-extrabold mb-4 text-gray-800 border-b pb-2">Form Pencatatan</h3>
-                    <form action="{{ route('sr.poin.store') }}" method="POST" class="space-y-4">
+                <div class="lg:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-sm self-start overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-100">
+                        <h4 class="text-[15px] font-bold text-slate-800">Form Pencatatan</h4>
+                    </div>
+                    <form action="{{ route('sr.poin.store') }}" method="POST" class="space-y-4 p-5">
                         @csrf
                         
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Nama Siswa <span class="text-red-500">*</span></label>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Nama Siswa <span class="text-red-500">*</span></label>
                             <select id="student_id" name="student_id" class="w-full" required>
                                 <option value="">🔍 Ketik nama atau kelas...</option>
                                 @foreach($students as $siswa)
@@ -70,7 +74,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Kriteria Sikap <span class="text-red-500">*</span></label>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Kriteria Sikap <span class="text-red-500">*</span></label>
                             <select id="criteria_id" name="criteria_id" class="w-full" required>
                                 <option value="">🔍 Ketik jenis perilaku...</option>
                                 @foreach($criterias as $kriteria)
@@ -82,34 +86,36 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Tanggal Kejadian <span class="text-red-500">*</span></label>
-                            <input type="date" name="tanggal_kejadian" value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}" class="w-full border-gray-300 rounded-lg text-sm p-2.5 focus:border-blue-500 focus:ring-blue-500" required>
-                            <p class="text-xs text-gray-500 mt-1">Hanya bisa mengisi tanggal hari ini atau mundur ke belakang.</p>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tanggal Kejadian <span class="text-red-500">*</span></label>
+                            <input type="date" name="tanggal_kejadian" value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" required>
+                            <p class="text-xs text-slate-500 mt-1.5">Hanya bisa mengisi tanggal hari ini atau mundur ke belakang.</p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Catatan/Keterangan</label>
-                            <textarea name="catatan" rows="3" class="w-full border-gray-300 rounded-lg text-sm p-2.5 focus:border-blue-500 focus:ring-blue-500" placeholder="Tambahkan detail kejadian jika diperlukan..."></textarea>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Catatan/Keterangan</label>
+                            <textarea name="catatan" rows="3" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="Tambahkan detail kejadian jika diperlukan..."></textarea>
                         </div>
 
-                        <button type="submit" style="background-color: #1e293b; color: white;" class="w-full py-4 rounded-lg text-sm font-bold shadow-sm hover:opacity-90 transition">
+                        <button type="submit" class="inline-flex items-center justify-center gap-1.5 h-10 w-full px-4 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-sm font-semibold shadow-sm transition whitespace-nowrap">
                             Simpan Poin
                         </button>
                     </form>
                 </div>
 
                 <!-- Bagian Histori Input Terakhir (Kanan) -->
-                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <h3 class="text-lg font-extrabold mb-4 text-gray-800 border-b pb-2">🕒 Riwayat Input Terakhir Anda</h3>
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-100">
+                        <h4 class="text-[15px] font-bold text-slate-800">🕒 Riwayat Input Terakhir Anda</h4>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-full">
                             <thead>
-                                <tr class="bg-gray-100 border-b-2 border-gray-200">
-                                    <th class="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider whitespace-nowrap">Tgl Kejadian</th>
-                                    <th class="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Nama Siswa</th>
-                                    <th class="p-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Perilaku & Catatan</th>
-                                    <th class="p-3 text-xs font-bold text-center text-gray-600 uppercase tracking-wider">Poin</th>
-                                    <th class="p-3 text-xs font-bold text-center text-gray-600 uppercase tracking-wider">Aksi</th>
+                                <tr class="bg-slate-50/80 border-b border-slate-200">
+                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">Tgl Kejadian</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Nama Siswa</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Perilaku &amp; Catatan</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Poin</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -118,40 +124,40 @@
                                         // Pengecekan otomatis kolom catatan atau keterangan
                                         $catatan = $entry->catatan ?? $entry->keterangan ?? '';
                                     @endphp
-                                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                    <td class="p-3 text-sm whitespace-nowrap">
+                                <tr class="border-b border-slate-100 hover:bg-slate-50/70 transition">
+                                    <td class="px-4 py-3 text-sm text-slate-500 font-medium whitespace-nowrap">
                                         {{ \Carbon\Carbon::parse($entry->tanggal_kejadian)->translatedFormat('d M Y') }}
                                     </td>
-                                    <td class="p-3 text-sm font-bold text-gray-800 leading-tight">
+                                    <td class="px-4 py-3 text-sm font-bold text-slate-800 leading-tight">
                                         {{ $entry->student->nama_lengkap ?? 'Siswa Dihapus' }}
                                     </td>
-                                    <td class="p-3 text-sm">
-                                        <div class="font-bold text-gray-700">{{ $entry->criteria->nama_perilaku ?? 'Kriteria Dihapus' }}</div>
+                                    <td class="px-4 py-3 text-sm">
+                                        <div class="font-bold text-slate-700">{{ $entry->criteria->nama_perilaku ?? 'Kriteria Dihapus' }}</div>
                                         @if($catatan)
-                                            <div class="text-xs text-gray-500 mt-1 flex items-start">
-                                                <span class="mr-1 text-gray-400">↳</span> 
+                                            <div class="text-xs text-slate-500 mt-1 flex items-start">
+                                                <span class="mr-1 text-slate-400">↳</span> 
                                                 <span class="italic">"{{ $catatan }}"</span>
                                             </div>
                                         @else
-                                            <div class="text-xs text-gray-400 mt-1 italic">- Tanpa catatan -</div>
+                                            <div class="text-xs text-slate-400 mt-1 italic">- Tanpa catatan -</div>
                                         @endif
                                     </td>
-                                    <td class="p-3 text-sm font-bold text-center">
+                                    <td class="px-4 py-3 text-sm font-bold text-center">
                                         @if($entry->poin > 0)
-                                            <span class="text-green-700 bg-green-100 px-3 py-1 rounded-full whitespace-nowrap">+{{ $entry->poin }}</span>
+                                            <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200 whitespace-nowrap">+{{ $entry->poin }}</span>
                                         @else
-                                            <span class="text-red-700 bg-red-100 px-3 py-1 rounded-full whitespace-nowrap">{{ $entry->poin }}</span>
+                                            <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 whitespace-nowrap">{{ $entry->poin }}</span>
                                         @endif
                                     </td>
-                                    <td class="p-3 text-center">
-                                        <div class="flex items-center justify-center gap-2">
+                                    <td class="px-4 py-3 text-center">
+                                        <div class="flex items-center justify-center gap-1">
                                             <!-- Tombol Edit Pop-up -->
                                             <button type="button" 
                                                 data-id="{{ $entry->id }}" 
                                                 data-poin="{{ $entry->poin }}" 
                                                 data-catatan="{{ $catatan }}"
                                                 onclick="openTailwindModal(this)"
-                                                class="p-1.5 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-200 transition" title="Edit Data">
+                                                class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition" title="Edit Data">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                             </button>
                                             
@@ -160,7 +166,7 @@
                                                 <form action="{{ route('poin.destroy', $entry->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Yakin ingin membatalkan/menghapus input poin ini?');">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="p-1.5 bg-red-50 text-red-500 rounded-md hover:bg-red-200 transition" title="Batalkan/Hapus">
+                                                    <button type="submit" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Batalkan/Hapus">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                                     </button>
                                                 </form>
@@ -170,7 +176,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="p-6 text-center text-gray-500 italic text-sm">Belum ada riwayat input poin yang Anda catat hari ini.</td>
+                                    <td colspan="5" class="px-4 py-12 text-center text-slate-500 italic text-sm">Belum ada riwayat input poin yang Anda catat hari ini.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -200,18 +206,18 @@
                 @method('PUT')
                 
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1 uppercase tracking-wide">Ubah Nilai Poin</label>
-                    <input type="number" name="poin" id="inputPoinTW" class="w-full border-gray-300 rounded-lg text-sm p-3 focus:border-blue-500 focus:ring-blue-500" required>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Ubah Nilai Poin</label>
+                    <input type="number" name="poin" id="inputPoinTW" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" required>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1 uppercase tracking-wide">Catatan / Alasan</label>
-                    <textarea name="catatan" id="inputCatatanTW" rows="4" class="w-full border-gray-300 rounded-lg text-sm p-3 focus:border-blue-500 focus:ring-blue-500" placeholder="Kosongkan jika tidak ada catatan..."></textarea>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Catatan / Alasan</label>
+                    <textarea name="catatan" id="inputCatatanTW" rows="4" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="Kosongkan jika tidak ada catatan..."></textarea>
                 </div>
                 
                 <div class="flex justify-end gap-3 pt-3">
-                    <button type="button" onclick="closeTailwindModal()" class="px-5 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition shadow-md hover:shadow-lg">Simpan Perubahan</button>
+                    <button type="button" onclick="closeTailwindModal()" class="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 text-sm font-semibold shadow-sm transition whitespace-nowrap">Batal</button>
+                    <button type="submit" class="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-sm font-semibold shadow-sm transition whitespace-nowrap">Simpan Perubahan</button>
                 </div>
             </form>
         </div>

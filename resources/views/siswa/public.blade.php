@@ -26,7 +26,7 @@
 
                 <div class="flex flex-col">
                     <span class="font-extrabold text-slate-900 text-base leading-none tracking-tight">{{ $pengaturan->nama_sekolah ?? 'SMA IT ARAFAH' }}</span>
-                    <span class="text-[10px] text-blue-600 font-bold tracking-widest mt-1 uppercase">{{ $pengaturan->motto ?? 'Cerdas & Beradab' }}</span>
+                    <span class="text-[10px] text-blue-800 font-bold tracking-widest mt-1 uppercase">{{ $pengaturan->motto ?? 'Cerdas & Beradab' }}</span>
                 </div>
             </div>
             <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full border border-green-200 shadow-sm">
@@ -57,7 +57,7 @@
             </div>
 
             <h2 class="text-2xl font-black text-slate-800 mb-1">{{ $siswa->nama_lengkap }}</h2>
-            <p class="text-blue-600 font-mono font-bold text-sm mb-6">NISN: {{ $siswa->nisn }}</p>
+            <p class="text-blue-900 font-mono font-bold text-sm mb-6">NISN: {{ $siswa->nisn }}</p>
 
             <div class="bg-slate-50 rounded-xl border border-slate-100 p-4 text-left space-y-3">
                 <div class="flex justify-between border-b border-slate-200 pb-2 text-sm">
