@@ -10,26 +10,34 @@
 <div class="lg:hidden" x-data="{ open: false }">
     {{-- Top bar --}}
     <div class="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 shadow-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-2.5 flex justify-between items-center">
-            <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 min-w-0">
-                @if($logoUrl)
-                    <img src="{{ $logoUrl }}" class="h-9 w-auto rounded bg-white/90 p-0.5 shrink-0" alt="Logo">
-                @else
-                    <div class="h-9 w-9 bg-white text-blue-900 rounded-lg flex items-center justify-center font-black shrink-0">{{ mb_substr($nama, 0, 1) }}</div>
-                @endif
-                <div class="leading-tight min-w-0">
-                    <div class="font-black text-white text-[13px] uppercase tracking-tight truncate">{{ $nama }}</div>
-                    <div class="text-[10px] text-blue-200 font-bold tracking-widest uppercase truncate">{{ $motto }}</div>
-                </div>
+        <div class="px-3 py-2.5 flex items-center justify-between gap-2">
+            {{-- Kiri: hamburger + branding --}}
+            <div class="flex items-center gap-1.5 min-w-0">
+                <button @click="open = !open" class="inline-flex items-center justify-center p-2 -ml-1 rounded-lg text-white hover:bg-white/10 transition shrink-0" aria-label="Buka menu">
+                    <svg class="h-6 w-6" :class="{ 'hidden': open }" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    <svg class="h-6 w-6 hidden" :class="{ 'hidden': !open }" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 min-w-0">
+                    @if($logoUrl)
+                        <img src="{{ $logoUrl }}" class="h-8 w-8 rounded bg-white/90 p-0.5 object-contain shrink-0" alt="Logo">
+                    @else
+                        <div class="h-8 w-8 bg-white text-blue-900 rounded-lg flex items-center justify-center font-black text-sm shrink-0">{{ mb_substr($nama, 0, 1) }}</div>
+                    @endif
+                    <div class="leading-tight min-w-0">
+                        <div class="font-black text-white text-[13px] uppercase tracking-tight truncate">{{ $nama }}</div>
+                        <div class="text-[10px] text-blue-200 font-bold tracking-widest uppercase truncate">{{ $motto }}</div>
+                    </div>
+                </a>
+            </div>
+
+            {{-- Kanan: avatar profil --}}
+            <a href="{{ route('profile.edit') }}" class="h-9 w-9 rounded-full bg-white text-blue-900 flex items-center justify-center font-black text-sm shadow shrink-0" title="{{ Auth::user()->name }}">
+                {{ mb_substr(Auth::user()->name, 0, 1) }}
             </a>
-            <button @click="open = !open" class="inline-flex items-center justify-center p-2 rounded-lg text-white hover:bg-white/10 transition" aria-label="Menu">
-                <svg class="h-6 w-6" :class="{ 'hidden': open }" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-                <svg class="h-6 w-6 hidden" :class="{ 'hidden': !open }" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
         </div>
     </div>
 
