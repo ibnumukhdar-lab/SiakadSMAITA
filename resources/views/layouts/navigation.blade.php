@@ -4,23 +4,38 @@
     $motto = $pengaturan->motto ?? 'Cerdas & Beradab';
     $logoUrl = ($pengaturan && $pengaturan->logo_path) ? url('berkas/' . $pengaturan->logo_path) : null;
 @endphp
-<style>[x-cloak]{display:none!important}</style>
+<style>
+    /* ===== Navigasi: drawer & seksi tanpa JavaScript (robust HP) ===== */
+    summary.nav-sum { list-style: none; }
+    summary.nav-sum::-webkit-details-marker { display: none; }
+    summary.nav-user { list-style: none; }
+    summary.nav-user::-webkit-details-marker { display: none; }
+    .chev { transition: transform .2s ease; }
+    .nav-sec[open] > summary .chev { transform: rotate(180deg); }
 
-{{-- ============ MOBILE: top bar + drawer (satu scope x-data) ============ --}}
-<div class="lg:hidden" x-data="{ open: false }">
+    .drawer-mask { display: none; }
+    #navDrawer:checked ~ .drawer-mask { display: block; }
+    .drawer-panel { display: none; }
+    #navDrawer:checked ~ .drawer-panel { display: flex; }
+    .nav-user[open] .user-pop { display: block; }
+    .user-pop { display: none; }
+</style>
+
+{{-- ============ MOBILE: top bar + drawer (checkbox CSS, tanpa Alpine) ============ --}}
+<div class="lg:hidden">
+    {{-- Checkbox pemicu drawer (hidden) --}}
+    <input type="checkbox" id="navDrawer" class="sr-only" aria-hidden="true">
+
     {{-- Top bar --}}
     <div class="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 shadow-md sticky top-0 z-40">
         <div class="px-3 py-2.5 flex items-center justify-between gap-2">
             {{-- Kiri: hamburger + branding --}}
             <div class="flex items-center gap-1.5 min-w-0">
-                <button @click="open = !open" class="inline-flex items-center justify-center p-2 -ml-1 rounded-lg text-white hover:bg-white/10 transition shrink-0" aria-label="Buka menu">
-                    <svg class="h-6 w-6" :class="{ 'hidden': open }" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                <label for="navDrawer" class="inline-flex items-center justify-center p-2 -ml-1 rounded-lg text-white hover:bg-white/10 transition shrink-0 cursor-pointer" aria-label="Buka menu" role="button">
+                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
-                    <svg class="h-6 w-6 hidden" :class="{ 'hidden': !open }" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                </label>
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 min-w-0">
                     @if($logoUrl)
                         <img src="{{ $logoUrl }}" class="h-8 w-8 rounded bg-white/90 p-0.5 object-contain shrink-0" alt="Logo">
@@ -41,13 +56,11 @@
         </div>
     </div>
 
-    {{-- Backdrop --}}
-    <div x-show="open" x-transition.opacity @click="open = false" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50"></div>
+    {{-- Backdrop (label: klik = tutup) --}}
+    <label for="navDrawer" class="drawer-mask fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 cursor-pointer" aria-hidden="true"></label>
 
     {{-- Panel drawer --}}
-    <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
-         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full"
-         class="fixed inset-y-0 left-0 w-[290px] max-w-[85vw] bg-white shadow-2xl z-50 flex flex-col">
+    <div class="drawer-panel fixed inset-y-0 left-0 w-[290px] max-w-[85vw] bg-white shadow-2xl z-50 flex flex-col">
         <div class="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 px-4 py-4 flex items-center justify-between gap-2">
             <div class="flex items-center gap-2.5 min-w-0">
                 @if($logoUrl)
@@ -60,7 +73,7 @@
                     <div class="text-[9px] text-blue-200 font-bold tracking-widest uppercase truncate">{{ $motto }}</div>
                 </div>
             </div>
-            <button @click="open = false" class="text-white/90 hover:text-white p-1 rounded-lg hover:bg-white/10 text-xl leading-none" aria-label="Tutup">&times;</button>
+            <label for="navDrawer" class="text-white/90 hover:text-white p-1 rounded-lg hover:bg-white/10 text-xl leading-none cursor-pointer" role="button" aria-label="Tutup">&times;</label>
         </div>
 
         <nav class="flex-1 overflow-y-auto px-3 py-4">
@@ -113,11 +126,11 @@
             <div class="text-[13px] font-bold text-slate-800 truncate">{{ Auth::user()->name }}</div>
             <div class="text-[11px] text-slate-400 truncate">{{ Auth::user()->email }}</div>
         </div>
-        <div class="relative" x-data="{ userMenu: false }">
-            <button @click="userMenu = !userMenu" class="text-slate-500 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100" aria-label="Menu akun">
+        <details class="nav-user relative">
+            <summary class="nav-user text-slate-500 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer flex" aria-label="Menu akun">
                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-            </button>
-            <div x-show="userMenu" @click.outside="userMenu = false" x-transition class="absolute bottom-full right-0 mb-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-50">
+            </summary>
+            <div class="user-pop absolute bottom-full right-0 mb-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-50">
                 @can('buka-menu-pengaturan')
                 <a href="{{ route('pengaturan.edit') }}" class="block px-4 py-2 text-[13px] font-semibold text-slate-700 hover:bg-slate-50">⚙️ Pengaturan Lembaga</a>
                 @endcan
@@ -127,6 +140,6 @@
                     <button type="submit" class="w-full text-left px-4 py-2 text-[13px] font-bold text-red-600 hover:bg-red-50">🚪 Log Out</button>
                 </form>
             </div>
-        </div>
+        </details>
     </div>
 </aside>
