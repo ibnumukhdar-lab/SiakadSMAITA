@@ -76,6 +76,22 @@ guru: audio Bee Smart, arsip surat, log, sesi). Data unggahan hanya ada di serve
   Bee Smart; dashboard) tidak terpengaruh. Dashboard per tingkat (X/XI/XII) dihitung dari daftar
   kelas, jadi kelas seperti "X IPA 1" tetap terhitung sebagai tingkat X.
 
+## Tahun Ajaran, Wali Kelas, dan Kenaikan Kelas
+
+- **Tahun Ajaran** (`/tahun-ajaran`): daftar tahun ajaran dengan **satu yang aktif**. Yang aktif dipakai
+  sebagai isian otomatis `tahun_ajaran` saat menambah/mengimpor siswa dan sebagai nilai bawaan pada
+  proses kenaikan kelas. Ganti nama tahun ajaran yang masih dipakai akan ditolak kecuali dicentang
+  "Ikut perbarui data siswa"; tahun yang aktif atau masih dipakai tidak bisa dihapus.
+- **Wali Kelas**: diatur per kelas (menu Kelola Kelas, form Tambah maupun Edit) — bisa dipilih dari
+  akun pengguna (dikelompokkan per peran: Guru, Musyrif, Tata Usaha, dst.) atau ditulis manual bila
+  walinya belum punya akun. Namanya tampil di daftar kelas.
+- **Kenaikan Kelas** (`/kenaikan-kelas`): memindahkan **seluruh siswa satu kelas sekaligus** —
+  pilih beberapa kelas asal, tentukan kelas tujuan (atau **Lulus/Alumni**), isi tahun ajaran baru,
+  dan lihat ringkasan "N siswa akan dipindahkan" sebelum diproses. Hanya menyentuh kolom `kelas`,
+  `status`, dan `tahun_ajaran` siswa; kamar Asrama dan grup Student Root tidak tersentuh.
+- Aksi massal di Data Siswa juga punya opsi **Pindahkan ke kelas…** untuk memindahkan siswa terpilih
+  (per halaman), melengkapi proses per kelas di halaman Kenaikan Kelas.
+
 ## Peta produksi
 
 - Live: `https://siakad.smaitarafah.sch.id`
