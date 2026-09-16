@@ -44,6 +44,11 @@
                     {{ session('success') }}
                 </div>
             @endif
+            @if(session('warning'))
+                <div class="bg-amber-100 border-l-4 border-amber-500 text-amber-800 p-4 mb-4 rounded shadow-sm font-bold">
+                    ⚠️ {{ session('warning') }}
+                </div>
+            @endif
             @if($errors->any())
                 <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded shadow-sm font-bold">
                     <ul class="list-disc pl-5">
@@ -62,6 +67,8 @@
                     </div>
                     <form action="{{ route('sr.poin.store') }}" method="POST" class="space-y-4 p-5">
                         @csrf
+                        {{-- Kunci sekali-pakai: mencegah satu klik tercatat berkali-kali --}}
+                        <input type="hidden" name="kunci_input" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                         
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Nama Siswa <span class="text-red-500">*</span></label>
@@ -238,6 +245,20 @@
                 create: false,
                 maxOptions: null,
             });
+
+            // Kunci tombol setelah ditekan: mencegah satu klik terkirim berkali-kali
+            var formPoin = document.querySelector('form[action*="input-poin"]');
+            if (formPoin) {
+                formPoin.addEventListener('submit', function () {
+                    var tombol = formPoin.querySelector('button[type="submit"]');
+                    if (tombol) {
+                        if (tombol.disabled) { return false; }
+                        tombol.disabled = true;
+                        tombol.classList.add('opacity-60', 'cursor-not-allowed');
+                        tombol.textContent = '⏳ Menyimpan...';
+                    }
+                });
+            }
         });
 
         // FUNGSI UNTUK MENGENDALIKAN MODAL POP-UP EDIT (TAILWIND)

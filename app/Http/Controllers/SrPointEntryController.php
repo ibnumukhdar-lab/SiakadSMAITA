@@ -8,6 +8,7 @@ use App\Models\SrPointCriteria;
 use App\Models\Siswa;
 use App\Models\SrGroupMember;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class SrPointEntryController extends Controller
 {
@@ -42,6 +43,26 @@ class SrPointEntryController extends Controller
             'tanggal_kejadian.before_or_equal' => 'Tanggal kejadian tidak boleh mendahului hari ini!'
         ]);
 
+        // ---- Penjaga KLIK GANDA (keluhan: sekali tekan, poin masuk berkali-kali) ----
+        // a) Kunci sekali-pakai dari form: kiriman kedua dengan kunci sama diabaikan.
+        $kunci = (string) $request->input('kunci_input');
+        if ($kunci !== '' && Cache::has('sr-poin-'.$kunci)) {
+            return back()->with('warning', 'Poin ini baru saja tersimpan — kiriman ganda diabaikan, tidak dicatat dua kali.');
+        }
+
+        // b) Penjaga jarak-dekat: entri identik oleh guru yang sama <15 detik lalu = klik ganda.
+        $kembar = SrPointEntry::where('student_id', $request->student_id)
+            ->where('criteria_id', $request->criteria_id)
+            ->whereDate('tanggal_kejadian', $request->tanggal_kejadian)
+            ->where('input_by', Auth::id())
+            // catatan ikut dibandingkan: data yang memang berbeda tetap boleh dicatat
+            ->where('catatan', $request->catatan)
+            ->where('created_at', '>=', now()->subSeconds(15))
+            ->exists();
+        if ($kembar) {
+            return back()->with('warning', 'Poin identik baru dicatat beberapa detik lalu — tidak dicatat ulang.');
+        }
+
         // 1. Cari kriteria untuk memastikan nilai poin otomatis sesuai master
         $criteria = SrPointCriteria::findOrFail($request->criteria_id);
 
@@ -61,6 +82,10 @@ class SrPointEntryController extends Controller
             'input_by' => Auth::id(), // Rekam siapa guru yang menginput
             'tanggal_kejadian' => $request->tanggal_kejadian,
         ]);
+
+        if ($kunci !== '') {
+            Cache::put('sr-poin-'.$kunci, true, now()->addMinutes(10));
+        }
 
         return back()->with('success', '✅ Poin sikap berhasil dicatat ke dalam sistem!');
     }
