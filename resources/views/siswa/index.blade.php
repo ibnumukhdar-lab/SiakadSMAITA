@@ -4,6 +4,7 @@
         qrModalOpen: false, qrUrl: '', qrName: '', qrNisn: '',
         deleteModalOpen: false, deleteFormId: '', deleteStudentName: '',
         search: '', filterKelas: '', filterJk: '', filterAngkatan: '', limit: '30', visibleCount: 0,
+        hanyaNisnBermasalah: false,
         updateVisibility() {
             let count = 0;
             let rows = document.querySelectorAll('.siswa-row');
@@ -21,6 +22,7 @@
                 let kelas = cleanStr(row.getAttribute('data-kelas'));
                 let jk = cleanStr(row.getAttribute('data-jk'));
                 let angkatan = cleanStr(row.getAttribute('data-angkatan'));
+                let nisnBaku = row.getAttribute('data-nisn-baku') === '1';
 
                 let matchSearch = !this.search || text.includes(searchLower);
                 let matchKelas = !fKelas || kelas === fKelas;
@@ -33,8 +35,9 @@
                               (fJk === 'perempuan' && jk.startsWith('p'));
 
                 let matchAngkatan = !fAngkatan || angkatan === fAngkatan;
+                let matchNisnBaku = !this.hanyaNisnBermasalah || !nisnBaku;
 
-                if (matchSearch && matchKelas && matchJk && matchAngkatan) {
+                if (matchSearch && matchKelas && matchJk && matchAngkatan && matchNisnBaku) {
                     count++;
                     // Tampilkan baris jika masih di bawah limit yang dipilih
                     if (this.limit === 'all' || count <= parseInt(this.limit)) {
@@ -53,6 +56,7 @@
         $watch('filterKelas', () => updateVisibility());
         $watch('filterJk', () => updateVisibility());
         $watch('filterAngkatan', () => updateVisibility());
+        $watch('hanyaNisnBermasalah', () => updateVisibility());
         $watch('limit', () => updateVisibility());
         updateVisibility();
     ">
@@ -65,7 +69,12 @@
                         <p class="text-sm text-slate-500 mt-0.5">Master data siswa &amp; alumni SMA IT Arafah</p>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto">
+                    <div class="flex flex-col sm:flex-row sm:flex-wrap gap-2.5 w-full md:w-auto">
+                        @if($jumlahTong > 0)
+                        <a href="{{ route('siswa.trash') }}" style="background-color: #f8fafc; color: #b91c1c; border: 1px solid #fecaca;" class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-lg text-sm shadow-sm hover:bg-red-50 transition duration-200 whitespace-nowrap gap-1.5">
+                            🗑️ Tong Sampah ({{ $jumlahTong }})
+                        </a>
+                        @endif
                         <a href="{{ route('siswa.import') }}" style="background-color: #334155; color: #ffffff;" class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-lg text-sm shadow-sm hover:opacity-90 transition duration-200 whitespace-nowrap gap-1.5">
                             📥 Impor Data
                         </a>
@@ -84,6 +93,29 @@
                 @if(session('error'))
                     <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded shadow-sm">
                         {{ session('error') }}
+                    </div>
+                @endif
+
+                @if(session('masalah_impor') && count(session('masalah_impor')) > 0)
+                    <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-900 p-4 mb-4 rounded shadow-sm text-sm">
+                        <p class="font-bold mb-2">⚠️ Baris yang tidak diimpor ({{ session('masalah_impor_total') }} total, maks 15 ditampilkan):</p>
+                        <ul class="list-disc pl-5 space-y-1">
+                            @foreach(session('masalah_impor') as $baris)
+                                <li>{{ $baris }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if($jumlahNisnBermasalah > 0)
+                    <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-900 p-4 mb-4 rounded shadow-sm text-sm flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                        <span>
+                            ℹ️ <strong>{{ $jumlahNisnBermasalah }} siswa</strong> NISN-nya belum 10 digit (sisa data lama). Betulkan lewat tombol Edit setelah datanya ada.
+                        </span>
+                        <button type="button" @click="hanyaNisnBermasalah = !hanyaNisnBermasalah"
+                                class="shrink-0 inline-flex items-center justify-center h-9 px-3.5 rounded-lg border border-blue-300 bg-white text-blue-800 text-[13px] font-semibold hover:bg-blue-100 transition whitespace-nowrap">
+                            <span x-text="hanyaNisnBermasalah ? 'Tampilkan semua siswa' : 'Saring yang perlu dibetulkan'"></span>
+                        </button>
                     </div>
                 @endif
 
@@ -133,7 +165,7 @@
                 </div>
 
                 <!-- FORM AKSI MASSAL -->
-                <form action="/public/siswa/bulk-action" method="POST" id="bulkActionForm">
+                <form action="{{ route('siswa.bulk_action') }}" method="POST" id="bulkActionForm">
                     @csrf
                     <!-- Kontainer Aksi Massal Tanpa Tailwind -->
                     <div class="custom-bulk-action-panel">
@@ -144,13 +176,14 @@
                                 <option value="set_xi">Naik Kelas XI</option>
                                 <option value="set_xii">Naik Kelas XII</option>
                                 <option value="set_alumni">🎓 Jadikan Alumni</option>
+                                <option value="set_aktif">♻️ Kembalikan jadi Aktif</option>
                             </optgroup>
                             <optgroup label="Edit Data Cepat">
                                 <option value="set_laki">Ubah Gender: Laki-laki</option>
                                 <option value="set_perempuan">Ubah Gender: Perempuan</option>
                             </optgroup>
                             <optgroup label="Tindakan Bahaya">
-                                <option value="delete">🗑️ Hapus Data</option>
+                                <option value="delete">🗑️ Pindahkan ke Tong Sampah</option>
                             </optgroup>
                         </select>
                         
@@ -190,13 +223,19 @@
                                         data-text="{{ strtolower($siswa->nama_lengkap ?? '') }}"
                                         data-kelas="{{ $siswa->kelas ?? '' }}"
                                         data-jk="{{ $siswa->jk ?? '' }}"
+                                        data-nisn-baku="{{ preg_match('/^\d{10}$/', (string) $siswa->nisn) ? 1 : 0 }}"
                                         data-angkatan="{{ $siswa->thn_masuk ?? '' }}">
                                         
                                         <td class="px-4 py-3 text-center">
                                             <input type="checkbox" name="siswa_ids[]" value="{{ $siswa->id }}" class="rounded border-slate-300">
                                         </td>
                                         <td class="px-4 py-3 text-sm text-slate-500 text-center">{{ $index + 1 }}</td>
-                                        <td class="px-4 py-3 text-sm text-slate-600 font-mono">{{ $siswa->nisn }}</td>
+                                        <td class="px-4 py-3 text-sm text-slate-600 font-mono">
+                                            {{ $siswa->nisn }}
+                                            @unless(preg_match('/^\d{10}$/', (string) $siswa->nisn))
+                                                <span class="ml-1 text-amber-600 font-sans text-xs font-bold" title="NISN belum 10 digit — perlu dibetulkan">⚠</span>
+                                            @endunless
+                                        </td>
                                         <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ $siswa->nama_lengkap }}</td>
                                         <td class="px-4 py-3 text-xs font-bold text-slate-500 text-center">
                                              {{ substr($siswa->jk, 0, 1) }} <!-- Menampilkan inisial L/P saja agar ringkas -->
@@ -227,7 +266,7 @@
                                                 
                                                 <button type="button" 
                                                     @click="deleteFormId = 'delete-form-{{ $siswa->id }}'; deleteStudentName = '{{ addslashes($siswa->nama_lengkap) }}'; deleteModalOpen = true" 
-                                                    title="Hapus" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">🗑️
+                                                    title="Pindahkan ke Tong Sampah" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">🗑️
                                                 </button>
                                             </div>
                                         </td>
@@ -337,11 +376,11 @@
                         </svg>
                     </div>
 
-                    <h3 class="text-xl font-extrabold text-slate-800 mb-2 leading-tight">Konfirmasi Hapus</h3>
+                    <h3 class="text-xl font-extrabold text-slate-800 mb-2 leading-tight">Pindahkan ke Tong Sampah</h3>
                     <p class="text-sm text-slate-600 mb-6">
-                        Apakah Anda yakin ingin menghapus data siswa <br>
+                        Apakah Anda yakin ingin memindahkan data siswa <br>
                         <span class="font-bold text-red-600 break-words" x-text="deleteStudentName"></span>? <br>
-                        <span class="text-xs italic text-slate-400 mt-1 block">Tindakan ini tidak dapat dibatalkan.</span>
+                        <span class="text-xs italic text-slate-400 mt-1 block">Tidak permanen — data masih bisa dipulihkan dari menu Tong Sampah.</span>
                     </p>
                     
                     <div class="flex flex-row gap-3 w-full">
@@ -349,7 +388,7 @@
                             Batal
                         </button>
                         <button type="button" @click="document.getElementById(deleteFormId).submit()" style="background-color: #dc2626; color: #ffffff;" class="font-bold py-3 px-4 rounded-xl shadow hover:opacity-90 transition w-full text-sm tracking-wide text-center">
-                            Ya, Hapus
+                            Ya, Pindahkan
                         </button>
                     </div>
                     

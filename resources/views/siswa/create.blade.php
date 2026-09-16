@@ -10,6 +10,17 @@
                 </div>
             </div>
 
+            @if($errors->any())
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-800 p-4 mb-4 rounded shadow-sm text-sm">
+                    <p class="font-bold mb-1">⚠️ Data belum bisa disimpan:</p>
+                    <ul class="list-disc pl-5 space-y-0.5">
+                        @foreach($errors->all() as $pesan)
+                            <li>{{ $pesan }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
 
                 {{-- Navigasi Tab --}}
@@ -35,7 +46,8 @@
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">NISN *</label>
-                            <input type="text" name="nisn" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" required>
+                            <input type="text" name="nisn" value="{{ old('nisn') }}" inputmode="numeric" maxlength="20" placeholder="10 digit angka" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" required>
+                            <p class="text-[11px] text-slate-400 mt-1">Wajib 10 digit angka. Spasi / karakter tak terlihat otomatis dibuang.</p>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">NIS Lokal</label>
@@ -209,14 +221,15 @@
                         <div class="mb-6 p-4 rounded-xl border bg-red-50 border-red-200">
                             <h3 class="font-bold text-red-700 mb-3 text-sm uppercase tracking-wide">⚠️ Tambah Catatan Merah</h3>
                             <template x-for="(pl, index) in pelanggaran" :key="index">
-                                <div class="flex gap-2 mb-2 items-center">
+                                <div class="flex flex-wrap gap-2 mb-2 items-center">
                                     <input type="text" x-model="pl.tgl" :name="`pelanggaran[${index}][tgl]`" placeholder="Tgl Kejadian" class="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition w-1/4">
                                     <input type="text" x-model="pl.kategori" :name="`pelanggaran[${index}][kategori]`" placeholder="Kategori" class="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition w-1/4">
-                                    <input type="text" x-model="pl.kasus" :name="`pelanggaran[${index}][kasus]`" placeholder="Kasus/Sanksi" class="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition w-2/4">
+                                    <input type="text" x-model="pl.kasus" :name="`pelanggaran[${index}][kasus]`" placeholder="Kasus" class="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition w-1/4">
+                                    <input type="text" x-model="pl.tindakan" :name="`pelanggaran[${index}][tindakan]`" placeholder="Sanksi" class="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition w-1/4">
                                     <button type="button" @click="pelanggaran.splice(index, 1)" class="h-10 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold shadow-sm transition flex items-center justify-center">X</button>
                                 </div>
                             </template>
-                            <button type="button" @click="pelanggaran.push({tgl: '', kategori: '', kasus: ''})" class="inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-lg bg-red-100 text-red-800 hover:bg-red-200 text-sm font-bold transition">+ Tambah Baris Pelanggaran</button>
+                            <button type="button" @click="pelanggaran.push({tgl: '', kategori: '', kasus: '', tindakan: ''})" class="inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-lg bg-red-100 text-red-800 hover:bg-red-200 text-sm font-bold transition">+ Tambah Baris Pelanggaran</button>
                         </div>
 
                         <div class="flex flex-col sm:flex-row justify-between gap-3 mt-6 pt-5 border-t border-slate-200">

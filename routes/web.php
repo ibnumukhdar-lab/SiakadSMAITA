@@ -69,6 +69,17 @@ Route::middleware(['auth', 'permission:buka-menu-siswa'])->group(function () {
     Route::post('/siswa/import', [SiswaController::class, 'prosesImport'])->name('siswa.prosesImport');
     Route::get('/siswa/import/template', [SiswaController::class, 'downloadTemplate'])->name('siswa.downloadTemplate');
     Route::post('/siswa/bulk-action', [SiswaController::class, 'bulkAction'])->name('siswa.bulk_action');
+
+    // --- TONG SAMPAH DATA SISWA ---
+    // Hapus = pindah ke tong sampah (soft delete, masih bisa dipulihkan).
+    // Hapus permanen hanya lewat halaman tong sampah & butuh izin khusus.
+    Route::get('/siswa/tong-sampah', [SiswaController::class, 'trash'])->name('siswa.trash');
+    Route::post('/siswa/tong-sampah/{id}/pulihkan', [SiswaController::class, 'restore'])
+        ->where('id', '[0-9]+')->name('siswa.restore');
+    Route::delete('/siswa/tong-sampah/{id}', [SiswaController::class, 'forceDestroy'])
+        ->where('id', '[0-9]+')
+        ->middleware('permission:hapus-permanen-siswa')
+        ->name('siswa.forceDestroy');
     Route::get('/siswa/{id}/edit', [SiswaController::class, 'edit'])->name('siswa.edit')->where('id', '[0-9]+');
     Route::put('/siswa/{id}', [SiswaController::class, 'update'])->name('siswa.update')->where('id', '[0-9]+');
     Route::delete('/siswa/{id}', [SiswaController::class, 'destroy'])->name('siswa.destroy')->where('id', '[0-9]+');

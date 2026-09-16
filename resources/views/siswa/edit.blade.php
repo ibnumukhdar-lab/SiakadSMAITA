@@ -10,6 +10,24 @@
                 </div>
             </div>
 
+            @if($errors->any())
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-800 p-4 mb-4 rounded shadow-sm text-sm">
+                    <p class="font-bold mb-1">⚠️ Perubahan belum bisa disimpan:</p>
+                    <ul class="list-disc pl-5 space-y-0.5">
+                        @foreach($errors->all() as $pesan)
+                            <li>{{ $pesan }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @unless(preg_match('/^\d{10}$/', (string) $siswa->nisn))
+                <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-900 p-4 mb-4 rounded shadow-sm text-sm">
+                    ℹ️ NISN siswa ini masih <strong>{{ $siswa->nisn }}</strong> ({{ strlen((string) $siswa->nisn) }} digit, sisa data lama) — belum 10 digit.
+                    Kolom lain tetap bisa disimpan. Begitu NISN diubah, isinya wajib 10 digit angka.
+                </div>
+            @endunless
+
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
 
                 {{-- Navigasi Tab --}}
@@ -36,7 +54,8 @@
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">NISN *</label>
-                            <input type="text" name="nisn" value="{{ $siswa->nisn }}" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" required>
+                            <input type="text" name="nisn" value="{{ old('nisn', $siswa->nisn) }}" inputmode="numeric" maxlength="20" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" required>
+                            <p class="text-[11px] text-slate-400 mt-1">Wajib 10 digit angka bila diubah.</p>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">NIS Lokal</label>
@@ -49,6 +68,9 @@
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Jenis Kelamin</label>
                             <select name="jk" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
+                                @if($siswa->jk && !in_array($siswa->jk, ['Laki-laki', 'Perempuan']))
+                                    <option value="{{ $siswa->jk }}" selected>{{ $siswa->jk }} (perlu dibetulkan)</option>
+                                @endif
                                 <option value="Laki-laki" {{ $siswa->jk == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
                                 <option value="Perempuan" {{ $siswa->jk == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
                             </select>

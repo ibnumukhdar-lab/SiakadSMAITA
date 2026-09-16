@@ -21,6 +21,20 @@ Repo ini adalah salinan kode yang **sama persis dengan yang ada di hosting**
 `.env` (berisi sandi DB), `vendor/`, `node_modules/`, `storage/` (269 MB — unggahan
 guru: audio Bee Smart, arsip surat, log, sesi). Data unggahan hanya ada di server.
 
+## Hak akses & catatan modul Data Induk
+
+- Menu modul dijaga izin `buka-menu-*` (Spatie). Super Admin lolos otomatis lewat `Gate::before`.
+- Menghapus siswa dari Data Induk **tidak permanen** — datanya masuk **Tong Sampah**
+  (`/siswa/tong-sampah`) dan masih bisa dipulihkan. Hapus permanen hanya dari halaman
+  Tong Sampah dan butuh izin `hapus-permanen-siswa` (hanya Super Admin yang memilikinya
+  secara bawaan; bisa diberikan lewat Kelola Akun).
+- Validasi: NISN wajib 10 digit angka (spasi & karakter tak terlihat dari Excel otomatis
+  dibuang). Data lama yang NISN-nya belum 10 digit tetap bisa disunting selama NISN-nya
+  tidak diubah — barisnya ditandai ⚠ di daftar, dan ada tombol "Saring yang perlu dibetulkan".
+- Impor CSV: tiap baris divalidasi lebih dulu; baris bermasalah **tidak** diimpor dan
+  rinciannya ditampilkan setelah impor. Impor tidak lagi menghapus data di Tong Sampah.
+- Kolom yang boleh diisi dari form dibatasi daftar putih (`KOLOM_ISI` di `SiswaController`).
+
 ## Peta produksi
 
 - Live: `https://siakad.smaitarafah.sch.id`
