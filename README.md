@@ -57,6 +57,25 @@ guru: audio Bee Smart, arsip surat, log, sesi). Data unggahan hanya ada di serve
 > sebelum deploy — hasilnya ada di `public/build` dan ikut dikirim `deploy-server.sh`. Kalau lupa,
 > kelas baru (mis. `w-[68px]`, `text-[12.5px]`) tidak ada di CSS hasil build dan tampilan jadi tidak rapi.
 
+## Modul Kelola Kelas (pengelompokan kelas)
+
+- Halaman **Kelola Kelas** (`/kelas`, menu di bagian Utama): tambah kelas, ganti nama, atur
+  **tingkat** (X/XI/XII/Lulus), urutan tampil, keterangan, dan status aktif/nonaktif; kelas
+  bisa dihapus selama belum dipakai data siswa.
+- Daftar kelas ini yang muncul sebagai pilihan **kelas** di Data Siswa (form Tambah/Edit,
+  filter, dan aksi massal **Pindahkan ke kelas…**) — jadi pengelompokan siswa ikut daftar,
+  bukan teks bebas lagi.
+- Ganti nama kelas yang masih dipakai akan **ditolak** kecuali admin mencentang
+  "Ikut pindahkan siswa" (barulah kolom kelas siswa ikut diperbarui) — supaya tidak ada siswa
+  yang nyangkut di nama kelas lama.
+- Bila ada nama kelas di data siswa yang belum terdaftar (mis. hasil impor lama), halaman
+  Kelola Kelas menampilkan blok peringatan + tombol **Daftarkan sebagai kelas** (hanya menambah
+  ke daftar, tidak mengubah data siswa).
+- **Desain penting**: kolom `siswas.kelas` tetap teks — sengaja TIDAK dijadikan relasi/FK supaya
+  modul yang sudah berjalan (Asrama: kamar & penilaian; Student Root: grup binaan & poin;
+  Bee Smart; dashboard) tidak terpengaruh. Dashboard per tingkat (X/XI/XII) dihitung dari daftar
+  kelas, jadi kelas seperti "X IPA 1" tetap terhitung sebagai tingkat X.
+
 ## Peta produksi
 
 - Live: `https://siakad.smaitarafah.sch.id`
