@@ -68,6 +68,15 @@ Route::middleware(['auth', 'permission:buka-menu-siswa'])->group(function () {
     Route::get('/siswa/import', [SiswaController::class, 'importForm'])->name('siswa.import');
     Route::post('/siswa/import', [SiswaController::class, 'prosesImport'])->name('siswa.prosesImport');
     Route::get('/siswa/import/template', [SiswaController::class, 'downloadTemplate'])->name('siswa.downloadTemplate');
+    Route::get('/siswa/import/pratinjau', [SiswaController::class, 'pratinjau'])->name('siswa.pratinjau');
+    Route::post('/siswa/import/eksekusi', [SiswaController::class, 'eksekusiImpor'])->name('siswa.eksekusiImpor');
+    Route::get('/siswa/import/laporan', [SiswaController::class, 'laporanImpor'])->name('siswa.laporanImpor');
+
+    // --- EKSPOR & CETAK ---
+    Route::get('/siswa/ekspor', [SiswaController::class, 'ekspor'])->name('siswa.ekspor');
+    Route::get('/siswa/cetak', [SiswaController::class, 'cetak'])->name('siswa.cetak');
+    Route::get('/siswa/{id}/kartu', [SiswaController::class, 'kartu'])->where('id', '[0-9]+')->name('siswa.kartu');
+
     Route::post('/siswa/bulk-action', [SiswaController::class, 'bulkAction'])->name('siswa.bulk_action');
 
     // --- TONG SAMPAH DATA SISWA ---

@@ -37,8 +37,7 @@
                     <!-- TAB 1: Identitas & Akademik -->
                     <div x-show="tab === 1" class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div class="md:col-span-2">
-                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Foto Siswa</label>
-                            <input type="file" name="foto" accept="image/*" class="block w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-500 transition file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-900 hover:file:bg-blue-100">
+                            @include('siswa.partials.foto-unggah', ['fotoAwal' => null])
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Nama Lengkap *</label>

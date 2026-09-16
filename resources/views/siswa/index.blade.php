@@ -1,492 +1,388 @@
 <x-app-layout>
-    <!-- LOGIKA ALPINE JS SUPER CERDAS (KEBAL HURUF BESAR/KECIL/SPASI/TYPO EXCEL) -->
-    <div class="py-8" x-data="{ 
-        qrModalOpen: false, qrUrl: '', qrName: '', qrNisn: '',
-        deleteModalOpen: false, deleteFormId: '', deleteStudentName: '',
-        search: '', filterKelas: '', filterJk: '', filterAngkatan: '', limit: '30', visibleCount: 0,
-        hanyaNisnBermasalah: false,
-        updateVisibility() {
-            let count = 0;
-            let rows = document.querySelectorAll('.siswa-row');
-            
-            // FUNGSI PEMBERSIH EKSTREM: Membuang semua spasi, strip, dan karakter aneh
-            const cleanStr = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-            
-            let searchLower = this.search.toLowerCase().trim();
-            let fKelas = cleanStr(this.filterKelas);
-            let fJk = cleanStr(this.filterJk); // Output pasti jadi 'lakilaki' atau 'perempuan'
-            let fAngkatan = cleanStr(this.filterAngkatan);
-            
-            rows.forEach(row => {
-                let text = row.getAttribute('data-text') || ''; // Pencarian nama dibiarkan murni
-                let kelas = cleanStr(row.getAttribute('data-kelas'));
-                let jk = cleanStr(row.getAttribute('data-jk'));
-                let angkatan = cleanStr(row.getAttribute('data-angkatan'));
-                let nisnBaku = row.getAttribute('data-nisn-baku') === '1';
+    <div class="py-5 sm:py-8" x-data="{
+        filtBuka: false,
+        pilihSemua: false,
+        hapusModalOpen: false, hapusFormId: '', hapusNama: '',
+        ringkasNama: '{{ '' }}'
+    }">
+        <div class="max-w-[1500px] mx-auto px-3 sm:px-6 lg:px-8">
 
-                let matchSearch = !this.search || text.includes(searchLower);
-                let matchKelas = !fKelas || kelas === fKelas;
-                
-                // JURUS JITU GENDER: 
-                // Jika pilih Laki-laki, ambil semua data yang huruf depannya 'l' (termasuk L, Laki-Laki, Laki laki, dll)
-                // Jika pilih Perempuan, ambil semua data yang huruf depannya 'p' (termasuk P, Perempuan, pr, dll)
-                let matchJk = !fJk || 
-                              (fJk === 'lakilaki' && jk.startsWith('l')) || 
-                              (fJk === 'perempuan' && jk.startsWith('p'));
-
-                let matchAngkatan = !fAngkatan || angkatan === fAngkatan;
-                let matchNisnBaku = !this.hanyaNisnBermasalah || !nisnBaku;
-
-                if (matchSearch && matchKelas && matchJk && matchAngkatan && matchNisnBaku) {
-                    count++;
-                    // Tampilkan baris jika masih di bawah limit yang dipilih
-                    if (this.limit === 'all' || count <= parseInt(this.limit)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                } else {
-                    row.style.display = 'none'; // Sembunyikan jika tidak cocok filter
-                }
-            });
-            this.visibleCount = count;
-        }
-    }" x-init="
-        $watch('search', () => updateVisibility());
-        $watch('filterKelas', () => updateVisibility());
-        $watch('filterJk', () => updateVisibility());
-        $watch('filterAngkatan', () => updateVisibility());
-        $watch('hanyaNisnBermasalah', () => updateVisibility());
-        $watch('limit', () => updateVisibility());
-        updateVisibility();
-    ">
-        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white p-4 sm:p-6 shadow-sm sm:rounded-2xl border border-slate-200 relative">
-
-                <div class="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
-                    <div>
-                        <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">📚 Data Induk Siswa</h3>
-                        <p class="text-sm text-slate-500 mt-0.5">Master data siswa &amp; alumni SMA IT Arafah</p>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row sm:flex-wrap gap-2.5 w-full md:w-auto">
-                        @if($jumlahTong > 0)
-                        <a href="{{ route('siswa.trash') }}" style="background-color: #f8fafc; color: #b91c1c; border: 1px solid #fecaca;" class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-lg text-sm shadow-sm hover:bg-red-50 transition duration-200 whitespace-nowrap gap-1.5">
-                            🗑️ Tong Sampah ({{ $jumlahTong }})
-                        </a>
+            {{-- ================= KEPALA HALAMAN ================= --}}
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-4">
+                <div>
+                    <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">📚 Data Induk Siswa</h3>
+                    <p class="text-[13px] text-slate-500 mt-0.5">
+                        {{ number_format($ringkasan['aktif'], 0, ',', '.') }} siswa aktif
+                        @if($ringkasan['tong_sampah'] > 0)
+                            <span class="text-slate-300 mx-1">·</span>
+                            <a href="{{ route('siswa.trash') }}" class="text-rose-600 hover:underline">{{ $ringkasan['tong_sampah'] }} di tong sampah</a>
                         @endif
-                        <a href="{{ route('siswa.import') }}" style="background-color: #334155; color: #ffffff;" class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-lg text-sm shadow-sm hover:opacity-90 transition duration-200 whitespace-nowrap gap-1.5">
-                            📥 Impor Data
-                        </a>
-                        <a href="{{ route('siswa.create') }}" style="background-color: #1e3a8a; color: #ffffff;" class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-lg text-sm shadow-sm hover:bg-blue-800 hover:opacity-95 transition duration-200 whitespace-nowrap gap-1.5">
-                            ➕ Tambah Siswa Baru
-                        </a>
-                    </div>
+                    </p>
                 </div>
 
-                @if(session('success'))
-                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded shadow-sm">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded shadow-sm">
-                        {{ session('error') }}
-                    </div>
-                @endif
-
-                @if(session('masalah_impor') && count(session('masalah_impor')) > 0)
-                    <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-900 p-4 mb-4 rounded shadow-sm text-sm">
-                        <p class="font-bold mb-2">⚠️ Baris yang tidak diimpor ({{ session('masalah_impor_total') }} total, maks 15 ditampilkan):</p>
-                        <ul class="list-disc pl-5 space-y-1">
-                            @foreach(session('masalah_impor') as $baris)
-                                <li>{{ $baris }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                @if($jumlahNisnBermasalah > 0)
-                    <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-900 p-4 mb-4 rounded shadow-sm text-sm flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-                        <span>
-                            ℹ️ <strong>{{ $jumlahNisnBermasalah }} siswa</strong> NISN-nya belum 10 digit (sisa data lama). Betulkan lewat tombol Edit setelah datanya ada.
-                        </span>
-                        <button type="button" @click="hanyaNisnBermasalah = !hanyaNisnBermasalah"
-                                class="shrink-0 inline-flex items-center justify-center h-9 px-3.5 rounded-lg border border-blue-300 bg-white text-blue-800 text-[13px] font-semibold hover:bg-blue-100 transition whitespace-nowrap">
-                            <span x-text="hanyaNisnBermasalah ? 'Tampilkan semua siswa' : 'Saring yang perlu dibetulkan'"></span>
-                        </button>
-                    </div>
-                @endif
-
-                <!-- PANEL FILTER MENGGUNAKAN CSS MURNI (Anti Tailwind) -->
-                <div class="custom-filter-panel">
-                    <input type="text" x-model="search" placeholder="🔍 Cari nama siswa..." class="custom-filter-input custom-search-bar">
-                    
-                    <select x-model="filterKelas" class="custom-filter-input">
-                        <option value="">Semua Kelas</option>
-                        <option value="X">Kelas X</option>
-                        <option value="XI">Kelas XI</option>
-                        <option value="XII">Kelas XII</option>
-                    </select>
-                    
-                    <select x-model="filterJk" class="custom-filter-input">
-                        <option value="">Semua Gender</option>
-                        <option value="Laki-laki">Laki-laki</option>
-                        <option value="Perempuan">Perempuan</option>
-                    </select>
-                    
-                    <input type="text" x-model="filterAngkatan" placeholder="Angkatan (Tahun)" class="custom-filter-input">
-                    
-                    <select x-model="limit" class="custom-filter-input bold-text">
-                        <option value="30">Tampilkan: 30</option>
-                        <option value="50">Tampilkan: 50</option>
-                        <option value="100">Tampilkan: 100</option>
-                        <option value="all">Semua Data</option>
-                    </select>
+                <div class="flex flex-wrap items-center gap-2">
+                    @if($ringkasan['tong_sampah'] > 0)
+                        <a href="{{ route('siswa.trash') }}" title="Tong Sampah"
+                           class="inline-flex items-center justify-center h-10 px-3 rounded-lg border border-rose-200 bg-white text-rose-700 text-[12.5px] font-semibold hover:bg-rose-50 transition">🗑️ <span class="ml-1.5">Tong Sampah</span></a>
+                    @endif
+                    <a href="{{ route('siswa.import') }}" title="Impor CSV"
+                       class="inline-flex items-center justify-center h-10 px-3 rounded-lg bg-slate-700 text-white text-[12.5px] font-semibold hover:opacity-90 transition">📥 <span class="ml-1.5">Impor</span></a>
+                    <a href="{{ route('siswa.create') }}" title="Tambah siswa"
+                       class="inline-flex items-center justify-center h-10 px-3.5 rounded-lg bg-blue-900 text-white text-[12.5px] font-semibold hover:bg-blue-800 transition">➕ <span class="ml-1.5">Tambah Siswa</span></a>
                 </div>
+            </div>
 
-                <!-- TEKS RINGKASAN DINAMIS -->
-                <div class="mb-5 text-[13px] font-medium text-slate-600 bg-white p-3 rounded-lg border border-slate-200 flex items-start gap-2">
-                    <span class="text-slate-400 mt-0.5">ℹ️</span>
-                    <span>
-                        Berikut data 
-                        <strong class="text-slate-700 text-base" x-text="limit === 'all' ? visibleCount : Math.min(visibleCount, limit)"></strong> 
-                        siswa
-                        <template x-if="filterKelas"><span> kelas <strong class="text-slate-700" x-text="filterKelas"></strong></span></template>
-                        <template x-if="filterJk"><span> (<strong class="text-slate-700" x-text="filterJk"></strong>)</span></template>
-                        <template x-if="filterAngkatan"><span> angkatan <strong class="text-slate-700" x-text="filterAngkatan"></strong></span></template>
-                        <template x-if="search"><span> dengan pencarian "<strong class="text-slate-700" x-text="search"></strong>"</span></template>
-                        
-                        <span class="text-slate-500 ml-1">
-                            (Total cocok: <span x-text="visibleCount"></span> data).
-                        </span>
+            {{-- ================= PESAN ================= --}}
+            @if(session('success'))
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-800 p-3.5 mb-3 rounded shadow-sm text-sm">{{ session('success') }}</div>
+            @endif
+            @if(session('error'))
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-800 p-3.5 mb-3 rounded shadow-sm text-sm">{{ session('error') }}</div>
+            @endif
+            @if(session('masalah_impor') && count(session('masalah_impor')) > 0)
+                <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-900 p-3.5 mb-3 rounded shadow-sm text-sm">
+                    <p class="font-bold mb-1.5">⚠️ Baris yang tidak diimpor ({{ session('masalah_impor_total') }} total):</p>
+                    <ul class="list-disc pl-5 space-y-0.5">
+                        @foreach(session('masalah_impor') as $baris)
+                            <li>{{ $baris }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @if($ringkasan['nisn_perlu'] > 0)
+                <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-900 p-3.5 mb-3 rounded shadow-sm text-[13px] flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
+                    <span>ℹ️ <strong>{{ $ringkasan['nisn_perlu'] }} siswa</strong> NISN-nya belum 10 digit.</span>
+                    <a href="{{ route('siswa.index', ['perlu' => 'nisn']) }}"
+                       class="shrink-0 inline-flex items-center justify-center h-9 px-3 rounded-lg border border-blue-300 bg-white text-blue-800 text-[13px] font-semibold hover:bg-blue-100 transition whitespace-nowrap">
+                        Saring yang perlu dibetulkan
+                    </a>
+                </div>
+            @endif
+
+            {{-- ================= FILTER (server-side) ================= --}}
+            <div class="bg-white border border-slate-200 rounded-xl shadow-sm mb-3">
+                <button type="button" @click="filtBuka = !filtBuka"
+                        class="w-full flex items-center justify-between px-3.5 py-3 md:hidden text-left">
+                    <span class="text-[13px] font-bold text-slate-700">🔍 Pencarian &amp; Filter
+                        @if($filter['q'] || $filter['kelas'] || $filter['status'] || $filter['jk'] || $filter['angkatan'] || $filter['perlu'])
+                            <span class="ml-1 text-blue-800">•</span>
+                        @endif
                     </span>
-                </div>
+                    <span class="text-slate-400 text-xs" x-text="filtBuka ? '▲' : '▼'"></span>
+                </button>
 
-                <!-- FORM AKSI MASSAL -->
-                <form action="{{ route('siswa.bulk_action') }}" method="POST" id="bulkActionForm">
-                    @csrf
-                    <!-- Kontainer Aksi Massal Tanpa Tailwind -->
-                    <div class="custom-bulk-action-panel">
-                        <select name="bulk_action_type" class="custom-filter-input" style="flex: 1; max-width: 250px;" required>
-                            <option value="">-- Pilih Aksi Massal --</option>
-                            <optgroup label="Akademik & Status">
-                                <option value="set_x">Naik Kelas X</option>
-                                <option value="set_xi">Naik Kelas XI</option>
-                                <option value="set_xii">Naik Kelas XII</option>
-                                <option value="set_alumni">🎓 Jadikan Alumni</option>
-                                <option value="set_aktif">♻️ Kembalikan jadi Aktif</option>
-                            </optgroup>
-                            <optgroup label="Edit Data Cepat">
-                                <option value="set_laki">Ubah Gender: Laki-laki</option>
-                                <option value="set_perempuan">Ubah Gender: Perempuan</option>
-                            </optgroup>
-                            <optgroup label="Tindakan Bahaya">
-                                <option value="delete">🗑️ Pindahkan ke Tong Sampah</option>
-                            </optgroup>
-                        </select>
-                        
-                        <input type="text" name="bulk_tahun_ajaran" placeholder="Set Thn Ajaran (Opsional)" class="custom-filter-input" style="flex: 1; max-width: 200px;">
-                        
-                        <button type="submit" onclick="return confirm('Apakah Anda yakin ingin menerapkan aksi massal pada siswa yang dipilih?')" style="background-color: #1e293b; color: #ffffff;" class="font-bold py-3 px-8 rounded-lg text-sm hover:opacity-80 transition shadow-md w-full sm:w-auto text-center whitespace-nowrap tracking-wide">
-                            Terapkan Aksi
-                        </button>
+                <form method="GET" action="{{ route('siswa.index') }}" :class="filtBuka ? 'block' : 'hidden md:block'" class="px-3.5 pb-3.5 md:pt-3.5 border-t border-slate-100 md:border-t-0">
+                    <div class="grid grid-cols-2 md:grid-cols-12 gap-2">
+                        <div class="col-span-2 md:col-span-2">
+                            <input type="search" name="q" value="{{ $filter['q'] }}" placeholder="Cari nama / NISN / NIS"
+                                   class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none">
+                        </div>
+                        <div class="md:col-span-2">
+                            <select name="kelas" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-sm text-slate-700 focus:border-blue-500 outline-none">
+                                <option value="">Semua kelas</option>
+                                @foreach(['X', 'XI', 'XII', 'Lulus'] as $k)
+                                    <option value="{{ $k }}" @selected($filter['kelas'] === $k)>Kelas {{ $k }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <select name="status" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-sm text-slate-700 focus:border-blue-500 outline-none">
+                                <option value="">Semua status</option>
+                                @foreach(['Aktif', 'Alumni', 'Pindah'] as $st)
+                                    <option value="{{ $st }}" @selected($filter['status'] === $st)>{{ $st }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="md:col-span-1">
+                            <select name="jk" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-sm text-slate-700 focus:border-blue-500 outline-none">
+                                <option value="">L/P</option>
+                                <option value="Laki-laki" @selected($filter['jk'] === 'Laki-laki')>L</option>
+                                <option value="Perempuan" @selected($filter['jk'] === 'Perempuan')>P</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-1">
+                            <input type="text" name="angkatan" value="{{ $filter['angkatan'] }}" inputmode="numeric" placeholder="Angkatan"
+                                   class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 outline-none">
+                        </div>
+                        <div class="col-span-2 md:col-span-2">
+                            <select name="perlu" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-sm text-slate-700 focus:border-blue-500 outline-none">
+                                <option value="">Semua data</option>
+                                <option value="nisn" @selected($filter['perlu'] === 'nisn')>NISN belum 10 digit</option>
+                                <option value="foto" @selected($filter['perlu'] === 'foto')>Belum ada foto</option>
+                                <option value="kontak" @selected($filter['perlu'] === 'kontak')>Belum ada no HP ortu</option>
+                                <option value="alamat" @selected($filter['perlu'] === 'alamat')>Belum ada alamat</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <select name="urut" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-sm text-slate-700 focus:border-blue-500 outline-none">
+                                <option value="baru" @selected($filter['urut'] === 'baru')>Terbaru</option>
+                                <option value="nama" @selected($filter['urut'] === 'nama')>Nama A-Z</option>
+                                <option value="kelas" @selected($filter['urut'] === 'kelas')>Kelas</option>
+                                <option value="nisn" @selected($filter['urut'] === 'nisn')>NISN</option>
+                                <option value="lama" @selected($filter['urut'] === 'lama')>Terlama</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="overflow-x-auto border border-slate-200 rounded-lg">
-                        <table class="w-full text-left border-collapse min-w-[900px]">
-                            <thead>
-                                <tr class="bg-slate-50/80 border-b border-slate-200">
-                                    <th class="px-4 py-3.5 w-10 text-center"><input type="checkbox" id="selectAll" class="rounded border-slate-300"></th>
-                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">No</th>
-                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">NISN</th>
-                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Nama Lengkap</th>
-                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Gender</th>
-                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Kelas</th>
-                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Status</th>
-                                    <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if(count($siswas) == 0)
-                                    <tr>
-                                        <td colspan="8" class="p-10 text-center text-slate-500 font-medium">
-                                            <span class="text-3xl block mb-2">📭</span>
-                                            Belum ada data siswa di sistem. Silakan tambah data baru atau lakukan impor CSV.
-                                        </td>
-                                    </tr>
-                                @else
-                                    @foreach ($siswas as $index => $siswa)
-                                    <!-- Data atribut dibiarkan apa adanya, pembersihan dilakukan di JS -->
-                                    <tr class="border-b border-slate-100 hover:bg-slate-50/70 transition duration-150 siswa-row"
-                                        data-text="{{ strtolower($siswa->nama_lengkap ?? '') }}"
-                                        data-kelas="{{ $siswa->kelas ?? '' }}"
-                                        data-jk="{{ $siswa->jk ?? '' }}"
-                                        data-nisn-baku="{{ preg_match('/^\d{10}$/', (string) $siswa->nisn) ? 1 : 0 }}"
-                                        data-angkatan="{{ $siswa->thn_masuk ?? '' }}">
-                                        
-                                        <td class="px-4 py-3 text-center">
-                                            <input type="checkbox" name="siswa_ids[]" value="{{ $siswa->id }}" class="rounded border-slate-300">
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-slate-500 text-center">{{ $index + 1 }}</td>
-                                        <td class="px-4 py-3 text-sm text-slate-600 font-mono">
-                                            {{ $siswa->nisn }}
-                                            @unless(preg_match('/^\d{10}$/', (string) $siswa->nisn))
-                                                <span class="ml-1 text-amber-600 font-sans text-xs font-bold" title="NISN belum 10 digit — perlu dibetulkan">⚠</span>
-                                            @endunless
-                                        </td>
-                                        <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ $siswa->nama_lengkap }}</td>
-                                        <td class="px-4 py-3 text-xs font-bold text-slate-500 text-center">
-                                             {{ substr($siswa->jk, 0, 1) }} <!-- Menampilkan inisial L/P saja agar ringkas -->
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-slate-700 text-center font-bold">{{ $siswa->kelas ?? '-' }}</td>
-                                        <td class="px-4 py-3 text-sm text-center">
-                                            @if($siswa->status == 'Aktif')
-                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-green-50 text-green-700 border border-green-200">Aktif</span>
-                                            @elseif($siswa->status == 'Alumni')
-                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-sky-50 text-sky-700 border border-sky-200">Alumni</span>
-                                            @elseif($siswa->status == 'Pindah')
-                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200">Pindah</span>
-                                            @else
-                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-red-50 text-red-700 border border-red-200">{{ $siswa->status }}</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <div class="flex justify-center gap-1.5">
-                                                <button type="button" 
-                                                    @click="qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ urlencode(route('siswa.public', $siswa->nisn)) }}'; qrName = '{{ addslashes($siswa->nama_lengkap) }}'; qrNisn = '{{ $siswa->nisn }}'; qrModalOpen = true" 
-                                                    title="Tampilkan QR Code" 
-                                                    class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">📱
-                                                </button>
-                                                
-                                                <a href="{{ route('siswa.show', $siswa->id) }}" title="Lihat Profil" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-700 hover:bg-blue-50 transition">👁️</a>
-                                                
-                                                <a href="{{ route('siswa.edit', $siswa->id) }}" title="Edit Data" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition">✏️</a>
-                                                
-                                                <button type="button" 
-                                                    @click="deleteFormId = 'delete-form-{{ $siswa->id }}'; deleteStudentName = '{{ addslashes($siswa->nama_lengkap) }}'; deleteModalOpen = true" 
-                                                    title="Pindahkan ke Tong Sampah" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">🗑️
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    @endforeach
+                    <div class="flex flex-wrap items-center gap-2 mt-2.5">
+                        <button type="submit" class="inline-flex items-center justify-center h-9 px-4 rounded-lg bg-blue-900 text-white text-[13px] font-semibold hover:bg-blue-800 transition">Terapkan</button>
+                        @if($filter['q'] || $filter['kelas'] || $filter['status'] || $filter['jk'] || $filter['angkatan'] || $filter['perlu'] || $filter['urut'] !== 'baru')
+                            <a href="{{ route('siswa.index') }}" class="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-slate-300 bg-white text-slate-600 text-[13px] font-semibold hover:bg-slate-50 transition">Bersihkan</a>
+                        @endif
 
-                                    <!-- BARIS JIKA PENCARIAN TIDAK DITEMUKAN -->
-                                    <tr x-show="visibleCount === 0" style="display: none;">
-                                        <td colspan="8" class="p-10 text-center text-slate-500 font-medium">
-                                            Tidak ada data siswa yang cocok dengan filter atau pencarian Anda.
-                                        </td>
-                                    </tr>
-                                @endif
-                            </tbody>
-                        </table>
+                        <span class="hidden sm:block w-px h-6 bg-slate-200 mx-1"></span>
+
+                        <a href="{{ route('siswa.ekspor', request()->query()) }}" title="Unduh CSV sesuai filter"
+                           class="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-[13px] font-semibold hover:bg-slate-50 transition">⬇️ <span class="ml-1.5 hidden sm:inline">Ekspor CSV</span></a>
+                        <a href="{{ route('siswa.cetak', request()->query()) }}" target="_blank" title="Cetak daftar sesuai filter"
+                           class="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-[13px] font-semibold hover:bg-slate-50 transition">🖨️ <span class="ml-1.5 hidden sm:inline">Cetak Daftar</span></a>
                     </div>
                 </form>
-
-                @foreach ($siswas as $siswa)
-                    <form id="delete-form-{{ $siswa->id }}" action="{{ route('siswa.destroy', $siswa->id) }}" method="POST" class="hidden">
-                        @csrf @method('DELETE')
-                    </form>
-                @endforeach
-
             </div>
-        </div>
 
-        <!-- MODAL QR CODE -->
-        <div x-show="qrModalOpen" 
-             style="display: none;" 
-             class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-60 backdrop-blur-sm p-4 transition-opacity duration-300" 
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0">
-             
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[340px] relative overflow-hidden transform transition-all mx-auto" 
-                 @click.away="qrModalOpen = false"
-                 x-show="qrModalOpen"
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-8 scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                 x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                 x-transition:leave-end="opacity-0 translate-y-8 scale-95">
-                 
-                <div style="background: linear-gradient(135deg, #1e40af, #3b82f6);" class="h-3 w-full"></div>
+            {{-- ================= DAFTAR ================= --}}
+            <form action="{{ route('siswa.bulk_action') }}" method="POST" id="formAksiMassal">
+                @csrf
 
-                <button type="button" @click="qrModalOpen = false" class="absolute top-4 right-4 bg-slate-100 text-slate-400 hover:text-red-500 hover:bg-red-50 w-8 h-8 flex items-center justify-center rounded-full font-black text-lg transition z-10">
-                    &times;
-                </button>
-                
-                <div class="p-6 sm:p-8 flex flex-col items-center text-center">
-                    
-                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex items-center justify-center shadow-sm mb-5">
-                        <img :src="qrUrl" class="w-36 h-36 sm:w-40 sm:h-40 bg-white p-2 rounded-xl shadow-sm border border-slate-100 object-contain">
+                {{-- Panel aksi massal --}}
+                <div class="bg-slate-50 border border-dashed border-slate-300 rounded-xl mb-3" x-data="{ aksiBuka: false }">
+                    <button type="button" @click="aksiBuka = !aksiBuka"
+                            class="w-full flex items-center justify-between px-3.5 py-3 md:hidden text-left">
+                        <span class="text-[13px] font-bold text-slate-700">⚙️ Aksi massal (ubah banyak siswa sekaligus)</span>
+                        <span class="text-slate-400 text-xs" x-text="aksiBuka ? '▲' : '▼'"></span>
+                    </button>
+
+                    <div :class="aksiBuka ? 'block' : 'hidden md:block'" class="px-3.5 pb-3.5 md:py-3.5 border-t border-slate-200 md:border-t-0">
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <select name="bulk_action_type" class="h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 focus:border-blue-500 outline-none w-full sm:w-auto" required>
+                                <option value="">-- Pilih aksi massal --</option>
+                                <optgroup label="Akademik &amp; status">
+                                    <option value="set_x">Naik Kelas X</option>
+                                    <option value="set_xi">Naik Kelas XI</option>
+                                    <option value="set_xii">Naik Kelas XII</option>
+                                    <option value="set_alumni">🎓 Jadikan Alumni</option>
+                                    <option value="set_aktif">♻️ Kembalikan jadi Aktif</option>
+                                </optgroup>
+                                <optgroup label="Edit cepat">
+                                    <option value="set_laki">Ubah gender: Laki-laki</option>
+                                    <option value="set_perempuan">Ubah gender: Perempuan</option>
+                                </optgroup>
+                                <optgroup label="Tindakan">
+                                    <option value="delete">🗑️ Pindahkan ke Tong Sampah</option>
+                                </optgroup>
+                            </select>
+                            <input type="text" name="bulk_tahun_ajaran" placeholder="Set tahun ajaran (opsional)"
+                                   class="h-10 rounded-lg border border-slate-300 bg-white px-3 text-[13px] text-slate-700 placeholder:text-slate-400 focus:border-blue-500 outline-none w-full sm:w-52">
+                            <button type="submit" onclick="return confirm('Terapkan aksi massal pada siswa yang dipilih?')"
+                                    class="h-10 px-4 rounded-lg bg-slate-800 text-white text-[13px] font-bold hover:opacity-90 transition w-full sm:w-auto whitespace-nowrap">Terapkan</button>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2">
+                            Pilih siswa lewat kotak centang.
+                            <button type="button" class="underline hover:text-slate-600" @click="pilihSemua = !pilihSemua; document.querySelectorAll('.centang-siswa').forEach(c => c.checked = pilihSemua)">Pilih/lepas semua di halaman ini</button>.
+                        </p>
                     </div>
-                    
-                    <h3 class="text-xl font-extrabold text-slate-800 mb-2 leading-tight break-words" x-text="qrName"></h3>
-                    <span class="inline-block bg-blue-50 text-blue-700 text-sm font-bold px-4 py-1.5 rounded-full border border-blue-200 mb-6 shadow-sm">
-                        NISN: <span class="font-mono font-black" x-text="qrNisn"></span>
-                    </span>
-                    
-                    <div class="flex flex-col gap-3 w-full">
-                        <button type="button" @click="downloadImage(qrUrl, 'QR_Code_' + qrName + '.png')" style="background-color: #10b981; color: #ffffff;" class="font-bold py-3 px-5 rounded-xl shadow hover:opacity-90 transition w-full flex items-center justify-center gap-2 text-sm tracking-wide">
-                            <span>⬇️</span> Simpan QR Code
-                        </button>
-                        <button type="button" @click="qrModalOpen = false" style="background-color: #f8fafc; color: #475569;" class="font-bold py-3 px-5 rounded-xl border border-slate-300 hover:bg-slate-100 transition w-full text-sm tracking-wide text-center">
-                            Tutup Kartu
-                        </button>
-                    </div>
-                    
                 </div>
-            </div>
-        </div>
 
-        <!-- MODAL HAPUS -->
-        <div x-show="deleteModalOpen" 
-             style="display: none;" 
-             class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-60 backdrop-blur-sm p-4 transition-opacity duration-300" 
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0">
-             
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[380px] relative overflow-hidden transform transition-all mx-auto" 
-                 @click.away="deleteModalOpen = false"
-                 x-show="deleteModalOpen"
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-8 scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                 x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                 x-transition:leave-end="opacity-0 translate-y-8 scale-95">
-                 
-                <div style="background: linear-gradient(135deg, #b91c1c, #ef4444);" class="h-3 w-full"></div>
-                
-                <div class="p-6 sm:p-8 flex flex-col items-center text-center">
-                    
-                    <div class="bg-red-50 text-red-500 w-16 h-16 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-sm">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                        </svg>
+                {{-- Ringkasan jumlah --}}
+                <div class="mb-2.5 text-[12px] text-slate-500">
+                    Menampilkan
+                    <strong class="text-slate-700">{{ $siswas->count() }}</strong> dari
+                    <strong class="text-slate-700">{{ number_format($siswas->total(), 0, ',', '.') }}</strong> siswa
+                    @if($filter['q']) · cari "{{ $filter['q'] }}"@endif
+                    @if($filter['kelas']) · kelas {{ $filter['kelas'] }}@endif
+                    @if($filter['status']) · {{ $filter['status'] }}@endif
+                    @if($filter['jk']) · {{ $filter['jk'] }}@endif
+                    @if($filter['angkatan']) · angkatan {{ $filter['angkatan'] }}@endif
+                    @if($filter['perlu']) · filter: {{ ['nisn' => 'NISN belum 10 digit', 'foto' => 'belum ada foto', 'kontak' => 'belum ada no HP ortu', 'alamat' => 'belum ada alamat'][$filter['perlu']] ?? $filter['perlu'] }}@endif
+                </div>
+
+                @if($siswas->isEmpty())
+                    <div class="bg-white border border-slate-200 rounded-xl p-10 text-center text-slate-500">
+                        <span class="text-3xl block mb-2">📭</span>
+                        <p class="font-medium">Tidak ada siswa yang cocok dengan filter ini.</p>
+                        <a href="{{ route('siswa.index') }}" class="inline-block mt-3 text-[13px] font-semibold text-blue-800 hover:underline">Bersihkan filter</a>
+                    </div>
+                @else
+
+                    {{-- ==== TABEL (tablet ke atas) ==== --}}
+                    <div class="hidden md:block bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50/80 border-b border-slate-200">
+                                        <th class="px-3 py-3 w-10 text-center">
+                                            <input type="checkbox" @click="pilihSemua = !pilihSemua; document.querySelectorAll('.centang-siswa').forEach(c => c.checked = pilihSemua)"
+                                                   :checked="pilihSemua" class="rounded border-slate-300">
+                                        </th>
+                                        <th class="px-3 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center w-12">No</th>
+                                        <th class="px-3 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">NISN</th>
+                                        <th class="px-3 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">Nama Siswa</th>
+                                        <th class="px-3 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center w-14">JK</th>
+                                        <th class="px-3 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center w-20">Kelas</th>
+                                        <th class="px-3 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center w-24">Status</th>
+                                        <th class="px-3 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center w-36">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($siswas as $i => $siswa)
+                                        <tr class="border-b border-slate-100 hover:bg-slate-50/70 transition">
+                                            <td class="px-3 py-2.5 text-center">
+                                                <input type="checkbox" name="siswa_ids[]" value="{{ $siswa->id }}" class="centang-siswa rounded border-slate-300">
+                                            </td>
+                                            <td class="px-3 py-2.5 text-[13px] text-slate-400 text-center">{{ $siswas->firstItem() + $i }}</td>
+                                            <td class="px-3 py-2.5 text-[13px] text-slate-600 font-mono">
+                                                {{ $siswa->nisn }}
+                                                @unless(preg_match('/^\d{10}$/', (string) $siswa->nisn))
+                                                    <span class="ml-1 text-amber-600 font-sans text-xs font-bold" title="NISN belum 10 digit">⚠</span>
+                                                @endunless
+                                            </td>
+                                            <td class="px-3 py-2.5">
+                                                <div class="flex items-center gap-2.5">
+                                                    <x-avatar-siswa :siswa="$siswa" />
+                                                    <span class="text-[13px] font-bold text-slate-900">{{ $siswa->nama_lengkap }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-3 py-2.5 text-[12px] font-bold text-slate-500 text-center">{{ $siswa->jk ? substr($siswa->jk, 0, 1) : '-' }}</td>
+                                            <td class="px-3 py-2.5 text-[13px] text-slate-700 text-center font-bold">{{ $siswa->kelas ?? '-' }}</td>
+                                            <td class="px-3 py-2.5 text-center">
+                                                <x-lencana-status :status="$siswa->status" />
+                                            </td>
+                                            <td class="px-3 py-2.5">
+                                                <div class="flex justify-center gap-1">
+                                                    <a href="{{ route('siswa.kartu', $siswa->id) }}" target="_blank" title="Kartu pelajar"
+                                                       class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-800 hover:bg-blue-50 transition">🪪</a>
+                                                    <a href="{{ route('siswa.show', $siswa->id) }}" title="Lembar induk"
+                                                       class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition">👁️</a>
+                                                    <a href="{{ route('siswa.edit', $siswa->id) }}" title="Edit data"
+                                                       class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition">✏️</a>
+                                                    <button type="button" title="Pindahkan ke Tong Sampah"
+                                                            @click="hapusFormId = 'hapus-{{ $siswa->id }}'; hapusNama = '{{ addslashes($siswa->nama_lengkap) }}'; hapusModalOpen = true"
+                                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">🗑️</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
-                    <h3 class="text-xl font-extrabold text-slate-800 mb-2 leading-tight">Pindahkan ke Tong Sampah</h3>
-                    <p class="text-sm text-slate-600 mb-6">
-                        Apakah Anda yakin ingin memindahkan data siswa <br>
-                        <span class="font-bold text-red-600 break-words" x-text="deleteStudentName"></span>? <br>
-                        <span class="text-xs italic text-slate-400 mt-1 block">Tidak permanen — data masih bisa dipulihkan dari menu Tong Sampah.</span>
+                    {{-- ==== KARTU (ponsel) ==== --}}
+                    <div class="md:hidden space-y-2">
+                        @foreach($siswas as $i => $siswa)
+                            <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                                <div class="flex items-start gap-3">
+                                    <input type="checkbox" name="siswa_ids[]" value="{{ $siswa->id }}" class="centang-siswa mt-1 rounded border-slate-300 shrink-0">
+                                    <x-avatar-siswa :siswa="$siswa" ukuran="besar" />
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-[14px] font-bold text-slate-900 leading-snug break-words">{{ $siswa->nama_lengkap }}</p>
+                                        <p class="text-[12px] text-slate-500 font-mono mt-0.5">
+                                            {{ $siswa->nisn }}
+                                            @unless(preg_match('/^\d{10}$/', (string) $siswa->nisn))
+                                                <span class="text-amber-600 font-sans font-bold" title="NISN belum 10 digit">⚠</span>
+                                            @endunless
+                                        </p>
+                                        <div class="flex items-center gap-1.5 mt-1.5">
+                                            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">Kelas {{ $siswa->kelas ?? '-' }}</span>
+                                            <x-lencana-status :status="$siswa->status" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-end gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100">
+                                    <a href="{{ route('siswa.kartu', $siswa->id) }}" target="_blank"
+                                       class="h-9 px-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 text-slate-600 text-[12px] font-semibold hover:bg-slate-50 transition">🪪 Kartu</a>
+                                    <a href="{{ route('siswa.show', $siswa->id) }}"
+                                       class="h-9 px-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 text-slate-600 text-[12px] font-semibold hover:bg-slate-50 transition">👁️ Profil</a>
+                                    <a href="{{ route('siswa.edit', $siswa->id) }}"
+                                       class="h-9 px-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 text-amber-700 text-[12px] font-semibold hover:bg-amber-50 transition">✏️ Edit</a>
+                                    <button type="button"
+                                            @click="hapusFormId = 'hapus-{{ $siswa->id }}'; hapusNama = '{{ addslashes($siswa->nama_lengkap) }}'; hapusModalOpen = true"
+                                            class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-rose-200 text-rose-600 text-[12px] hover:bg-rose-50 transition">🗑️</button>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    {{-- ==== PAGINASI ==== --}}
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-2 mt-3">
+                        <p class="text-[12px] text-slate-500 order-2 sm:order-1">
+                            Halaman <strong class="text-slate-700">{{ $siswas->currentPage() }}</strong> dari {{ $siswas->lastPage() }}
+                        </p>
+                        <div class="flex items-center gap-1 order-1 sm:order-2 flex-wrap justify-center">
+                            @if($siswas->onFirstPage())
+                                <span class="h-9 px-3 inline-flex items-center rounded-lg border border-slate-200 text-slate-300 text-[13px] font-semibold">‹ Sebelumnya</span>
+                            @else
+                                <a href="{{ $siswas->previousPageUrl() }}" class="h-9 px-3 inline-flex items-center rounded-lg border border-slate-300 bg-white text-slate-700 text-[13px] font-semibold hover:bg-slate-50 transition">‹ Sebelumnya</a>
+                            @endif
+
+                            <div class="hidden sm:flex items-center gap-1">
+                                @foreach($siswas->getUrlRange(max(1, $siswas->currentPage() - 2), min($siswas->lastPage(), $siswas->currentPage() + 2)) as $hal => $url)
+                                    @if($hal === $siswas->currentPage())
+                                        <span class="h-9 w-9 inline-flex items-center justify-center rounded-lg bg-blue-900 text-white text-[13px] font-bold">{{ $hal }}</span>
+                                    @else
+                                        <a href="{{ $url }}" class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 text-[13px] font-semibold hover:bg-slate-50 transition">{{ $hal }}</a>
+                                    @endif
+                                @endforeach
+                            </div>
+
+                            @if($siswas->hasMorePages())
+                                <a href="{{ $siswas->nextPageUrl() }}" class="h-9 px-3 inline-flex items-center rounded-lg border border-slate-300 bg-white text-slate-700 text-[13px] font-semibold hover:bg-slate-50 transition">Berikutnya ›</a>
+                            @else
+                                <span class="h-9 px-3 inline-flex items-center rounded-lg border border-slate-200 text-slate-300 text-[13px] font-semibold">Berikutnya ›</span>
+                            @endif
+                        </div>
+                    </div>
+
+                @endif
+            </form>
+
+            {{-- Kontrol jumlah per halaman — di LUAR form aksi massal (form tidak boleh bersarang) --}}
+            @if($siswas->total() > 0)
+                <form method="GET" action="{{ route('siswa.index') }}" class="flex items-center justify-end gap-2 mt-2.5">
+                    @foreach(request()->except('per_halaman', 'page') as $k => $v)
+                        <input type="hidden" name="{{ $k }}" value="{{ $v }}">
+                    @endforeach
+                    <label class="text-[12px] text-slate-500 whitespace-nowrap">Tampilkan per halaman</label>
+                    <select name="per_halaman" onchange="this.form.submit()"
+                            class="h-8 w-[74px] rounded-lg border border-slate-300 bg-white pl-2 pr-6 text-[12px] font-semibold text-slate-700 outline-none focus:border-blue-500">
+                        @foreach([25, 50, 100, 200] as $n)
+                            <option value="{{ $n }}" @selected($filter['per_halaman'] === $n)>{{ $n }}</option>
+                        @endforeach
+                    </select>
+                </form>
+            @endif
+
+            {{-- Form hapus (di luar form aksi massal supaya tidak bersarang) --}}
+            @foreach($siswas as $siswa)
+                <form id="hapus-{{ $siswa->id }}" action="{{ route('siswa.destroy', $siswa->id) }}" method="POST" class="hidden">
+                    @csrf @method('DELETE')
+                </form>
+            @endforeach
+
+        </div>
+
+        {{-- ================= MODAL HAPUS ================= --}}
+        <div x-show="hapusModalOpen" x-cloak style="display:none"
+             class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[380px] overflow-hidden" @click.away="hapusModalOpen = false">
+                <div class="h-1.5 w-full" style="background: linear-gradient(135deg,#b91c1c,#ef4444)"></div>
+                <div class="p-6 text-center">
+                    <div class="bg-red-50 text-red-500 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 border-4 border-white shadow-sm text-2xl">🗑️</div>
+                    <h3 class="text-lg font-extrabold text-slate-800 mb-1">Pindahkan ke Tong Sampah</h3>
+                    <p class="text-sm text-slate-600 mb-1">
+                        <span class="font-bold text-red-600 break-words" x-text="hapusNama"></span>
                     </p>
-                    
-                    <div class="flex flex-row gap-3 w-full">
-                        <button type="button" @click="deleteModalOpen = false" style="background-color: #f8fafc; color: #475569;" class="font-bold py-3 px-4 rounded-xl border border-slate-300 hover:bg-slate-100 transition w-full text-sm tracking-wide text-center">
-                            Batal
-                        </button>
-                        <button type="button" @click="document.getElementById(deleteFormId).submit()" style="background-color: #dc2626; color: #ffffff;" class="font-bold py-3 px-4 rounded-xl shadow hover:opacity-90 transition w-full text-sm tracking-wide text-center">
-                            Ya, Pindahkan
-                        </button>
+                    <p class="text-[11px] italic text-slate-400 mb-5">Tidak permanen — data masih bisa dipulihkan dari menu Tong Sampah.</p>
+                    <div class="flex gap-3">
+                        <button type="button" @click="hapusModalOpen = false"
+                                class="w-full h-10 rounded-xl border border-slate-300 bg-white text-slate-600 text-sm font-bold hover:bg-slate-50 transition">Batal</button>
+                        <button type="button" @click="document.getElementById(hapusFormId).submit()"
+                                class="w-full h-10 rounded-xl bg-red-600 text-white text-sm font-bold shadow hover:opacity-90 transition">Ya, pindahkan</button>
                     </div>
-                    
                 </div>
             </div>
         </div>
-
     </div>
-
-    <!-- INJEKSI CSS MURNI ANTI-GANGGUAN UNTUK FILTER DAN AKSI MASSAL -->
-    <style>
-        .custom-filter-panel, .custom-bulk-action-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            background-color: #ffffff;
-            padding: 16px;
-            border-radius: 14px;
-            border: 1px solid #e2e8f0;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-        }
-        
-        .custom-bulk-action-panel {
-            background-color: #fbfcfd;
-            border: 1px dashed #cbd5e1;
-        }
-
-        /* Jika layar cukup lebar (tablet ke atas), jadikan sebaris (Kiri ke Kanan) */
-        @media (min-width: 768px) {
-            .custom-filter-panel, .custom-bulk-action-panel {
-                flex-direction: row;
-                flex-wrap: wrap;
-                align-items: center;
-            }
-        }
-
-        .custom-filter-input {
-            flex: 1 1 150px;
-            min-width: 140px;
-            height: 40px;
-            padding: 0 12px;
-            border-radius: 10px;
-            border: 1px solid #cbd5e1;
-            font-size: 14px;
-            color: #334155;
-            background-color: #ffffff;
-            outline: none;
-            transition: all 0.2s ease;
-        }
-
-        .custom-filter-input:focus {
-            border-color: #60a5fa;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
-        }
-
-        /* Kotak pencarian lebih dominan di baris filter */
-        @media (min-width: 768px) {
-            .custom-search-bar {
-                flex: 2 1 260px;
-            }
-        }
-
-        .custom-filter-input:focus {
-            border-color: #60a5fa;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
-        }
-
-        .bold-text {
-            font-weight: 700;
-            background-color: #ffffff;
-        }
-    </style>
-
-    <script>
-        document.getElementById('selectAll').addEventListener('change', function(e) {
-            // Hanya menyeleksi checkbox pada baris yang SEDANG DITAMPILKAN (tidak di-display:none)
-            let visibleRows = document.querySelectorAll('.siswa-row:not([style*="display: none"])');
-            visibleRows.forEach(row => {
-                let checkbox = row.querySelector('input[name="siswa_ids[]"]');
-                if(checkbox) checkbox.checked = e.target.checked;
-            });
-        });
-
-        function downloadImage(url, filename) {
-            fetch(url)
-                .then(response => response.blob())
-                .then(blob => {
-                    const link = document.createElement("a");
-                    link.href = URL.createObjectURL(blob);
-                    link.download = filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                })
-                .catch(err => {
-                    window.open(url, '_blank');
-                });
-        }
-    </script>
 </x-app-layout>

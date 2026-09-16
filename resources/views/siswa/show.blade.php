@@ -50,6 +50,7 @@
                 </div>
                 <div class="flex flex-wrap gap-2.5">
                     <a href="{{ route('siswa.index') }}" class="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 text-sm font-semibold shadow-sm transition whitespace-nowrap">← Kembali</a>
+                    <a href="{{ route('siswa.kartu', $siswa->id) }}" class="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 text-sm font-semibold shadow-sm transition whitespace-nowrap">🪪 Kartu Pelajar</a>
                     <button onclick="window.print()" class="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-sm font-semibold shadow-sm transition whitespace-nowrap">🖨️ Cetak Buku Induk</button>
                 </div>
             </div>
