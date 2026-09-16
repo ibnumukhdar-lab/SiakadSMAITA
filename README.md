@@ -118,6 +118,38 @@ Modul penilaian berbasis kuesioner skala Likert 1–5 per siswa.
   `penilaian_jawaban`, `penilaian_pengaturan`). Tabel `siswas`, `asrama_members`, `sr_group_members`,
   dan `sr_point_entries` tidak disentuh, jadi kamar asrama, grup binaan, dan poin sikap tetap utuh.
 
+## Project Student Root (5 tahap) — penilaian per siswa, jumlah project bebas
+
+Modul penilaian project untuk grup binaan Student Root.
+
+- **Jumlah project bebas per grup**: mentor (Guru) menambah project sesuai kebutuhan grupnya di
+  `/project-sr` (nama, tema/tujuan, tanggal mulai–selesai, status rencana/berjalan/selesai).
+- **5 tahap penilaian** (bisa diubah namanya, bobot, dan panduannya di `/project-sr/tahap/master` —
+  Tata Usaha/Super Admin): Observasi 15%, Perencanaan 20%, Perancangan 25%, Validasi Ahli 20%,
+  Presentasi Publik 20%. Bobot ideal 100%, tapi tetap dihitung proporsional bila belum pas.
+- **Status tahap di level project** (belum / berjalan / selesai / **tidak dipakai**) untuk memantau progres;
+  tahap yang ditandai "tidak dipakai" otomatis dikeluarkan dari perhitungan dan bobotnya dialihkan
+  ke tahap lain. Project otomatis berstatus "berjalan" saat ada nilai, dan "selesai" saat semua tahap
+  yang dipakai selesai.
+- **Nilai diisi per SISWA per TAHAP (0–100)** di halaman detail project — setiap anak punya nilai sendiri.
+  Tersedia bantuan "Isi cepat satu tahap" (nilai sama untuk seluruh anggota), lalu bisa dikoreksi per siswa.
+  Ada juga kolom catatan per siswa.
+- **Nilai akhir project per siswa** = rata-rata berbobot tahap yang dipakai. Predikat memakai ambang yang
+  sama dengan penilaian karakter (A ≥ 90, B ≥ 80, C ≥ 70, D < 70).
+- **Nilai akhir Student Root per siswa** = rata-rata nilai project yang **lengkap** (semua tahap yang dipakai
+  sudah dinilai). Project yang baru sebagian dinilai tetap tampil dengan tanda `*`/kuning dan **tidak**
+  ikut menghitung nilai akhir — supaya nilai tidak terlihat bagus padahal penilaian belum selesai.
+- **Rekap** (`/project-sr/rekap`): tabel siswa × project, nilai akhir + predikat, jumlah project yang
+  dilaksanakan, rata-rata per tahap (untuk melihat tahap kuat/lemah), ekspor CSV.
+- **Izin**: `buka-menu-project-sr` (Guru, Tata Usaha), `kelola-project-sr` + `nilai-project-sr` (Guru),
+  `kelola-master-project-sr` (Tata Usaha). Mentor hanya bisa mengelola project grup binaannya sendiri;
+  Super Admin dan Tata Usaha bisa melihat semua.
+- **Integrasi**: nilai project muncul di halaman rincian penilaian per siswa (`/penilaian/siswa/{id}`)
+  bersama nilai Adab dan Keasramaan.
+- **Keamanan data**: tabel baru `sr_project_tahap`, `sr_projects`, `sr_project_tahap_status`,
+  `sr_project_nilai`. Tabel `sr_groups`, `sr_group_members`, `sr_point_criteria`, dan `sr_point_entries`
+  tidak disentuh — grup binaan dan poin sikap tetap utuh. Project yang sudah punya nilai tidak bisa dihapus.
+
 ## Peta produksi
 
 - Live: `https://siakad.smaitarafah.sch.id`

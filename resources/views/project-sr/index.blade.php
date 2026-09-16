@@ -11,6 +11,11 @@
                     </p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
+                    @if($bolehTambah)
+                        <span class="text-[11.5px] text-slate-400">Project dibuat &amp; dinilai oleh mentor grup</span>
+                    @else
+                        <span class="text-[11.5px] text-slate-400">Hanya bisa melihat · project dibuat &amp; dinilai oleh mentor masing-masing grup</span>
+                    @endif
                     <a href="{{ route('project-sr.rekap') }}"
                        class="inline-flex items-center justify-center h-10 px-3.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12.5px] font-semibold hover:bg-slate-50 transition">📈 Rekap Project</a>
                     @if($bolehMaster)
@@ -50,6 +55,11 @@
                     <summary class="cursor-pointer px-4 py-3 text-[13.5px] font-bold text-slate-800 select-none">➕ Tambah project baru</summary>
                     <form action="{{ route('project-sr.store') }}" method="POST" class="grid grid-cols-2 sm:grid-cols-12 gap-2.5 p-4 border-t border-slate-100">
                         @csrf
+                        <div class="col-span-2 sm:col-span-12">
+                            <p class="text-[11.5px] text-slate-500 mb-1">
+                                Kamu bebas menentukan jumlah dan nama project untuk grup binaanmu — ketik langsung di bawah ini.
+                            </p>
+                        </div>
                         <div class="col-span-2 sm:col-span-4">
                             <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Grup Student Root *</label>
                             <select name="grup_id" required class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 focus:border-blue-500 outline-none">

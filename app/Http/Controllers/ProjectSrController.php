@@ -82,6 +82,7 @@ class ProjectSrController extends Controller
             'bolehSemua' => $bolehSemua,
             'bolehTambah' => $user->can('kelola-project-sr') || $user->hasRole('Super Admin'),
             'bolehMaster' => $user->can('kelola-master-project-sr') || $user->hasRole('Super Admin'),
+            'grupSaya' => SrGroup::where('mentor_id', $user->id)->count(),
             'jumlahTahap' => SrProjectTahap::daftarAktif()->count(),
             'bobotTotal' => SrProjectTahap::bobotTotal(),
         ]);
@@ -91,10 +92,13 @@ class ProjectSrController extends Controller
 
     public function store(Request $request)
     {
-        abort_unless(Auth::user()->can('kelola-project-sr') || Auth::user()->hasRole('Super Admin'), 403);
+        abort_unless(Auth::user()->can('kelola-project-sr') || Auth::user()->hasRole('Super Admin'), 403, 'Hanya mentor grup (Guru) yang boleh membuat project.');
         $data = $this->validasiProject($request);
 
-        $this->pastikanBolehKelolaGrup($data['grup_id']);
+        if (! $this->bolehKelolaGrup($data['grup_id'])) {
+            return redirect()->route('project-sr.index')
+                ->with('error', 'Project hanya boleh dibuat oleh mentor grup tersebut. Pilih grup binaan Anda sendiri.');
+        }
 
         $grup = SrGroup::find($data['grup_id']);
 
@@ -112,10 +116,18 @@ class ProjectSrController extends Controller
     {
         $project = SrProject::findOrFail($id);
         abort_unless(Auth::user()->can('kelola-project-sr') || Auth::user()->hasRole('Super Admin'), 403);
-        $this->pastikanBolehKelolaGrup($project->grup_id);
+
+        if (! $this->mentorGrup($project)) {
+            return redirect()->route('project-sr.show', $project->id)
+                ->with('error', 'Project ini milik grup lain — hanya mentornya yang boleh mengubah.');
+        }
 
         $data = $this->validasiProject($request, $project);
-        $this->pastikanBolehKelolaGrup($data['grup_id']);
+
+        if (! $this->bolehKelolaGrup($data['grup_id'])) {
+            return redirect()->route('project-sr.show', $project->id)
+                ->with('error', 'Tidak bisa memindahkan project ke grup yang bukan binaan Anda.');
+        }
 
         $project->update($data);
 
@@ -126,7 +138,11 @@ class ProjectSrController extends Controller
     {
         $project = SrProject::findOrFail($id);
         abort_unless(Auth::user()->can('kelola-project-sr') || Auth::user()->hasRole('Super Admin'), 403);
-        $this->pastikanBolehKelolaGrup($project->grup_id);
+
+        if (! $this->mentorGrup($project)) {
+            return redirect()->route('project-sr.show', $project->id)
+                ->with('error', 'Project ini milik grup lain — hanya mentornya yang boleh menghapus.');
+        }
 
         $jumlahNilai = $project->nilai()->whereNotNull('skor')->count();
         if ($jumlahNilai > 0) {
@@ -540,7 +556,9 @@ class ProjectSrController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->hasRole('Super Admin') || $user->can('buka-menu-master-student-root')) {
+        // Hanya Super Admin yang boleh bertindak pada project grup mana pun (jaring pengaman teknis).
+        // Pembuatan & penilaian project adalah tugas MENTOR grup (Guru pengampu grup itu).
+        if ($user->hasRole('Super Admin')) {
             return true;
         }
 
@@ -558,15 +576,16 @@ class ProjectSrController extends Controller
         return $this->mentorGrup($project) || $this->bolehLihatSemua();
     }
 
-    private function pastikanBolehKelolaGrup($grupId): void
+    private function bolehKelolaGrup($grupId): bool
     {
         $user = Auth::user();
-        if ($user->hasRole('Super Admin') || $user->can('buka-menu-master-student-root')) {
-            return;
+        if ($user->hasRole('Super Admin')) {
+            return true;
         }
 
         $grup = SrGroup::find($grupId);
-        abort_unless($grup && (int) $grup->mentor_id === (int) $user->id, 403, 'Anda bukan mentor grup ini.');
+
+        return $grup && (int) $grup->mentor_id === (int) $user->id;
     }
 
     /** Kalau seluruh tahap yang dipakai sudah selesai → project otomatis berstatus selesai. */

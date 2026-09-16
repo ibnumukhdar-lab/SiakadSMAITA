@@ -146,7 +146,7 @@
                     <div class="text-[13px] text-slate-400 py-4 text-center">Grup ini belum punya anggota aktif.</div>
                 @elseif(! $bolehNilai)
                     <div class="bg-slate-50 border border-slate-200 text-slate-600 p-3 rounded-xl text-[12.5px]">
-                        Anda hanya bisa melihat. Penilaian dilakukan oleh mentor grup{{ $project->mentor ? ' (' . $project->mentor->name . ')' : '' }}.
+                        Anda hanya bisa melihat. Project dibuat dan dinilai oleh mentor grup{{ $project->mentor ? ' (' . $project->mentor->name . ')' : '' }}.
                     </div>
                     <div class="mt-3 divide-y divide-slate-100">
                         @foreach($anggota as $a)
