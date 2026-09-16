@@ -9,6 +9,9 @@ use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\KelasController;
 use App\Http\Controllers\TahunAjaranController;
 use App\Http\Controllers\KenaikanKelasController;
+use App\Http\Controllers\PenilaianIsiController;
+use App\Http\Controllers\PenilaianMasterController;
+use App\Http\Controllers\PenilaianRekapController;
 use Illuminate\Support\Facades\DB;        // <-- Ditambahkan untuk Route Sinkronisasi
 use Illuminate\Support\Facades\Schema;  // <-- Ditambahkan untuk Route Sinkronisasi
 
@@ -117,7 +120,40 @@ Route::middleware(['auth', 'permission:buka-menu-siswa'])->group(function () {
     Route::delete('/tahun-ajaran/{id}', [TahunAjaranController::class, 'destroy'])->where('id', '[0-9]+')->name('tahun-ajaran.destroy');
 });
 
-// --- 3d. KENAIKAN / PINDAH KELAS MASSAL ---
+// --- 4. PENILAIAN KARAKTER (Adab & Keasramaan) ---
+// Rekap & rincian: siapa pun yang boleh membuka menu penilaian (mis. Tata Usaha, Kepala Sekolah).
+Route::middleware(['auth', 'permission:buka-menu-penilaian'])->group(function () {
+    Route::get('/penilaian', fn () => redirect()->route('penilaian.rekap'))->name('penilaian.index');
+    Route::get('/penilaian/rekap', [PenilaianRekapController::class, 'index'])->name('penilaian.rekap');
+    Route::get('/penilaian/rekap/ekspor', [PenilaianRekapController::class, 'ekspor'])->name('penilaian.rekap.ekspor');
+    Route::get('/penilaian/siswa/{id}', [PenilaianRekapController::class, 'siswa'])->where('id', '[0-9]+')->name('penilaian.siswa');
+
+    // Pengisian lembar penilaian (Kepala Diniyah, Musyrif/Penanggungjawab Asrama)
+    Route::get('/penilaian/{jenis}', [PenilaianIsiController::class, 'index'])->where('jenis', 'adab|keasramaan')->name('penilaian.isi');
+    Route::post('/penilaian/{jenis}/sesi', [PenilaianIsiController::class, 'buatSesi'])->where('jenis', 'adab|keasramaan')->name('penilaian.sesi.buat');
+    Route::get('/penilaian/sesi/{id}', [PenilaianIsiController::class, 'sesi'])->where('id', '[0-9]+')->name('penilaian.sesi');
+    Route::get('/penilaian/sesi/{id}/siswa/{siswaId}', [PenilaianIsiController::class, 'form'])->where(['id' => '[0-9]+', 'siswaId' => '[0-9]+'])->name('penilaian.sesi.form');
+    Route::post('/penilaian/sesi/{id}/siswa/{siswaId}', [PenilaianIsiController::class, 'simpan'])->where(['id' => '[0-9]+', 'siswaId' => '[0-9]+'])->name('penilaian.sesi.simpan');
+    Route::get('/penilaian/sesi/{id}/kamar/{kamarId}', [PenilaianIsiController::class, 'kamar'])->where(['id' => '[0-9]+', 'kamarId' => '[0-9]+'])->name('penilaian.sesi.kamar');
+    Route::post('/penilaian/sesi/{id}/kamar/{kamarId}', [PenilaianIsiController::class, 'kamarSimpan'])->where(['id' => '[0-9]+', 'kamarId' => '[0-9]+'])->name('penilaian.sesi.kamarSimpan');
+    Route::post('/penilaian/sesi/{id}/finalkan', [PenilaianIsiController::class, 'finalkan'])->where('id', '[0-9]+')->name('penilaian.sesi.finalkan');
+    Route::post('/penilaian/sesi/{id}/buka', [PenilaianIsiController::class, 'buka'])->where('id', '[0-9]+')->name('penilaian.sesi.buka');
+});
+
+// Master penilaian: pertanyaan, periode, ambang predikat (Tata Usaha / Super Admin).
+Route::middleware(['auth', 'permission:kelola-master-penilaian'])->prefix('penilaian/master')->group(function () {
+    Route::get('/', [PenilaianMasterController::class, 'index'])->name('penilaian.master');
+    Route::post('/kriteria', [PenilaianMasterController::class, 'kriteriaStore'])->name('penilaian.master.kriteriaStore');
+    Route::put('/kriteria/{id}', [PenilaianMasterController::class, 'kriteriaUpdate'])->where('id', '[0-9]+')->name('penilaian.master.kriteriaUpdate');
+    Route::delete('/kriteria/{id}', [PenilaianMasterController::class, 'kriteriaDestroy'])->where('id', '[0-9]+')->name('penilaian.master.kriteriaDestroy');
+    Route::post('/periode', [PenilaianMasterController::class, 'periodeStore'])->name('penilaian.master.periodeStore');
+    Route::put('/periode/{id}', [PenilaianMasterController::class, 'periodeUpdate'])->where('id', '[0-9]+')->name('penilaian.master.periodeUpdate');
+    Route::post('/periode/{id}/aktifkan', [PenilaianMasterController::class, 'periodeAktifkan'])->where('id', '[0-9]+')->name('penilaian.master.periodeAktifkan');
+    Route::delete('/periode/{id}', [PenilaianMasterController::class, 'periodeDestroy'])->where('id', '[0-9]+')->name('penilaian.master.periodeDestroy');
+    Route::post('/ambang', [PenilaianMasterController::class, 'ambangStore'])->name('penilaian.master.ambangStore');
+});
+
+// --- 3d. KENAIKAN / PINDAH KELAS (massal) ---
 Route::middleware(['auth', 'permission:buka-menu-siswa'])->group(function () {
     Route::get('/kenaikan-kelas', [KenaikanKelasController::class, 'index'])->name('kenaikan.index');
     Route::post('/kenaikan-kelas', [KenaikanKelasController::class, 'proses'])->name('kenaikan.proses');

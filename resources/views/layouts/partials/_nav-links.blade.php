@@ -6,6 +6,7 @@
     $beeOn   = request()->routeIs('bee.*');
     $arsipOn = request()->routeIs('arsip.*');
     $siswaOn = request()->routeIs('siswa.*');
+    $nilaiOn = request()->routeIs('penilaian.*');
     $kelasOn = request()->routeIs('kelas.*');
     $tahunOn = request()->routeIs('tahun-ajaran.*');
     $kenaikanOn = request()->routeIs('kenaikan.*');
@@ -85,6 +86,41 @@
             </div>
         </details>
     </div>
+
+    {{-- ===== PENILAIAN KARAKTER ===== --}}
+    @can('buka-menu-penilaian')
+    <div class="pt-3">
+        <div class="px-3 pb-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-indigo-500/90">📋 Penilaian</div>
+        <details class="nav-sec" {{ $nilaiOn ? 'open' : '' }}>
+            <summary class="{{ $secSum }} {{ $nilaiOn ? $secAct : '' }}">
+                <span class="{{ $ico }}">📋</span> Penilaian Karakter
+                <svg class="chev ms-auto h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </summary>
+            <div class="mt-0.5 space-y-0.5">
+                <a href="{{ route('penilaian.rekap') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                    <span class="w-5 text-center text-[14px] shrink-0">📊</span> Rekap Nilai
+                </a>
+                @can('nilai-adab')
+                <a href="{{ route('penilaian.isi', 'adab') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                    <span class="w-5 text-center text-[14px] shrink-0">🕌</span> Penilaian Adab
+                </a>
+                @endcan
+                @can('nilai-keasramaan')
+                <a href="{{ route('penilaian.isi', 'keasramaan') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                    <span class="w-5 text-center text-[14px] shrink-0">🛏️</span> Penilaian Keasramaan
+                </a>
+                @endcan
+                @can('kelola-master-penilaian')
+                <a href="{{ route('penilaian.master') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                    <span class="w-5 text-center text-[14px] shrink-0">⚙️</span> Master Penilaian
+                </a>
+                @endcan
+            </div>
+        </details>
+    </div>
+    @endcan
 
     {{-- ===== ASRAMA ===== --}}
     @can('buka-menu-asrama')

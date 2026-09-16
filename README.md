@@ -92,6 +92,31 @@ guru: audio Bee Smart, arsip surat, log, sesi). Data unggahan hanya ada di serve
 - Aksi massal di Data Siswa juga punya opsi **Pindahkan ke kelas…** untuk memindahkan siswa terpilih
   (per halaman), melengkapi proses per kelas di halaman Kenaikan Kelas.
 
+## Penilaian Karakter: Adab & Keasramaan
+
+Modul penilaian berbasis kuesioner skala Likert 1–5 per siswa.
+
+- **Master Penilaian** (`/penilaian/master`, izin `kelola-master-penilaian` — Tata Usaha/Super Admin):
+  daftar pertanyaan Adab & Keasramaan (bisa ditambah/diubah/dinonaktifkan), daftar periode penilaian
+  (satu periode aktif), dan ambang predikat (bawaan A ≥ 90, B ≥ 80, C ≥ 70, sisanya D).
+  Pertanyaan yang sudah dipakai di penilaian **tidak bisa dihapus** — pakai "nonaktifkan".
+  Periode yang sedang aktif atau sudah punya lembar penilaian juga tidak bisa dihapus.
+- **Pengisian** (`/penilaian/adab`, `/penilaian/keasramaan`, izin `nilai-adab` / `nilai-keasramaan` —
+  Kepala Diniyah & Musyrif/Penanggungjawab Asrama): satu "lembar penilaian" (sesi) per penilai per periode.
+  Adab boleh dinilai dua pihak (Kepala Diniyah dan Penanggungjawab Asrama) — nilainya **dirata-ratakan**
+  di rekap. Keasramaan punya bantuan **isi cepat per kamar** (skor sama untuk semua penghuni) yang masih
+  bisa dikoreksi per siswa.
+- **Alur**: pilih periode → buka lembar → isi per siswa (tombol "Simpan & lanjut siswa berikutnya")
+  → **Finalkan**. Setelah final, nilai terkunci; hanya Super Admin yang bisa "buka kembali".
+- **Perhitungan**: persentase = (jumlah skor ÷ (jumlah pertanyaan dijawab × 5)) × 100; nilai akhir
+  adab/keasramaan = rata-rata persentase tiap penilai; predikat dari ambang di Master Penilaian.
+- **Rekap** (`/penilaian/rekap`): tabel nilai akhir per siswa (kolom per penilai, rata-rata, predikat),
+  ringkasan sebaran predikat, filter periode/kelas/nama, **ekspor CSV**, dan halaman rincian per siswa
+  (`/penilaian/siswa/{id}`) berisi skor tiap pertanyaan dari setiap penilai.
+- **Keamanan data**: semua tabel baru (`penilaian_kriteria`, `penilaian_periode`, `penilaian_sesi`,
+  `penilaian_jawaban`, `penilaian_pengaturan`). Tabel `siswas`, `asrama_members`, `sr_group_members`,
+  dan `sr_point_entries` tidak disentuh, jadi kamar asrama, grup binaan, dan poin sikap tetap utuh.
+
 ## Peta produksi
 
 - Live: `https://siakad.smaitarafah.sch.id`
