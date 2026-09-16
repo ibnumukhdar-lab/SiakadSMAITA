@@ -16,9 +16,13 @@ class PenilaianSesi extends Model
     public const JENIS = ['adab' => 'Adab', 'keasramaan' => 'Keasramaan'];
 
     public const PERAN = [
-        'kepala_diniyah' => 'Kepala Diniyah',
-        'penanggungjawab_asrama' => 'Penanggungjawab Asrama',
+        'musyrif' => 'Musyrif/Musyrifah',
+        'penanggungjawab_asrama' => 'Musyrif/Musyrifah',
+        'kepala_diniyah' => 'Kepala Diniyah (penilaian lama)',
     ];
+
+    /** Pilihan peran yang boleh dipakai saat membuat lembar baru (hanya musyrif/musyrifah). */
+    public const PERAN_PILIHAN = ['musyrif' => 'Musyrif/Musyrifah'];
 
     public function periode()
     {
@@ -107,6 +111,8 @@ class PenilaianSesi extends Model
             ->get();
 
         $hasil = [];
+        $namaPenilai = \App\Models\User::whereIn('id', $sesi->pluck('penilai_id')->filter()->unique())->pluck('name', 'id');
+
         foreach ($baris as $b) {
             $jumlah = (int) $b->jumlah;
             $maks = $jumlah * 5;
@@ -116,6 +122,7 @@ class PenilaianSesi extends Model
             $hasil[$b->siswa_id][] = [
                 'sesi_id' => (int) $b->sesi_id,
                 'penilai_id' => $induk?->penilai_id,
+                'penilai_nama' => $induk ? ($namaPenilai[$induk->penilai_id] ?? null) : null,
                 'penilai_peran' => $induk?->penilai_peran,
                 'status' => $induk?->status,
                 'jumlah' => $jumlah,

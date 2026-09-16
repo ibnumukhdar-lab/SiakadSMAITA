@@ -68,8 +68,8 @@
                 </div>
             </div>
 
-            {{-- ===== ISI CEPAT PER KAMAR (keasramaan) ===== --}}
-            @if($sesi->jenis === 'keasramaan' && $daftarKamar->isNotEmpty())
+            {{-- ===== ISI CEPAT PER KAMAR ===== --}}
+            @if($daftarKamar->isNotEmpty())
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-3.5 sm:p-4 mb-3">
                     <div class="flex items-center justify-between gap-2 mb-2.5">
                         <h4 class="text-[13.5px] font-bold text-slate-800">⚡ Isi cepat per kamar</h4>
@@ -77,11 +77,16 @@
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                         @foreach($daftarKamar as $kamar)
-                            @php $p = $progresKamar[$kamar->id] ?? ['total' => 0, 'sudah' => 0]; @endphp
+                            @php
+                                $p = $progresKamar[$kamar->id] ?? ['total' => 0, 'sudah' => 0];
+                                $binaanSaya = $kamarBinaan->contains('id', $kamar->id);
+                            @endphp
                             <a href="{{ route('penilaian.sesi.kamar', [$sesi->id, $kamar->id]) }}"
-                               class="group flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 hover:border-blue-300 hover:bg-blue-50/60 transition">
+                               class="group flex items-center justify-between gap-2 rounded-xl border px-3 py-2 transition {{ $binaanSaya ? 'border-blue-200 bg-blue-50/50 hover:border-blue-300' : 'border-slate-200 bg-slate-50/60 hover:border-blue-300 hover:bg-blue-50/60' }}">
                                 <span class="min-w-0">
-                                    <span class="block text-[12.5px] font-semibold text-slate-700 truncate">{{ $kamar->nama_kamar }}</span>
+                                    <span class="block text-[12.5px] font-semibold text-slate-700 truncate">
+                                        {{ $kamar->nama_kamar }}@if($binaanSaya) <span class="text-[9.5px] font-black uppercase tracking-wide text-blue-700">· binaan saya</span>@endif
+                                    </span>
                                     <span class="block text-[10.5px] text-slate-400">{{ $p['sudah'] }}/{{ $p['total'] }} terisi</span>
                                 </span>
                                 <span class="text-[13px] {{ ($p['total'] > 0 && $p['sudah'] >= $p['total']) ? 'text-green-600' : 'text-slate-300 group-hover:text-blue-600' }}">
@@ -90,6 +95,23 @@
                             </a>
                         @endforeach
                     </div>
+                </div>
+            @endif
+
+            {{-- ===== KAMAR BINAAN SAYA ===== --}}
+            @if($kamarBinaan->isNotEmpty())
+                <div class="flex flex-wrap items-center gap-1.5 mb-3">
+                    <span class="text-[11.5px] font-semibold text-slate-400">Kamar binaan saya:</span>
+                    @foreach($kamarBinaan as $kb)
+                        <a href="{{ route('penilaian.sesi', [$sesi->id, 'kamar' => $kb->id]) }}"
+                           class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11.5px] font-semibold transition {{ $filter['kamar'] === $kb->id ? 'border-blue-300 bg-blue-50 text-blue-900' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50' }}">
+                            🏠 {{ $kb->nama_kamar }}
+                        </a>
+                    @endforeach
+                    @if($filter['kamar'] > 0)
+                        <a href="{{ route('penilaian.sesi', $sesi->id) }}"
+                           class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11.5px] font-semibold text-slate-500 hover:bg-slate-100 transition">Semua siswa</a>
+                    @endif
                 </div>
             @endif
 

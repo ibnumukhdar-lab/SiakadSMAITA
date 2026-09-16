@@ -52,7 +52,7 @@ class PenilaianIsiController extends Controller
             'sesiSaya' => $sesiSaya,
             'sesiLain' => $sesiLain,
             'jumlahKriteria' => $jumlahKriteria,
-            'peranPilihan' => PenilaianSesi::PERAN,
+            'peranPilihan' => PenilaianSesi::PERAN_PILIHAN,
             'peranBawaan' => $this->peranBawaan(),
         ]);
     }
@@ -65,7 +65,6 @@ class PenilaianIsiController extends Controller
 
         $data = $request->validate([
             'periode_id' => ['required', 'integer', 'exists:penilaian_periode,id'],
-            'penilai_peran' => ['nullable', 'string', 'max:40'],
         ]);
 
         if (PenilaianKriteria::daftarAktif($jenis)->count() === 0) {
@@ -75,7 +74,7 @@ class PenilaianIsiController extends Controller
 
         $sesi = PenilaianSesi::firstOrCreate(
             ['jenis' => $jenis, 'periode_id' => $data['periode_id'], 'penilai_id' => Auth::id()],
-            ['penilai_peran' => $data['penilai_peran'] ?: $this->peranBawaan(), 'status' => 'draft']
+            ['penilai_peran' => $this->peranBawaan(), 'status' => 'draft']
         );
 
         return redirect()->route('penilaian.sesi', $sesi->id)
@@ -125,12 +124,11 @@ class PenilaianIsiController extends Controller
         // Peta kamar tiap siswa (dipakai untuk tampilan keasramaan)
         $petaKamar = $this->petaKamar($siswa->pluck('id')->all());
 
-        $daftarKamar = PenilaianSesi::JENIS[$sesi->jenis] && $sesi->jenis === 'keasramaan'
-            ? AsramaKamar::where('status', 'aktif')->orderBy('nama_kamar')->get()
-            : collect();
+        $daftarKamar = AsramaKamar::where('status', 'aktif')->orderBy('nama_kamar')->get();
+        $kamarBinaan = AsramaKamar::where('status', 'aktif')->where('musyrif_id', Auth::id())->orderBy('nama_kamar')->get();
 
         $progresKamar = [];
-        if ($sesi->jenis === 'keasramaan' && $daftarKamar->isNotEmpty()) {
+        if ($daftarKamar->isNotEmpty()) {
             $anggotaKamar = DB::table('asrama_members')->whereIn('kamar_id', $daftarKamar->pluck('id'))->whereNull('tanggal_keluar')->get()->groupBy('kamar_id');
             foreach ($daftarKamar as $kamar) {
                 $anggota = $anggotaKamar[$kamar->id] ?? collect();
@@ -153,6 +151,7 @@ class PenilaianIsiController extends Controller
             'filter' => $filter,
             'petaKamar' => $petaKamar,
             'daftarKamar' => $daftarKamar,
+            'kamarBinaan' => $kamarBinaan,
             'progresKamar' => $progresKamar,
             'daftarKelas' => \App\Models\Kelas::daftarNama(true),
             'totalSiswa' => Siswa::where('status', 'Aktif')->count(),
@@ -229,7 +228,6 @@ class PenilaianIsiController extends Controller
     {
         $sesi = PenilaianSesi::with('periode')->findOrFail($id);
         $this->izinkanAkses($sesi, hanyaPenilai: true);
-        abort_unless($sesi->jenis === 'keasramaan', 404);
         abort_if($sesi->status === 'final', 403, 'Penilaian sudah difinalkan.');
 
         $kamar = AsramaKamar::findOrFail($kamarId);
@@ -340,7 +338,7 @@ class PenilaianIsiController extends Controller
 
     private function peranBawaan(): string
     {
-        return Auth::user()->hasRole('Kepala Diniyah') ? 'kepala_diniyah' : 'penanggungjawab_asrama';
+        return 'musyrif';
     }
 
     private function namaAtribut($kriteria): array

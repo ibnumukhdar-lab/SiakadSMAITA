@@ -7,7 +7,7 @@
                 <div>
                     <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">📊 Rekap Penilaian Karakter</h3>
                     <p class="text-[13px] text-slate-500 mt-0.5">
-                        Nilai adab (rata-rata penilai) &amp; keasramaan per siswa · predikat A ≥ {{ $ambang['a'] }}, B ≥ {{ $ambang['b'] }}, C ≥ {{ $ambang['c'] }}, D &lt; {{ $ambang['c'] }}
+                        Nilai adab &amp; keasramaan per siswa (dinilai musyrif/musyrifah) · predikat A ≥ {{ $ambang['a'] }}, B ≥ {{ $ambang['b'] }}, C ≥ {{ $ambang['c'] }}, D &lt; {{ $ambang['c'] }}
                     </p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
@@ -109,9 +109,7 @@
                             <tr>
                                 <th class="px-4 py-2.5">Siswa</th>
                                 <th class="px-3 py-2.5">Kelas</th>
-                                <th class="px-3 py-2.5 text-center">Adab<br><span class="font-bold normal-case tracking-normal text-slate-400">Kepala Diniyah</span></th>
-                                <th class="px-3 py-2.5 text-center">Adab<br><span class="font-bold normal-case tracking-normal text-slate-400">PJ Asrama</span></th>
-                                <th class="px-3 py-2.5 text-center">Adab Akhir</th>
+                                <th class="px-3 py-2.5 text-center">Adab</th>
                                 <th class="px-3 py-2.5 text-center">Keasramaan</th>
                                 <th class="px-3 py-2.5"></th>
                             </tr>
@@ -126,12 +124,6 @@
                                     <td class="px-3 py-2.5">
                                         <div class="text-[12.5px] text-slate-600">{{ $r['kelas'] ?: '-' }}</div>
                                         @if($r['kamar'])<div class="text-[11px] text-slate-400">{{ $r['kamar'] }}</div>@endif
-                                    </td>
-                                    <td class="px-3 py-2.5 text-center">
-                                        @include('penilaian.partials._angka', ['entri' => $r['adab']['per_penilai']['kepala_diniyah'] ?? null])
-                                    </td>
-                                    <td class="px-3 py-2.5 text-center">
-                                        @include('penilaian.partials._angka', ['entri' => $r['adab']['per_penilai']['penanggungjawab_asrama'] ?? null])
                                     </td>
                                     <td class="px-3 py-2.5 text-center">
                                         @include('penilaian.partials._nilai-akhir', ['nilai' => $r['adab']])

@@ -102,10 +102,11 @@ Modul penilaian berbasis kuesioner skala Likert 1–5 per siswa.
   Pertanyaan yang sudah dipakai di penilaian **tidak bisa dihapus** — pakai "nonaktifkan".
   Periode yang sedang aktif atau sudah punya lembar penilaian juga tidak bisa dihapus.
 - **Pengisian** (`/penilaian/adab`, `/penilaian/keasramaan`, izin `nilai-adab` / `nilai-keasramaan` —
-  Kepala Diniyah & Musyrif/Penanggungjawab Asrama): satu "lembar penilaian" (sesi) per penilai per periode.
-  Adab boleh dinilai dua pihak (Kepala Diniyah dan Penanggungjawab Asrama) — nilainya **dirata-ratakan**
-  di rekap. Keasramaan punya bantuan **isi cepat per kamar** (skor sama untuk semua penghuni) yang masih
-  bisa dikoreksi per siswa.
+  **musyrif/musyrifah**): satu "lembar penilaian" (sesi) per musyrif per periode. Bila satu siswa dinilai
+  lebih dari satu musyrif, nilainya **dirata-ratakan** di rekap (nama pengisi tampil di rekap/CSV).
+  Kepala Diniyah **tidak mengisi** — beliau hanya bisa melihat rekap (izin `buka-menu-penilaian`).
+  Lembar Adab maupun Keasramaan punya bantuan **isi cepat per kamar** (skor sama untuk semua penghuni kamar)
+  yang masih bisa dikoreksi per siswa; kamar binaan musyrif ditandai "· binaan saya" dan ada chip filter cepat.
 - **Alur**: pilih periode → buka lembar → isi per siswa (tombol "Simpan & lanjut siswa berikutnya")
   → **Finalkan**. Setelah final, nilai terkunci; hanya Super Admin yang bisa "buka kembali".
 - **Perhitungan**: persentase = (jumlah skor ÷ (jumlah pertanyaan dijawab × 5)) × 100; nilai akhir

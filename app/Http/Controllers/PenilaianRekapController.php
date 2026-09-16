@@ -84,8 +84,8 @@ class PenilaianRekapController extends Controller
             fwrite($keluaran, "\xEF\xBB\xBF");
             fputcsv($keluaran, [
                 'NISN', 'Nama Siswa', 'Kelas', 'Kamar',
-                'Adab - Kepala Diniyah (%)', 'Adab - Penanggungjawab Asrama (%)', 'Adab Rata-rata (%)', 'Predikat Adab',
-                'Keasramaan (%)', 'Predikat Keasramaan',
+                'Adab (%)', 'Predikat Adab', 'Dinilai oleh (Adab)',
+                'Keasramaan (%)', 'Predikat Keasramaan', 'Dinilai oleh (Keasramaan)',
             ]);
 
             foreach ($baris as $r) {
@@ -94,12 +94,12 @@ class PenilaianRekapController extends Controller
                     $r['nama'],
                     $r['kelas'],
                     $r['kamar'] ?? '',
-                    $r['adab']['per_penilai']['kepala_diniyah']['persentase'] ?? '',
-                    $r['adab']['per_penilai']['penanggungjawab_asrama']['persentase'] ?? '',
                     $r['adab']['rata'] ?? '',
                     $r['adab']['predikat'] ?? '',
+                    implode(' | ', $r['adab']['pengisi'] ?? []),
                     $r['keasramaan']['rata'] ?? '',
                     $r['keasramaan']['predikat'] ?? '',
+                    implode(' | ', $r['keasramaan']['pengisi'] ?? []),
                 ]);
             }
 
@@ -215,11 +215,12 @@ class PenilaianRekapController extends Controller
         });
     }
 
-    /** Ubah daftar hasil sesi (bisa 2 penilai) menjadi nilai akhir + predikat. */
+    /** Ubah daftar hasil sesi (bisa beberapa penilai musyrif) menjadi nilai akhir + predikat. */
     private function ringkasJenis(array $entri): array
     {
         $perPenilai = [];
         $angka = [];
+        $pengisi = [];
         $adaDraft = false;
 
         foreach ($entri as $e) {
@@ -227,6 +228,9 @@ class PenilaianRekapController extends Controller
             $perPenilai[$peran] = $e;
             if ($e['persentase'] !== null) {
                 $angka[] = $e['persentase'];
+            }
+            if (! empty($e['penilai_nama'])) {
+                $pengisi[] = $e['penilai_nama'];
             }
             if (($e['status'] ?? 'draft') === 'draft') {
                 $adaDraft = true;
@@ -240,6 +244,7 @@ class PenilaianRekapController extends Controller
             'rata' => $rata,
             'predikat' => PenilaianPengaturan::predikat($rata),
             'jumlah_penilai' => count($angka),
+            'pengisi' => array_values(array_unique($pengisi)),
             'ada_draft' => $adaDraft,
         ];
     }

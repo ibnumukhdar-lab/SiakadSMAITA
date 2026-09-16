@@ -39,7 +39,10 @@
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 mb-3">
                 <h4 class="text-[14px] font-bold text-slate-800 mb-1">Mulai / lanjutkan penilaian saya</h4>
                 <p class="text-[12.5px] text-slate-500 mb-3">
-                    Satu lembar penilaian per periode. {{ $jenis === 'adab' ? 'Adab boleh dinilai Kepala Diniyah dan Penanggungjawab Asrama — dua lembar terpisah, hasilnya dirata-ratakan.' : 'Keasramaan dinilai Penanggungjawab Asrama / Musyrif.' }}
+                    Satu lembar penilaian per periode. Penilaian {{ $labelJenis }} diisi oleh
+                    <strong>musyrif/musyrifah</strong> — tiap musyrif punya lembarnya sendiri, dan bila satu siswa
+                    dinilai lebih dari satu musyrif, nilainya dirata-ratakan di rekap.
+                    @if($jenis === 'keasramaan') Lembar keasramaan bisa diisi cepat per kamar. @endif
                 </p>
 
                 @if($periodeList->isEmpty())
@@ -47,7 +50,7 @@
                 @else
                     <form action="{{ route('penilaian.sesi.buat', $jenis) }}" method="POST" class="grid grid-cols-2 sm:grid-cols-12 gap-2.5">
                         @csrf
-                        <div class="col-span-2 sm:col-span-5">
+                        <div class="col-span-2 sm:col-span-8">
                             <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Periode</label>
                             <select name="periode_id" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 focus:border-blue-500 outline-none">
                                 @foreach($periodeList as $p)
@@ -55,15 +58,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-span-2 sm:col-span-4">
-                            <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Saya menilai sebagai</label>
-                            <select name="penilai_peran" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 focus:border-blue-500 outline-none">
-                                @foreach($peranPilihan as $kunci => $label)
-                                    <option value="{{ $kunci }}" @selected($peranBawaan === $kunci)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-span-2 sm:col-span-3 flex items-end">
+                        <div class="col-span-2 sm:col-span-4 flex items-end">
                             <button type="submit" class="w-full h-10 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-[12.5px] font-semibold transition">
                                 📝 Buka lembar penilaian
                             </button>
