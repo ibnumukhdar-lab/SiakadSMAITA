@@ -35,6 +35,28 @@ guru: audio Bee Smart, arsip surat, log, sesi). Data unggahan hanya ada di serve
   rinciannya ditampilkan setelah impor. Impor tidak lagi menghapus data di Tong Sampah.
 - Kolom yang boleh diisi dari form dibatasi daftar putih (`KOLOM_ISI` di `SiswaController`).
 
+## Fitur Data Induk (tahap 2)
+
+- **Daftar server-side**: pencarian (nama/NISN/NIS), filter kelas/status/gender/angkatan/kelengkapan
+  data, urut (terbaru/nama/kelas/NISN/terlama), dan paginasi (25–200 per halaman) diproses di server —
+  aman untuk ribuan baris. Indeks DB ditambahkan lewat migrasi `tambah_indeks_pencarian_siswas`.
+- **Ekspor CSV** (`/siswa/ekspor`) mengikuti filter yang sedang aktif (23 kolom, BOM agar Excel rapi).
+- **Cetak daftar** (`/siswa/cetak`) — siap print/PDF, dikelompokkan per kelas, memuat kop sekolah.
+- **Kartu pelajar** (`/siswa/{id}/kartu`) — foto, NISN/NIS, kelas, tahun ajaran + QR verifikasi ke
+  halaman profil publik; tombol cetak & opsi `?auto=1` untuk cetak otomatis.
+- **Unggah foto dari kamera HP**: pilih dari kamera atau berkas, foto dikecilkan di perangkat
+  (maks 900 px, JPEG mutu ~0.8, pola canvas + perpindahan ke input tersembunyi) sebelum dikirim.
+- **Impor berpratinjau** (`/siswa/import` → pratinjau → eksekusi): judul kolom dibaca otomatis
+  (urutan kolom bebas), baris bermasalah/duplikat dirinci, laporan masalah bisa diunduh CSV, dan
+  data baru masuk setelah tombol impor ditekan. Pratinjau disimpan sementara di
+  `storage/app/pratinjau-impor` (token UUID, dibersihkan otomatis setelah 6 jam).
+- Tampilan disiapkan dua bentuk: tabel untuk PC/tablet dan kartu untuk HP (tap target ≥ 36 px,
+  panel filter & aksi massal bisa dilipat di layar kecil).
+
+> **Penting untuk pengembangan**: setiap menambah kelas Tailwind baru, jalankan `npm run build`
+> sebelum deploy — hasilnya ada di `public/build` dan ikut dikirim `deploy-server.sh`. Kalau lupa,
+> kelas baru (mis. `w-[68px]`, `text-[12.5px]`) tidak ada di CSS hasil build dan tampilan jadi tidak rapi.
+
 ## Peta produksi
 
 - Live: `https://siakad.smaitarafah.sch.id`
