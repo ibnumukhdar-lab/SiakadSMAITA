@@ -27,7 +27,9 @@ ssh -o ConnectTimeout=20 -o BatchMode=yes nizhom "
 " < /tmp/siakad-deploy.tar.gz
 
 echo "== 3/5 tukar folder (folder lama -> _old_<timestamp>) =="
-ssh -o ConnectTimeout=20 -o BatchMode=yes nizhom "
+# -n = jangan mewarisi stdin; tanpa ini, ssh bisa menggantung saat skrip dijalankan
+# dari proses latar belakang/tanpa tty (folder sudah ditukar tapi composer tak jalan -> situs 500).
+ssh -n -o ConnectTimeout=20 -o BatchMode=yes nizhom "
   cd ~/public_html &&
   TS=\$(date +%Y%m%d_%H%M%S) &&
   mv siakad.smaitarafah.sch.id siakad.smaitarafah.sch.id_old_\$TS &&
@@ -42,7 +44,7 @@ ssh -o ConnectTimeout=20 -o BatchMode=yes nizhom "
 "
 
 echo "== 4/5 composer + cache =="
-ssh -o ConnectTimeout=20 -o BatchMode=yes nizhom "
+ssh -n -o ConnectTimeout=20 -o BatchMode=yes nizhom "
   cd ~/public_html/siakad.smaitarafah.sch.id &&
   rm -f bootstrap/cache/packages.php bootstrap/cache/services.php &&
   composer install --no-dev --no-interaction --prefer-dist --no-progress 2>&1 | tail -2 &&
