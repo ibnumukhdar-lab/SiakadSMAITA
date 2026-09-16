@@ -48,7 +48,26 @@ class SiswaController extends Controller
             })->count(),
         ];
 
-        return view('siswa.index', compact('siswas', 'filter', 'ringkasan'));
+        return view('siswa.index', [
+            'siswas' => $siswas,
+            'filter' => $filter,
+            'ringkasan' => $ringkasan,
+            'daftarKelas' => $this->daftarKelasSah(),
+        ]);
+    }
+
+    /** Nama kelas yang sah: semua kelas di Kelola Kelas + nama lama yang masih dipakai data siswa. */
+    private function daftarKelasSah(): array
+    {
+        $daftar = \App\Models\Kelas::terurut()->pluck('nama')->all();
+
+        foreach (array_keys(\App\Models\Kelas::jumlahSiswaPerKelas(true)) as $nama) {
+            if (! in_array($nama, $daftar, true)) {
+                $daftar[] = $nama;
+            }
+        }
+
+        return $daftar;
     }
 
     /** Saring + urut + paginasi: query dibangun sekali di sini supaya daftar, ekspor, dan cetak konsisten. */
@@ -114,7 +133,7 @@ class SiswaController extends Controller
 
         return [
             'q'           => trim((string) $request->input('q', '')),
-            'kelas'       => in_array($request->input('kelas'), self::KELAS_SAH, true) ? $request->input('kelas') : '',
+            'kelas'       => mb_substr(trim((string) $request->input('kelas', '')), 0, 60),
             'status'      => in_array($request->input('status'), self::STATUS_SAH, true) ? $request->input('status') : '',
             'jk'          => in_array($request->input('jk'), ['Laki-laki', 'Perempuan'], true) ? $request->input('jk') : '',
             'angkatan'    => preg_replace('/[^0-9]/', '', (string) $request->input('angkatan', '')),
@@ -195,7 +214,9 @@ class SiswaController extends Controller
 
     public function create()
     {
-        return view('siswa.create');
+        return view('siswa.create', [
+            'daftarKelas' => \App\Models\Kelas::daftarNama(true),
+        ]);
     }
 
     public function store(Request $request)
@@ -221,7 +242,11 @@ class SiswaController extends Controller
     public function edit($id)
     {
         $siswa = Siswa::findOrFail($id);
-        return view('siswa.edit', compact('siswa'));
+
+        return view('siswa.edit', [
+            'siswa' => $siswa,
+            'daftarKelas' => \App\Models\Kelas::daftarNama(true),
+        ]);
     }
 
     public function update(Request $request, $id)
@@ -680,7 +705,7 @@ class SiswaController extends Controller
     {
         $aksi = (string) $request->input('bulk_action_type');
 
-        $sah = ['delete', 'set_x', 'set_xi', 'set_xii', 'set_alumni', 'set_aktif', 'set_laki', 'set_perempuan'];
+        $sah = ['delete', 'set_kelas', 'set_x', 'set_xi', 'set_xii', 'set_alumni', 'set_aktif', 'set_laki', 'set_perempuan'];
 
         if (! in_array($aksi, $sah, true)) {
             return back()->with('error', 'Aksi massal tidak dikenali.');
@@ -699,6 +724,15 @@ class SiswaController extends Controller
             case 'delete':
                 $jumlah = Siswa::whereIn('id', $ids)->delete();
                 return back()->with('success', "$jumlah data siswa dipindahkan ke Tong Sampah. Masih bisa dipulihkan dari menu Tong Sampah.");
+
+            case 'set_kelas':
+                $kelasBaru = $this->rapikanTeks($request->input('bulk_kelas'));
+                if ($kelasBaru === null || $kelasBaru === '' || ! in_array($kelasBaru, $this->daftarKelasSah(), true)) {
+                    return back()->with('error', 'Pilih dulu kelas tujuan yang terdaftar di menu Kelola Kelas.');
+                }
+                Siswa::whereIn('id', $ids)->update(['kelas' => $kelasBaru] + $tambahan);
+
+                return back()->with('success', count($ids) . ' siswa dipindahkan ke kelas ' . $kelasBaru . '.');
 
             case 'set_x':
                 Siswa::whereIn('id', $ids)->update(['kelas' => 'X', 'status' => 'Aktif'] + $tambahan);
@@ -755,7 +789,19 @@ class SiswaController extends Controller
             'ttl' => 'nullable|string|max:150',
             'jk' => 'nullable|in:Laki-laki,Perempuan',
             'status' => 'nullable|in:Aktif,Alumni,Pindah',
-            'kelas' => 'nullable|in:X,XI,XII,Lulus',
+            'kelas' => ['nullable', 'string', 'max:60', function ($attribute, $value, $fail) use ($siswa) {
+                $nilai = $this->rapikanTeks($value);
+                if ($nilai === null || $nilai === '') {
+                    return;
+                }
+                // Data lama yang kelasnya belum terdaftar tetap boleh disimpan apa adanya.
+                if ($siswa && $nilai === (string) $siswa->kelas) {
+                    return;
+                }
+                if (! in_array($nilai, $this->daftarKelasSah(), true)) {
+                    $fail('Kelas "' . $nilai . '" belum terdaftar. Tambahkan dulu lewat menu Kelola Kelas.');
+                }
+            }],
             'thn_masuk' => 'nullable|string|max:10',
             'thn_lulus' => 'nullable|string|max:10',
             'tahun_ajaran' => 'nullable|string|max:20',

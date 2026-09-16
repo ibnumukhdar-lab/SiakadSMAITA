@@ -267,13 +267,11 @@ class DashboardController extends Controller
         return [$totalAkun, $roleRows];
     }
 
-    /** Statistik siswa: aktif per kelas + alumni + total terdaftar */
+    /** Statistik siswa: aktif per tingkat (dinamis dari Kelola Kelas) + alumni + total terdaftar */
     private function statSiswa(): array
     {
-        $kelas = [];
-        foreach (['X', 'XI', 'XII'] as $k) {
-            $kelas[strtolower($k)] = Siswa::where('status', 'Aktif')->where('kelas', $k)->count();
-        }
+        $perTingkat = \App\Models\Kelas::jumlahPerTingkat();
+
         $alumni = Siswa::where(function ($q) {
             $q->where('status', 'Alumni')->orWhere('kelas', 'Lulus');
         })->count();
@@ -281,9 +279,9 @@ class DashboardController extends Controller
         return [
             'aktif'   => Siswa::where('status', 'Aktif')->count(),
             'terdaftar' => Siswa::count(),
-            'x'       => $kelas['x'],
-            'xi'      => $kelas['xi'],
-            'xii'     => $kelas['xii'],
+            'x'       => $perTingkat['X'] ?? 0,
+            'xi'      => $perTingkat['XI'] ?? 0,
+            'xii'     => $perTingkat['XII'] ?? 0,
             'alumni'  => $alumni,
         ];
     }

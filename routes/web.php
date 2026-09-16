@@ -6,6 +6,7 @@ use App\Http\Controllers\ArsipSuratController;
 use App\Http\Controllers\DashboardController; 
 use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\SiswaController;
+use App\Http\Controllers\KelasController;
 use Illuminate\Support\Facades\DB;        // <-- Ditambahkan untuk Route Sinkronisasi
 use Illuminate\Support\Facades\Schema;  // <-- Ditambahkan untuk Route Sinkronisasi
 
@@ -93,6 +94,15 @@ Route::middleware(['auth', 'permission:buka-menu-siswa'])->group(function () {
     Route::put('/siswa/{id}', [SiswaController::class, 'update'])->name('siswa.update')->where('id', '[0-9]+');
     Route::delete('/siswa/{id}', [SiswaController::class, 'destroy'])->name('siswa.destroy')->where('id', '[0-9]+');
     Route::get('/siswa/{id}', [SiswaController::class, 'show'])->name('siswa.show')->where('id', '[0-9]+');
+});
+
+// --- 3b. KELOLA KELAS (daftar/pengelompokan kelas yang dipakai Data Siswa) ---
+Route::middleware(['auth', 'permission:buka-menu-siswa'])->group(function () {
+    Route::get('/kelas', [KelasController::class, 'index'])->name('kelas.index');
+    Route::post('/kelas', [KelasController::class, 'store'])->name('kelas.store');
+    Route::get('/kelas/{id}/edit', [KelasController::class, 'edit'])->where('id', '[0-9]+')->name('kelas.edit');
+    Route::put('/kelas/{id}', [KelasController::class, 'update'])->where('id', '[0-9]+')->name('kelas.update');
+    Route::delete('/kelas/{id}', [KelasController::class, 'destroy'])->where('id', '[0-9]+')->name('kelas.destroy');
 });
 
 // --- 4. MODUL KELOLA AKUN ---

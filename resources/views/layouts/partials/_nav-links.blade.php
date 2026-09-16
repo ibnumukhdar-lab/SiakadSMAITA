@@ -6,6 +6,7 @@
     $beeOn   = request()->routeIs('bee.*');
     $arsipOn = request()->routeIs('arsip.*');
     $siswaOn = request()->routeIs('siswa.*');
+    $kelasOn = request()->routeIs('kelas.*');
     $kelolaOn = request()->routeIs('kelola-akun.*');
     $adminOn = request()->routeIs('dashboard');
 @endphp
@@ -34,6 +35,9 @@
     @can('buka-menu-siswa')
     <a href="{{ route('siswa.index') }}" class="{{ $linkBase }} {{ $siswaOn ? $linkAct : '' }}">
         <span class="{{ $ico }}">🎓</span> Data Siswa
+    </a>
+    <a href="{{ route('kelas.index') }}" class="{{ $linkBase }} {{ $kelasOn ? $linkAct : '' }}">
+        <span class="{{ $ico }}">🏫</span> Kelola Kelas
     </a>
     @endcan
 

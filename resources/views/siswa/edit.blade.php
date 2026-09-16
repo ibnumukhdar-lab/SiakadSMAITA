@@ -85,11 +85,18 @@
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Kelas</label>
                             <select name="kelas" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
-                                <option value="X" {{ $siswa->kelas == 'X' ? 'selected' : '' }}>Kelas X</option>
-                                <option value="XI" {{ $siswa->kelas == 'XI' ? 'selected' : '' }}>Kelas XI</option>
-                                <option value="XII" {{ $siswa->kelas == 'XII' ? 'selected' : '' }}>Kelas XII</option>
-                                <option value="Lulus" {{ $siswa->kelas == 'Lulus' ? 'selected' : '' }}>Lulus</option>
+                                @if($siswa->kelas && !in_array($siswa->kelas, $daftarKelas, true))
+                                    <option value="{{ $siswa->kelas }}" selected>{{ $siswa->kelas }} (belum terdaftar)</option>
+                                @endif
+                                @forelse($daftarKelas as $k)
+                                    <option value="{{ $k }}" @selected(old('kelas', $siswa->kelas) === $k)>{{ $k }}</option>
+                                @empty
+                                    <option value="">(belum ada kelas)</option>
+                                @endforelse
                             </select>
+                            <p class="text-[11px] text-slate-400 mt-1">
+                                Daftar kelas diatur di <a href="{{ route('kelas.index') }}" class="underline font-semibold hover:text-slate-600">Kelola Kelas</a>.
+                            </p>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tahun Ajaran Saat Ini</label>

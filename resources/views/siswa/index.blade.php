@@ -81,7 +81,7 @@
                         <div class="md:col-span-2">
                             <select name="kelas" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-sm text-slate-700 focus:border-blue-500 outline-none">
                                 <option value="">Semua kelas</option>
-                                @foreach(['X', 'XI', 'XII', 'Lulus'] as $k)
+                                @foreach($daftarKelas as $k)
                                     <option value="{{ $k }}" @selected($filter['kelas'] === $k)>Kelas {{ $k }}</option>
                                 @endforeach
                             </select>
@@ -146,7 +146,7 @@
                 @csrf
 
                 {{-- Panel aksi massal --}}
-                <div class="bg-slate-50 border border-dashed border-slate-300 rounded-xl mb-3" x-data="{ aksiBuka: false }">
+                <div class="bg-slate-50 border border-dashed border-slate-300 rounded-xl mb-3" x-data="{ aksiBuka: false, aksi: '' }">
                     <button type="button" @click="aksiBuka = !aksiBuka"
                             class="w-full flex items-center justify-between px-3.5 py-3 md:hidden text-left">
                         <span class="text-[13px] font-bold text-slate-700">⚙️ Aksi massal (ubah banyak siswa sekaligus)</span>
@@ -155,12 +155,10 @@
 
                     <div :class="aksiBuka ? 'block' : 'hidden md:block'" class="px-3.5 pb-3.5 md:py-3.5 border-t border-slate-200 md:border-t-0">
                         <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <select name="bulk_action_type" class="h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 focus:border-blue-500 outline-none w-full sm:w-auto" required>
+                            <select name="bulk_action_type" x-model="aksi" class="h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 focus:border-blue-500 outline-none w-full sm:w-auto" required>
                                 <option value="">-- Pilih aksi massal --</option>
-                                <optgroup label="Akademik &amp; status">
-                                    <option value="set_x">Naik Kelas X</option>
-                                    <option value="set_xi">Naik Kelas XI</option>
-                                    <option value="set_xii">Naik Kelas XII</option>
+                                <optgroup label="Pengelompokan &amp; status">
+                                    <option value="set_kelas">🏫 Pindahkan ke kelas…</option>
                                     <option value="set_alumni">🎓 Jadikan Alumni</option>
                                     <option value="set_aktif">♻️ Kembalikan jadi Aktif</option>
                                 </optgroup>
@@ -172,14 +170,24 @@
                                     <option value="delete">🗑️ Pindahkan ke Tong Sampah</option>
                                 </optgroup>
                             </select>
+
+                            <select name="bulk_kelas" x-show="aksi === 'set_kelas'" x-cloak style="display:none"
+                                    class="h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 focus:border-blue-500 outline-none w-full sm:w-44">
+                                <option value="">Kelas tujuan…</option>
+                                @foreach($daftarKelas as $nama)
+                                    <option value="{{ $nama }}">{{ $nama }}</option>
+                                @endforeach
+                            </select>
+
                             <input type="text" name="bulk_tahun_ajaran" placeholder="Set tahun ajaran (opsional)"
-                                   class="h-10 rounded-lg border border-slate-300 bg-white px-3 text-[13px] text-slate-700 placeholder:text-slate-400 focus:border-blue-500 outline-none w-full sm:w-52">
+                                   class="h-10 rounded-lg border border-slate-300 bg-white px-3 text-[13px] text-slate-700 placeholder:text-slate-400 focus:border-blue-500 outline-none w-full sm:w-48">
                             <button type="submit" onclick="return confirm('Terapkan aksi massal pada siswa yang dipilih?')"
                                     class="h-10 px-4 rounded-lg bg-slate-800 text-white text-[13px] font-bold hover:opacity-90 transition w-full sm:w-auto whitespace-nowrap">Terapkan</button>
                         </div>
                         <p class="text-[11px] text-slate-400 mt-2">
                             Pilih siswa lewat kotak centang.
                             <button type="button" class="underline hover:text-slate-600" @click="pilihSemua = !pilihSemua; document.querySelectorAll('.centang-siswa').forEach(c => c.checked = pilihSemua)">Pilih/lepas semua di halaman ini</button>.
+                            Daftar kelas diatur di menu <a href="{{ route('kelas.index') }}" class="underline hover:text-slate-600 font-semibold">Kelola Kelas</a>.
                         </p>
                     </div>
                 </div>
