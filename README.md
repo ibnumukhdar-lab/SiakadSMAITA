@@ -1,4 +1,6 @@
-# SIAKAD SMAITA
+# SiakadSMAITA
+
+SIAKAD.SMAITARAFAH.SCH.ID
 
 Sistem Akademik / Kesiswaan **SMA IT Arafah** — aplikasi Laravel yang menjalankan
 **https://siakad.smaitarafah.sch.id**.
