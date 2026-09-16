@@ -1,59 +1,74 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SIAKAD SMAITA
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistem Akademik / Kesiswaan **SMA IT Arafah** — aplikasi Laravel yang menjalankan
+**https://siakad.smaitarafah.sch.id**.
 
-## About Laravel
+Repo ini adalah salinan kode yang **sama persis dengan yang ada di hosting**
+(akun Hostinger `u8151173`), supaya ada riwayat versi dan bisa dipulihkan.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Isi repo
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Ada di repo | Keterangan |
+|---|---|
+| `app/`, `routes/`, `resources/`, `config/`, `database/`, `bootstrap/`, `public/` (tanpa `build`) | kode aplikasi |
+| `public/build/` | hasil build Vite (Tailwind + JS) — **ikut di-commit** karena server tidak punya `node_modules` dan tidak bisa `npm run build` |
+| `.htaccess` | aturan rewrite di docroot (semua permintaan masuk ke `public/`) |
+| `JALANKAN.cmd`, `deploy-server.sh` | jalankan lokal & skrip deploy ke hosting |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**Tidak** ada di repo (dan tidak boleh di-commit):
+`.env` (berisi sandi DB), `vendor/`, `node_modules/`, `storage/` (269 MB — unggahan
+guru: audio Bee Smart, arsip surat, log, sesi). Data unggahan hanya ada di server.
 
-## Learning Laravel
+## Peta produksi
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- Live: `https://siakad.smaitarafah.sch.id`
+- Host: Hostinger, akun `u8151173`, SSH alias `nizhom` (port 65002)
+- Folder aplikasi: `~/public_html/siakad.smaitarafah.sch.id` — **Laravel ada DI DALAM docroot**
+  (berbeda dari situs `smaitarafah.sch.id` yang aplikasinya di luar docroot).
+  `.htaccess` di root meneruskan semua permintaan ke `public/`.
+- Basis data: MySQL/MariaDB `u8151173_siakad` (charset `latin1`, data produksi asli).
+  Cadangan: `~/siakad-smaita-dump.sql` di home server.
+- Aset frontend diambil dari `public/build` (hasil `npm run build`), bukan CDN.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Menjalankan di komputer
 
-## Laravel Sponsors
+1. Dobel-klik `JALANKAN.cmd` → menyalakan MySQL XAMPP bila mati, lalu
+   `php artisan serve --port=8070` → buka http://localhost:8070
+2. Database lokal: `siakad_smaita` (MySQL XAMPP, root tanpa sandi).
+3. Salin `.env.example` → `.env` lalu sesuaikan `DB_*` (jangan pakai kredensial produksi).
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Deploy ke hosting
 
-### Premium Partners
+```
+bash deploy-server.sh
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Skrip mengemas kode (tanpa `.env`, `vendor`, `node_modules`, `storage`) → unggah ke
+folder `_tmp` di server → simpan `.env`/`.htaccess` → tukar folder → **kembalikan
+`storage/app` (unggahan) dari folder lama** → `composer install --no-dev` →
+`php artisan migrate --force` → `config:cache` lalu `view:cache` → cek HTTP 200.
+Folder lama tetap ada sebagai `_old_<tanggal>` untuk rollback.
 
-## Contributing
+Catatan penting:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Jangan `route:cache`.
+- Jangan menaruh file di `/storage/{path}` — framework memakai prefix itu sendiri;
+  semua tautan berkas memakai `/berkas/{path}`.
+- Perubahan skema DB = migration baru, jangan mengubah migration lama.
 
-## Code of Conduct
+## Akun & peran
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Peran (Spatie): Super Admin, Guru, Tata Usaha, Kepala Sekolah, Kepala Diniyah, Musyrif.
+Login memakai email + sandi dari tabel `users`.
 
-## Security Vulnerabilities
+## Modul
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Modul | Isi |
+|---|---|
+| Master Siswa | data siswa, kelas, status (soft delete) |
+| E-Arsip | surat masuk/keluar, unggah berkas, ekspor CSV |
+| Student Root | master kriteria poin, grup binaan, input poin sikap, TV display |
+| Asrama | kamar putra/putri, musyrif, inspeksi harian, finalisasi → injeksi poin |
+| Bee Smart | kosakata mingguan 3 bahasa + audio, mode kelas, buku saku, klaim poin |
+| Kelola Akun | pengguna, peran, matriks izin menu (`buka-menu-*`), impersonate |
+| Pengaturan | identitas sekolah & tampilan |
