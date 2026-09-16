@@ -7,6 +7,8 @@
     $arsipOn = request()->routeIs('arsip.*');
     $siswaOn = request()->routeIs('siswa.*');
     $kelasOn = request()->routeIs('kelas.*');
+    $tahunOn = request()->routeIs('tahun-ajaran.*');
+    $kenaikanOn = request()->routeIs('kenaikan.*');
     $kelolaOn = request()->routeIs('kelola-akun.*');
     $adminOn = request()->routeIs('dashboard');
 @endphp
@@ -38,6 +40,12 @@
     </a>
     <a href="{{ route('kelas.index') }}" class="{{ $linkBase }} {{ $kelasOn ? $linkAct : '' }}">
         <span class="{{ $ico }}">🏫</span> Kelola Kelas
+    </a>
+    <a href="{{ route('tahun-ajaran.index') }}" class="{{ $linkBase }} {{ $tahunOn ? $linkAct : '' }}">
+        <span class="{{ $ico }}">📅</span> Tahun Ajaran
+    </a>
+    <a href="{{ route('kenaikan.index') }}" class="{{ $linkBase }} {{ $kenaikanOn ? $linkAct : '' }}">
+        <span class="{{ $ico }}">⬆️</span> Kenaikan Kelas
     </a>
     @endcan
 

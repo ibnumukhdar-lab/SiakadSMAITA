@@ -47,6 +47,26 @@
                     </div>
 
                     <div class="col-span-2 sm:col-span-6">
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Wali Kelas</label>
+                        <select name="wali_kelas_id" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-sm text-slate-700 focus:border-blue-500 outline-none">
+                            <option value="">— belum ditentukan —</option>
+                            @foreach($daftarGuru as $peran => $grup)
+                                <optgroup label="{{ $peran }}">
+                                    @foreach($grup as $guru)
+                                        <option value="{{ $guru['id'] }}" @selected((int) old('wali_kelas_id', $kelas->wali_kelas_id) === $guru['id'])>
+                                            {{ $guru['name'] }}{{ $guru['jabatan'] ? ' — ' . $guru['jabatan'] : '' }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                        <input type="text" name="wali_kelas_nama" value="{{ old('wali_kelas_nama', $kelas->wali_kelas_nama) }}" maxlength="100"
+                               placeholder="Atau tulis nama wali kelas (bila belum punya akun)"
+                               class="w-full h-10 mt-2 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 outline-none">
+                        <p class="text-[11px] text-slate-400 mt-1">Kalau kolom nama diisi, itu yang dipakai; kalau kosong, nama akun di atas yang dipakai.</p>
+                    </div>
+
+                    <div class="col-span-2 sm:col-span-6">
                         <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Keterangan</label>
                         <input type="text" name="keterangan" value="{{ old('keterangan', $kelas->keterangan) }}" maxlength="150" placeholder="Opsional"
                                class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 outline-none">

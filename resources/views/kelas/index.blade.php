@@ -69,6 +69,19 @@
                         <input type="text" name="keterangan" value="{{ old('keterangan') }}" maxlength="150" placeholder="Opsional"
                                class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 outline-none">
                     </div>
+                    <div class="col-span-2 sm:col-span-6">
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Wali Kelas (opsional)</label>
+                        <select name="wali_kelas_id" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-sm text-slate-700 focus:border-blue-500 outline-none">
+                            <option value="">— belum ditentukan —</option>
+                            @foreach($daftarGuru as $peran => $grup)
+                                <optgroup label="{{ $peran }}">
+                                    @foreach($grup as $guru)
+                                        <option value="{{ $guru['id'] }}" @selected((int) old('wali_kelas_id') === $guru['id'])>{{ $guru['name'] }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="col-span-2 sm:col-span-12 flex flex-wrap items-center gap-3">
                         <label class="inline-flex items-center gap-2 text-[13px] text-slate-600">
                             <input type="checkbox" name="aktif" value="1" checked class="rounded border-slate-300"> Aktif (muncul di pilihan Data Siswa)
@@ -116,6 +129,9 @@
                                         <td class="px-4 py-3 text-[13px] text-slate-400 text-center">{{ $i + 1 }}</td>
                                         <td class="px-4 py-3">
                                             <span class="text-[13.5px] font-bold text-slate-900">{{ $k->nama }}</span>
+                                            @if($namaWali[$k->id] ?? null)
+                                                <span class="block text-[11.5px] text-slate-500">👤 Wali: {{ $namaWali[$k->id] }}</span>
+                                            @endif
                                             @if($k->keterangan)
                                                 <span class="block text-[11.5px] text-slate-400">{{ $k->keterangan }}</span>
                                             @endif
@@ -173,6 +189,9 @@
                                                 <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">Aktif</span>
                                             @else
                                                 <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">Nonaktif</span>
+                                            @endif
+                                            @if($namaWali[$k->id] ?? null)
+                                                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200">👤 {{ $namaWali[$k->id] }}</span>
                                             @endif
                                         </div>
                                         @if($k->keterangan)

@@ -216,6 +216,7 @@ class SiswaController extends Controller
     {
         return view('siswa.create', [
             'daftarKelas' => \App\Models\Kelas::daftarNama(true),
+            'tahunAktif' => \App\Models\TahunAjaran::namaAktif(),
         ]);
     }
 
@@ -227,6 +228,11 @@ class SiswaController extends Controller
 
         if ($balasan = $this->cekNisnBentrok($data['nisn'])) {
             return $balasan;
+        }
+
+        // Tahun ajaran kosong → diisi tahun ajaran yang sedang aktif.
+        if (empty($data['tahun_ajaran'])) {
+            $data['tahun_ajaran'] = \App\Models\TahunAjaran::namaAktif();
         }
 
         if ($request->hasFile('foto')) {
@@ -432,7 +438,7 @@ class SiswaController extends Controller
                 'asal_sekolah'    => $ambil('asal_sekolah'),
                 'alamat'          => $ambil('alamat'),
                 'penyakit'        => $ambil('penyakit'),
-                'tahun_ajaran'    => $ambil('tahun_ajaran'),
+                'tahun_ajaran'    => $ambil('tahun_ajaran') ?: \App\Models\TahunAjaran::namaAktif(),
             ];
         }
         fclose($handle);

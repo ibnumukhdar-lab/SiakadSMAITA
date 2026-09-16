@@ -7,6 +7,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\KelasController;
+use App\Http\Controllers\TahunAjaranController;
+use App\Http\Controllers\KenaikanKelasController;
 use Illuminate\Support\Facades\DB;        // <-- Ditambahkan untuk Route Sinkronisasi
 use Illuminate\Support\Facades\Schema;  // <-- Ditambahkan untuk Route Sinkronisasi
 
@@ -103,6 +105,22 @@ Route::middleware(['auth', 'permission:buka-menu-siswa'])->group(function () {
     Route::get('/kelas/{id}/edit', [KelasController::class, 'edit'])->where('id', '[0-9]+')->name('kelas.edit');
     Route::put('/kelas/{id}', [KelasController::class, 'update'])->where('id', '[0-9]+')->name('kelas.update');
     Route::delete('/kelas/{id}', [KelasController::class, 'destroy'])->where('id', '[0-9]+')->name('kelas.destroy');
+});
+
+// --- 3c. TAHUN AJARAN (satu tahun aktif dipakai sebagai bawaan aplikasi) ---
+Route::middleware(['auth', 'permission:buka-menu-siswa'])->group(function () {
+    Route::get('/tahun-ajaran', [TahunAjaranController::class, 'index'])->name('tahun-ajaran.index');
+    Route::post('/tahun-ajaran', [TahunAjaranController::class, 'store'])->name('tahun-ajaran.store');
+    Route::get('/tahun-ajaran/{id}/edit', [TahunAjaranController::class, 'edit'])->where('id', '[0-9]+')->name('tahun-ajaran.edit');
+    Route::put('/tahun-ajaran/{id}', [TahunAjaranController::class, 'update'])->where('id', '[0-9]+')->name('tahun-ajaran.update');
+    Route::post('/tahun-ajaran/{id}/aktifkan', [TahunAjaranController::class, 'aktifkan'])->where('id', '[0-9]+')->name('tahun-ajaran.aktifkan');
+    Route::delete('/tahun-ajaran/{id}', [TahunAjaranController::class, 'destroy'])->where('id', '[0-9]+')->name('tahun-ajaran.destroy');
+});
+
+// --- 3d. KENAIKAN / PINDAH KELAS MASSAL ---
+Route::middleware(['auth', 'permission:buka-menu-siswa'])->group(function () {
+    Route::get('/kenaikan-kelas', [KenaikanKelasController::class, 'index'])->name('kenaikan.index');
+    Route::post('/kenaikan-kelas', [KenaikanKelasController::class, 'proses'])->name('kenaikan.proses');
 });
 
 // --- 4. MODUL KELOLA AKUN ---

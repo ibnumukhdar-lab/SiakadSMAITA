@@ -31,7 +31,65 @@ class KelasController extends Controller
             ->sortKeys()
             ->all();
 
-        return view('kelas.index', compact('daftar', 'jumlah', 'jumlahSemua', 'belumTerdaftar'));
+        return view('kelas.index', [
+            'daftar' => $daftar,
+            'jumlah' => $jumlah,
+            'jumlahSemua' => $jumlahSemua,
+            'belumTerdaftar' => $belumTerdaftar,
+            'daftarGuru' => $this->daftarGuru(),
+            'namaWali' => $this->namaWali($daftar),
+        ]);
+    }
+
+    /**
+     * Daftar pengguna untuk pilihan wali kelas, dikelompokkan per peran utama.
+     * Dikelompokkan supaya mudah dicari (Guru, Musyrif, Tata Usaha, ...).
+     */
+    private function daftarGuru(): array
+    {
+        $urutanPeran = ['Guru', 'Kepala Sekolah', 'Kepala Diniyah', 'Tata Usaha', 'Musyrif', 'Super Admin'];
+
+        $hasil = [];
+        foreach (\App\Models\User::with('roles')->orderBy('name')->get() as $user) {
+            $peranList = $user->roles->pluck('name')->all();
+            $peran = 'Lainnya';
+            foreach ($urutanPeran as $kandidat) {
+                if (in_array($kandidat, $peranList, true)) {
+                    $peran = $kandidat;
+                    break;
+                }
+            }
+            $hasil[$peran][] = ['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'jabatan' => $user->jabatan];
+        }
+
+        // Urutkan grup sesuai daftar peran, sisanya di belakang.
+        uksort($hasil, function ($a, $b) use ($urutanPeran) {
+            $ia = array_search($a, $urutanPeran, true);
+            $ib = array_search($b, $urutanPeran, true);
+            $ia = $ia === false ? 99 : $ia;
+            $ib = $ib === false ? 99 : $ib;
+
+            return $ia <=> $ib;
+        });
+
+        return $hasil;
+    }
+
+    /** Nama wali kelas tampil: pakai nama manual bila ada, kalau tidak nama akunnya. */
+    private function namaWali($daftar): array
+    {
+        $idUser = $daftar->pluck('wali_kelas_id')->filter()->unique()->all();
+        $namaUser = empty($idUser)
+            ? []
+            : \App\Models\User::whereIn('id', $idUser)->pluck('name', 'id')->toArray();
+
+        $hasil = [];
+        foreach ($daftar as $kelas) {
+            $nama = $kelas->wali_kelas_nama ?: ($namaUser[$kelas->wali_kelas_id] ?? null);
+            $hasil[$kelas->id] = $nama;
+        }
+
+        return $hasil;
     }
 
     public function store(Request $request)
@@ -49,7 +107,11 @@ class KelasController extends Controller
         $kelas = Kelas::findOrFail($id);
         $dipakai = (int) (Kelas::jumlahSiswaPerKelas(true)[$kelas->nama] ?? 0);
 
-        return view('kelas.edit', compact('kelas', 'dipakai'));
+        return view('kelas.edit', [
+            'kelas' => $kelas,
+            'dipakai' => $dipakai,
+            'daftarGuru' => $this->daftarGuru(),
+        ]);
     }
 
     public function update(Request $request, $id)
@@ -106,6 +168,8 @@ class KelasController extends Controller
             'tingkat' => $request->filled('tingkat') ? $request->input('tingkat') : null,
             'keterangan' => $this->rapikanTeks($request->input('keterangan')),
             'urutan' => $request->filled('urutan') ? (int) $request->input('urutan') : 0,
+            'wali_kelas_id' => $request->filled('wali_kelas_id') ? (int) $request->input('wali_kelas_id') : null,
+            'wali_kelas_nama' => $this->rapikanTeks($request->input('wali_kelas_nama')),
             'aktif' => $request->boolean('aktif'),
         ]);
 
@@ -114,6 +178,8 @@ class KelasController extends Controller
             'tingkat' => ['nullable', Rule::in(Kelas::TINGKAT)],
             'urutan' => ['nullable', 'integer', 'min:0', 'max:999'],
             'keterangan' => ['nullable', 'string', 'max:150'],
+            'wali_kelas_id' => ['nullable', 'integer', 'exists:users,id'],
+            'wali_kelas_nama' => ['nullable', 'string', 'max:100'],
             'aktif' => ['boolean'],
         ];
 

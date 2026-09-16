@@ -86,7 +86,8 @@
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tahun Ajaran Saat Ini</label>
-                            <input type="text" name="tahun_ajaran" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="Contoh: 2026/2027">
+                            <input type="text" name="tahun_ajaran" value="{{ old('tahun_ajaran', $tahunAktif) }}" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="Contoh: 2026/2027">
+                            <p class="text-[11px] text-slate-400 mt-1">Terisi otomatis dari <a href="{{ route('tahun-ajaran.index') }}" class="underline font-semibold hover:text-slate-600">Tahun Ajaran</a> yang aktif.</p>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tahun Masuk</label>
