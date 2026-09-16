@@ -162,10 +162,36 @@ class PenilaianRekapController extends Controller
             }
         }
 
+        // ---- Nilai Project Student Root (5 tahap) ----
+        $grupIds = DB::table('sr_group_members')
+            ->where('student_id', $siswa->id)
+            ->whereNull('tanggal_keluar')
+            ->pluck('group_id')
+            ->all();
+
+        $projects = $grupIds
+            ? \App\Models\SrProject::aktif()->with('grup')->whereIn('grup_id', $grupIds)->orderBy('id')->get()
+            : collect();
+
+        $projectBaris = [];
+        $angkaProject = [];
+        foreach ($projects as $p) {
+            $n = $p->nilaiPerSiswa()[$siswa->id] ?? null;
+            $projectBaris[] = ['project' => $p, 'nilai' => $n];
+            if ($n && $n['rata'] !== null) {
+                $angkaProject[] = $n['rata'];
+            }
+        }
+        $projectRata = $angkaProject ? round(array_sum($angkaProject) / count($angkaProject), 2) : null;
+
         return view('penilaian.siswa', [
             'siswa' => $siswa,
             'rincian' => $rincian,
             'perPeriode' => $perPeriode,
+            'projectBaris' => $projectBaris,
+            'projectRata' => $projectRata,
+            'projectPredikat' => PenilaianPengaturan::predikat($projectRata),
+            'projectTahap' => \App\Models\SrProjectTahap::daftarAktif(),
             'kamar' => DB::table('asrama_members as m')->join('asrama_kamars as k', 'k.id', '=', 'm.kamar_id')
                 ->where('m.student_id', $siswa->id)->value('k.nama_kamar'),
             'ambang' => PenilaianPengaturan::ambang(),

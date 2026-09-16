@@ -72,6 +72,19 @@
                     <span class="w-5 text-center text-[14px] shrink-0">👥</span> Grup Binaan Saya
                 </a>
                 @endcan
+                @can('buka-menu-project-sr')
+                <a href="{{ route('project-sr.index') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                    <span class="w-5 text-center text-[14px] shrink-0">📁</span> Project Student Root
+                </a>
+                <a href="{{ route('project-sr.rekap') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                    <span class="w-5 text-center text-[14px] shrink-0">📈</span> Rekap Project
+                </a>
+                @endcan
+                @can('kelola-master-project-sr')
+                <a href="{{ route('project-sr.master') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                    <span class="w-5 text-center text-[14px] shrink-0">⚙️</span> Tahap &amp; Bobot Project
+                </a>
+                @endcan
                 @can('buka-menu-master-student-root')
                 <a href="{{ route('sr.grup.index') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
                     <span class="w-5 text-center text-[14px] shrink-0">🏢</span> Manajemen Grup

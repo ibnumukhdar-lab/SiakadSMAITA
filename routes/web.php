@@ -12,6 +12,7 @@ use App\Http\Controllers\KenaikanKelasController;
 use App\Http\Controllers\PenilaianIsiController;
 use App\Http\Controllers\PenilaianMasterController;
 use App\Http\Controllers\PenilaianRekapController;
+use App\Http\Controllers\ProjectSrController;
 use Illuminate\Support\Facades\DB;        // <-- Ditambahkan untuk Route Sinkronisasi
 use Illuminate\Support\Facades\Schema;  // <-- Ditambahkan untuk Route Sinkronisasi
 
@@ -153,7 +154,26 @@ Route::middleware(['auth', 'permission:kelola-master-penilaian'])->prefix('penil
     Route::post('/ambang', [PenilaianMasterController::class, 'ambangStore'])->name('penilaian.master.ambangStore');
 });
 
-// --- 3d. KENAIKAN / PINDAH KELAS (massal) ---
+// --- 5. PROJECT STUDENT ROOT (penilaian 5 tahap, jumlah project bebas per grup) ---
+Route::middleware(['auth', 'permission:buka-menu-project-sr'])->prefix('project-sr')->group(function () {
+    Route::get('/', [ProjectSrController::class, 'index'])->name('project-sr.index');
+    Route::get('/rekap', [ProjectSrController::class, 'rekap'])->name('project-sr.rekap');
+    Route::get('/rekap/ekspor', [ProjectSrController::class, 'ekspor'])->name('project-sr.ekspor');
+    Route::post('/', [ProjectSrController::class, 'store'])->name('project-sr.store');
+
+    // Master tahap & bobot (Tata Usaha / Super Admin)
+    Route::get('/tahap/master', [ProjectSrController::class, 'master'])->name('project-sr.master');
+    Route::post('/tahap/bobot', [ProjectSrController::class, 'masterSimpanSemua'])->name('project-sr.master.bobot');
+    Route::put('/tahap/master/{id}', [ProjectSrController::class, 'masterUpdate'])->where('id', '[0-9]+')->name('project-sr.master.update');
+
+    Route::get('/{id}', [ProjectSrController::class, 'show'])->where('id', '[0-9]+')->name('project-sr.show');
+    Route::put('/{id}', [ProjectSrController::class, 'update'])->where('id', '[0-9]+')->name('project-sr.update');
+    Route::delete('/{id}', [ProjectSrController::class, 'destroy'])->where('id', '[0-9]+')->name('project-sr.destroy');
+    Route::post('/{id}/nilai', [ProjectSrController::class, 'simpanNilai'])->where('id', '[0-9]+')->name('project-sr.simpanNilai');
+    Route::post('/{id}/nilai-rata', [ProjectSrController::class, 'nilaiRata'])->where('id', '[0-9]+')->name('project-sr.nilaiRata');
+    Route::post('/{id}/tahap', [ProjectSrController::class, 'simpanTahap'])->where('id', '[0-9]+')->name('project-sr.tahap');
+});
+
 Route::middleware(['auth', 'permission:buka-menu-siswa'])->group(function () {
     Route::get('/kenaikan-kelas', [KenaikanKelasController::class, 'index'])->name('kenaikan.index');
     Route::post('/kenaikan-kelas', [KenaikanKelasController::class, 'proses'])->name('kenaikan.proses');

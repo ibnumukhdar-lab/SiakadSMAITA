@@ -49,6 +49,58 @@
                 @endforelse
             </div>
 
+            {{-- ===== NILAI PROJECT STUDENT ROOT ===== --}}
+            @if(!empty($projectBaris))
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-3.5 sm:p-4 mb-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                        <h4 class="text-[13.5px] font-bold text-slate-800">📁 Project Student Root</h4>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11.5px] text-slate-400">{{ count($projectBaris) }} project · {{ count(array_filter($projectBaris, fn ($r) => ($r['nilai']['rata'] ?? null) !== null)) }} sudah dinilai</span>
+                            @if($projectRata !== null)
+                                <span class="text-[14px] font-extrabold text-slate-900">{{ $projectRata }}%</span>
+                                <span class="inline-flex items-center justify-center h-6 w-6 rounded-lg border text-[11.5px] font-black {{ \App\Models\PenilaianPengaturan::warnaPredikat($projectPredikat) }}">{{ $projectPredikat }}</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        @foreach($projectBaris as $baris)
+                            @php
+                                $p = $baris['project'];
+                                $n = $baris['nilai'];
+                            @endphp
+                            <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-2.5">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-[12.5px] font-bold text-slate-800">{{ $p->nama }}</span>
+                                    <span class="text-[11px] text-slate-400">{{ $p->grup->nama_grup ?? '-' }} · {{ \App\Models\SrProject::STATUS[$p->status] ?? $p->status }}</span>
+                                    @if($n && $n['rata'] !== null)
+                                        <span class="ms-auto inline-flex items-center gap-1.5">
+                                            <span class="text-[12.5px] font-bold text-slate-800">{{ $n['rata'] }}%</span>
+                                            <span class="inline-flex items-center justify-center h-5 w-5 rounded-md border text-[10.5px] font-black {{ \App\Models\PenilaianPengaturan::warnaPredikat($n['predikat']) }}">{{ $n['predikat'] }}</span>
+                                        </span>
+                                    @else
+                                        <span class="ms-auto text-[11.5px] text-slate-400">Belum dinilai</span>
+                                    @endif
+                                </div>
+
+                                <div class="flex flex-wrap gap-1.5 mt-1.5">
+                                    @foreach($projectTahap as $t)
+                                        @php $skor = $n['per_tahap'][$t->id] ?? null; @endphp
+                                        <span class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10.5px] font-semibold text-slate-500" title="{{ $t->nama }} ({{ $t->bobot }}%)">
+                                            {{ $t->nama }} <span class="font-bold {{ $skor === null ? 'text-slate-300' : 'text-slate-700' }}">{{ $skor ?? '—' }}</span>
+                                        </span>
+                                    @endforeach
+                                </div>
+
+                                @if($n && ! empty($n['catatan']))
+                                    <div class="text-[11.5px] text-slate-600 mt-1.5">📝 {{ implode(' · ', array_unique($n['catatan'])) }}</div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             {{-- ===== RINCIAN PER LEMBAR PENILAIAN ===== --}}
             @foreach($rincian as $it)
                 @php
