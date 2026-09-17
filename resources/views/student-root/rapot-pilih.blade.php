@@ -44,7 +44,7 @@
                     <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Tahun ajaran</label>
                     <div class="w-full h-10 rounded-lg border border-slate-200 bg-slate-50 px-2.5 flex items-center text-[13px] font-semibold text-slate-600">
                         {{ $tahunAjaran }}
-                        <span class="ml-1.5 font-normal text-slate-400">{{ \Carbon\Carbon::parse($dari)->translatedFormat('d M Y') }} – {{ \Carbon\Carbon::parse($sampai)->translatedFormat('d M Y') }}</span>
+                        <span class="ml-1.5 font-normal text-slate-400">{{ \Carbon\Carbon::parse($dari)->locale('id')->translatedFormat('d M Y') }} – {{ \Carbon\Carbon::parse($sampai)->locale('id')->translatedFormat('d M Y') }}</span>
                     </div>
                 </div>
                 <div class="sm:col-span-2 flex items-end">

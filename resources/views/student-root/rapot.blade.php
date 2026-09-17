@@ -167,7 +167,7 @@
             <div class="judul">
                 <h2>Rapor Student Root</h2>
                 <p>
-                    {{ $semesterList[$preset] ?? 'Semester' }} · Tahun Ajaran {{ $tahunAjaran }} · {{ \Carbon\Carbon::parse($dari)->translatedFormat('d M Y') }} – {{ \Carbon\Carbon::parse($sampai)->translatedFormat('d M Y') }}
+                    {{ $semesterList[$preset] ?? 'Semester' }} · Tahun Ajaran {{ $tahunAjaran }} · {{ \Carbon\Carbon::parse($dari)->locale('id')->translatedFormat('d M Y') }} – {{ \Carbon\Carbon::parse($sampai)->locale('id')->translatedFormat('d M Y') }}
                 </p>
             </div>
 
