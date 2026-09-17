@@ -207,9 +207,34 @@ class AsramaPenilaianController extends Controller
     // =========================================================
     // 3. FUNGSI HARI INI — dua sesi (pagi & sore) × dua divisi
     // =========================================================
-    public function hariIni()
+    /**
+     * Divisi bawaan saat halaman inspeksi dibuka tanpa parameter:
+     * musyrif yang hanya membina satu divisi langsung dibukakan divisi itu.
+     */
+    private function divisiBawaan(): string
+    {
+        $user = Auth::user();
+
+        if ($user && ! $user->can('buka-menu-manajemen-kamar')) {
+            $kategori = AsramaKamar::where('musyrif_id', $user->id)->pluck('kategori')->unique();
+
+            if ($kategori->count() === 1) {
+                return strtolower((string) $kategori->first()) === 'putri' ? 'putri' : 'putra';
+            }
+        }
+
+        return 'putra';
+    }
+
+    public function hariIni(Request $request)
     {
         $tanggal = now()->toDateString();
+
+        // Halaman inspeksi DIPISAH per divisi (permintaan Fahri, 17 Sep 2026):
+        // /asrama/penilaian/hari-ini?divisi=putra  |  ?divisi=putri
+        $divisi = in_array($request->input('divisi'), ['putra', 'putri'], true)
+            ? $request->input('divisi')
+            : $this->divisiBawaan();
 
         $kamars = AsramaKamar::where('status', 'aktif')->orderBy('nama_kamar', 'asc')->get();
         if ($kamars->count() == 0) {
@@ -220,50 +245,58 @@ class AsramaPenilaianController extends Controller
             return redirect('/asrama/kamar')->with('error', 'Belum ada data kamar sama sekali di database.');
         }
 
-        $kamarPerDivisi = [
-            'putra' => $kamars->filter(fn ($k) => strtolower($k->kategori ?? '') == 'putra')->values(),
-            'putri' => $kamars->filter(fn ($k) => strtolower($k->kategori ?? '') == 'putri')->values(),
-        ];
+        $kamarDivisi = $kamars->filter(fn ($k) => strtolower($k->kategori ?? '') == $divisi)->values();
+        $kamarIds = $kamarDivisi->pluck('id')->toArray();
 
         $lembar = [];
 
         foreach (array_keys(self::SESI) as $sesi) {
-            foreach (['putra', 'putri'] as $kategori) {
-                $draft = AsramaPenilaian::firstOrCreate(
-                    ['tanggal' => $tanggal, 'kategori' => $kategori, 'sesi' => $sesi],
-                    ['status' => 'draft']
-                );
+            $draft = AsramaPenilaian::firstOrCreate(
+                ['tanggal' => $tanggal, 'kategori' => $divisi, 'sesi' => $sesi],
+                ['status' => 'draft']
+            );
 
-                $kamarDivisi = $kamarPerDivisi[$kategori];
-                $kamarIds = $kamarDivisi->pluck('id')->toArray();
+            // Auto-cleanup data hantu: skor kamar yang sudah dihapus/dinonaktifkan
+            if (! empty($kamarIds)) {
+                AsramaPenilaianKamar::where('penilaian_id', $draft->id)
+                    ->whereNotIn('kamar_id', $kamarIds)
+                    ->delete();
+            }
 
-                // Auto-cleanup data hantu: skor kamar yang sudah dihapus/dinonaktifkan
-                if (! empty($kamarIds)) {
-                    AsramaPenilaianKamar::where('penilaian_id', $draft->id)
-                        ->whereNotIn('kamar_id', $kamarIds)
-                        ->delete();
-                }
+            $rincian = AsramaPenilaianKamar::where('penilaian_id', $draft->id)->get();
+            $dinilai = $rincian->pluck('kamar_id')->toArray();
+            $selesai = ($kamarDivisi->count() > 0 && count($dinilai) == $kamarDivisi->count());
 
-                $rincian = AsramaPenilaianKamar::where('penilaian_id', $draft->id)->get();
-                $dinilai = $rincian->pluck('kamar_id')->toArray();
-                $selesai = ($kamarDivisi->count() > 0 && count($dinilai) == $kamarDivisi->count());
+            $lembar[$sesi] = [
+                'draft'    => $draft,
+                'kamar'    => $kamarDivisi,
+                'dinilai'  => $dinilai,
+                'skor'     => $rincian->keyBy('kamar_id'),   // untuk mengisi ulang modal saat "Koreksi"
+                'selesai'  => $selesai,
+                'kandidat' => $selesai
+                    ? $rincian->sortByDesc('total_skor')->values()
+                    : null,
+            ];
+        }
 
-                $lembar[$sesi][$kategori] = [
-                    'draft'    => $draft,
-                    'kamar'    => $kamarDivisi,
-                    'dinilai'  => $dinilai,
-                    'skor'     => $rincian->keyBy('kamar_id'),   // untuk mengisi ulang modal saat "Koreksi"
-                    'selesai'  => $selesai,
-                    'kandidat' => $selesai
-                        ? $rincian->sortByDesc('total_skor')->values()
-                        : null,
-                ];
+        // Progres tiap divisi untuk label tab (jumlah kamar per divisi + yang sudah dinilai per sesi)
+        $progres = [];
+        foreach (['putra', 'putri'] as $kat) {
+            $progres[$kat]['jumlah'] = $kamars->filter(fn ($k) => strtolower($k->kategori ?? '') == $kat)->count();
+
+            foreach (array_keys(self::SESI) as $sesi) {
+                $p = AsramaPenilaian::where('tanggal', $tanggal)
+                        ->where('kategori', $kat)
+                        ->where('sesi', $sesi)
+                        ->first();
+
+                $progres[$kat][$sesi] = $p ? AsramaPenilaianKamar::where('penilaian_id', $p->id)->count() : 0;
             }
         }
 
         $sesiSekarang = self::sesiSekarang();
 
-        return view('asrama.penilaian.hari-ini', compact('tanggal', 'lembar', 'sesiSekarang'));
+        return view('asrama.penilaian.hari-ini', compact('tanggal', 'lembar', 'sesiSekarang', 'divisi', 'kamarDivisi', 'progres'));
     }
 
     // =========================================================
