@@ -74,6 +74,23 @@
                         class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" />
                     <x-input-error class="mt-2" :messages="$errors->get('no_hp')" />
                 </div>
+
+                <div class="md:col-span-2">
+                    <label for="nipa" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">NIPA — Nomor Induk Pegawai Arafah</label>
+                    <div class="flex items-center gap-3">
+                        <input id="nipa" name="nipa" type="text" inputmode="numeric" autocomplete="off"
+                            value="{{ old('nipa', $user->nipa) }}" placeholder="YMA. 0000 000"
+                            oninput="rapikanNipa(this)" onblur="rapikanNipa(this)"
+                            class="w-full sm:w-56 h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold tracking-wide text-slate-700 placeholder:font-normal placeholder:text-slate-400 placeholder:tracking-normal focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" />
+                        @if($user->nipa)
+                            <span class="text-xs text-emerald-700 font-semibold whitespace-nowrap">✓ tersimpan: {{ $user->nipa }}</span>
+                        @else
+                            <span class="text-xs text-slate-400">Belum diisi</span>
+                        @endif
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">Cukup ketik 7 angkanya, format otomatis jadi <b>YMA. 0000 000</b>. Contoh: YMA. 0917 071.</p>
+                    <x-input-error class="mt-2" :messages="$errors->get('nipa')" />
+                </div>
             </div>
 
             <div class="flex items-center gap-4 pt-5 border-t border-slate-100">
@@ -122,6 +139,22 @@
 
         </div>
     </div>
+
+    <!-- FORMAT OTOMATIS NIPA: ketik angka -> "YMA. 0000 000" -->
+    <script>
+        function rapikanNipa(el) {
+            const angka = (el.value || '').replace(/\D/g, '').slice(0, 7);
+            if (angka.length === 0) {
+                el.value = '';
+                return;
+            }
+            let hasil = 'YMA. ' + angka.slice(0, 4);
+            if (angka.length > 4) {
+                hasil += ' ' + angka.slice(4);
+            }
+            el.value = hasil;
+        }
+    </script>
 
     <!-- SCRIPT CROPPER & SUBMIT OTOMATIS -->
     <script>

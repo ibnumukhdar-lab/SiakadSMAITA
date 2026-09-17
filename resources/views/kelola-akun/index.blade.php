@@ -166,13 +166,22 @@
                     </form>
                 </div>
 
-                <table class="w-full text-left border-collapse min-w-[700px]">
+                {{-- Form NIPA (dipasang di luar tabel pakai atribut form=, supaya tidak bersarang di form jabatan) --}}
+                @foreach($users as $user)
+                    <form id="nipa-{{ $user->id }}" method="POST" action="{{ route('kelola-akun.updateNipa', $user->id) }}" class="hidden">
+                        @csrf
+                        @method('PUT')
+                    </form>
+                @endforeach
+
+                <table class="w-full text-left border-collapse min-w-[900px]">
                     <thead>
                         <tr class="bg-slate-50/80 border-b border-slate-200">
                             <th class="px-4 py-3.5 w-10 text-center">
                                 <input type="checkbox" @change="toggleAll" class="w-4 h-4 text-blue-900 rounded border-slate-300 focus:ring-blue-500 cursor-pointer shadow-sm">
                             </th>
                             <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 w-1/4">Nama &amp; Email</th>
+                            <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">NIPA</th>
                             <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Pilih Jabatan (Centang yang sesuai)</th>
                             <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Aksi</th>
                         </tr>
@@ -188,6 +197,17 @@
                                 <td class="px-4 py-3.5 align-top">
                                     <div class="font-bold text-slate-900">{{ $user->name }}</div>
                                     <div class="text-xs text-slate-500 mt-0.5">{{ $user->email }}</div>
+                                </td>
+
+                                {{-- NIPA: boleh diisi pemiliknya sendiri di halaman Profil, boleh juga oleh admin di sini --}}
+                                <td class="px-4 py-3.5 align-top">
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="text" name="nipa" form="nipa-{{ $user->id }}" value="{{ $user->nipa }}"
+                                            inputmode="numeric" autocomplete="off" placeholder="YMA. 0000 000" oninput="rapikanNipa(this)"
+                                            class="w-36 h-9 rounded-lg border border-slate-300 bg-white px-2.5 text-[12.5px] font-semibold tracking-wide text-slate-700 placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" />
+                                        <button type="submit" form="nipa-{{ $user->id }}" title="Simpan NIPA"
+                                            class="inline-flex items-center justify-center h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[12px] font-semibold shadow-sm transition whitespace-nowrap">Simpan</button>
+                                    </div>
                                 </td>
 
                                 <!-- MULTI-ROLE CHECKBOXES -->
@@ -227,6 +247,17 @@
                         @endforeach
                     </tbody>
                 </table>
+
+                <script>
+                    // Ketik 7 angka -> langsung diformat "YMA. 0000 000"
+                    function rapikanNipa(el) {
+                        const angka = (el.value || '').replace(/\D/g, '').slice(0, 7);
+                        if (angka.length === 0) { el.value = ''; return; }
+                        let hasil = 'YMA. ' + angka.slice(0, 4);
+                        if (angka.length > 4) { hasil += ' ' + angka.slice(4); }
+                        el.value = hasil;
+                    }
+                </script>
             </div>
 
         </div>

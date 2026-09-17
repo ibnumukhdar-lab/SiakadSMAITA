@@ -35,6 +35,21 @@ class KelolaAkunController extends Controller
         return back()->with('success', 'Jabatan untuk akun ' . $user->name . ' berhasil diperbarui.');
     }
 
+    /** NIPA (Nomor Induk Pegawai Arafah) satu akun — diisi/diperbaiki admin. */
+    public function updateNipa(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $data = $request->validate([
+            'nipa' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $user->nipa = User::rapikanNipa($data['nipa'] ?? null);
+        $user->save();
+
+        return back()->with('success', '✅ NIPA akun ' . $user->name . ' disimpan: ' . ($user->nipa ?: '(dikosongkan)'));
+    }
+
     /**
      * TAB 1: Memperbarui jabatan/role pengguna secara massal (Bulk Action).
      */

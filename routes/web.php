@@ -203,6 +203,9 @@ Route::middleware(['auth', 'permission:buka-menu-kelola-akun'])->group(function 
     
     // --- TAMBAHAN RUTE BULK ACTION ---
     Route::put('/kelola-akun/bulk-user', [App\Http\Controllers\KelolaAkunController::class, 'bulkUpdateUser'])->name('kelola-akun.bulkUpdateUser');
+
+    // NIPA (Nomor Induk Pegawai Arafah) — diisi/diperbaiki oleh admin
+    Route::put('/kelola-akun/nipa/{id}', [App\Http\Controllers\KelolaAkunController::class, 'updateNipa'])->name('kelola-akun.updateNipa');
     
     Route::put('/kelola-akun/matrix', [App\Http\Controllers\KelolaAkunController::class, 'updateMatrix'])->name('kelola-akun.updateMatrix');
     Route::post('/kelola-akun/permission', [App\Http\Controllers\KelolaAkunController::class, 'storePermission'])->name('kelola-akun.storePermission');

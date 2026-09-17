@@ -32,6 +32,11 @@ class ProfileController extends Controller
             $request->user()->email_verified_at = null;
         }
 
+        // NIPA selalu disimpan dalam format baku "YMA. 0000 000".
+        if ($request->has('nipa')) {
+            $request->user()->nipa = \App\Models\User::rapikanNipa($request->input('nipa'));
+        }
+
         // PROSES UPLOAD AVATAR
         if ($request->hasFile('avatar')) {
             // Hapus foto lama jika ada (agar server tidak penuh)

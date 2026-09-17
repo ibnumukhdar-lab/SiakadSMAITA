@@ -29,6 +29,7 @@ class ProfileUpdateRequest extends FormRequest
             // Tambahan validasi untuk kolom profil baru
             'jabatan' => ['nullable', 'string', 'max:100'],
             'no_hp'   => ['nullable', 'string', 'max:20'],
+            'nipa'    => ['nullable', 'string', 'max:30'], // Nomor Induk Pegawai Arafah
             'avatar'  => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'], // Maksimal 2MB
         ];
     }
