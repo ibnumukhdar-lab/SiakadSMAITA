@@ -12,6 +12,7 @@ use App\Http\Controllers\KenaikanKelasController;
 use App\Http\Controllers\PenilaianIsiController;
 use App\Http\Controllers\PenilaianMasterController;
 use App\Http\Controllers\PenilaianRekapController;
+use App\Http\Controllers\PenilaianRaporController;
 use App\Http\Controllers\ProjectSrController;
 use Illuminate\Support\Facades\DB;        // <-- Ditambahkan untuk Route Sinkronisasi
 use Illuminate\Support\Facades\Schema;  // <-- Ditambahkan untuk Route Sinkronisasi
@@ -128,6 +129,10 @@ Route::middleware(['auth', 'permission:buka-menu-penilaian'])->group(function ()
     Route::get('/penilaian/rekap', [PenilaianRekapController::class, 'index'])->name('penilaian.rekap');
     Route::get('/penilaian/rekap/ekspor', [PenilaianRekapController::class, 'ekspor'])->name('penilaian.rekap.ekspor');
     Route::get('/penilaian/siswa/{id}', [PenilaianRekapController::class, 'siswa'])->where('id', '[0-9]+')->name('penilaian.siswa');
+
+    // Rapot cetak Adab & Keasramaan (17 Sep 2026)
+    Route::get('/penilaian/rapot', [PenilaianRaporController::class, 'index'])->name('penilaian.rapot');
+    Route::get('/penilaian/rapot/cetak', [PenilaianRaporController::class, 'cetak'])->name('penilaian.rapot.cetak');
 
     // Pengisian lembar penilaian (Kepala Diniyah, Musyrif/Penanggungjawab Asrama)
     Route::get('/penilaian/{jenis}', [PenilaianIsiController::class, 'index'])->where('jenis', 'adab|keasramaan')->name('penilaian.isi');

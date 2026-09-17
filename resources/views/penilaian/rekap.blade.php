@@ -132,8 +132,13 @@
                                         @include('penilaian.partials._nilai-akhir', ['nilai' => $r['keasramaan']])
                                     </td>
                                     <td class="px-3 py-2.5 text-right">
-                                        <a href="{{ route('penilaian.siswa', $r['id']) }}"
-                                           class="inline-flex items-center justify-center h-7 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-[11.5px] font-semibold hover:bg-slate-50 transition">Rincian</a>
+                                        <div class="flex items-center justify-end gap-1.5">
+                                            <a href="{{ route('penilaian.rapot.cetak', ['periode' => $periodeId, 'siswa' => $r['id']]) }}"
+                                               target="_blank" title="Cetak rapot Adab & Keasramaan"
+                                               class="inline-flex items-center justify-center h-7 w-7 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-900 transition">🖨️</a>
+                                            <a href="{{ route('penilaian.siswa', $r['id']) }}"
+                                               class="inline-flex items-center justify-center h-7 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-[11.5px] font-semibold hover:bg-slate-50 transition">Rincian</a>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -150,7 +155,10 @@
                                     <div class="text-[13.5px] font-bold text-slate-900 truncate">{{ $r['nama'] }}</div>
                                     <div class="text-[11px] text-slate-400">{{ $r['kelas'] ?: 'Kelas -' }}@if($r['kamar']) · {{ $r['kamar'] }}@endif · {{ $r['nisn'] ?: 'NISN -' }}</div>
                                 </div>
-                                <a href="{{ route('penilaian.siswa', $r['id']) }}" class="text-[11.5px] font-semibold text-blue-900 hover:underline shrink-0">Rincian →</a>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <a href="{{ route('penilaian.rapot.cetak', ['periode' => $periodeId, 'siswa' => $r['id']]) }}" target="_blank" class="text-[11.5px] font-semibold text-slate-500 hover:underline">🖨️</a>
+                                    <a href="{{ route('penilaian.siswa', $r['id']) }}" class="text-[11.5px] font-semibold text-blue-900 hover:underline">Rincian →</a>
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-2 mt-2.5">

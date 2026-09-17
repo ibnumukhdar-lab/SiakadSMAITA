@@ -16,8 +16,12 @@
                         NISN {{ $siswa->nisn ?: '-' }} · Kelas {{ $siswa->kelas ?: '-' }}@if($kamar) · Kamar {{ $kamar }}@endif
                     </div>
                 </div>
-                <a href="{{ route('siswa.show', $siswa->id) }}"
-                   class="inline-flex items-center justify-center h-8 px-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12px] font-semibold hover:bg-slate-50 transition whitespace-nowrap">Profil</a>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('penilaian.rapot.cetak', ['siswa' => $siswa->id]) }}" target="_blank"
+                       class="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-[12px] font-semibold transition whitespace-nowrap">🖨️ Rapot</a>
+                    <a href="{{ route('siswa.show', $siswa->id) }}"
+                       class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12px] font-semibold hover:bg-slate-50 transition whitespace-nowrap">Profil</a>
+                </div>
             </div>
 
             {{-- ===== RINGKASAN PER PERIODE ===== --}}
