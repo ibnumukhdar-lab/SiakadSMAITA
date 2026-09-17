@@ -147,9 +147,9 @@
 
     <div class="bar tanpa-cetak">
         <button type="button" class="utama" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
-        <a href="{{ route('sr.rapot', ['semester' => request('semester', 'semua'), 'dari' => $dari, 'sampai' => $sampai]) }}">⬅️ Kembali</a>
+        <a href="{{ route('sr.rapot', ['semester' => $preset]) }}">⬅️ Kembali</a>
         @if($grupCetak)
-            <a class="utama" href="{{ route('sr.rapot.cetak', ['grup' => $grupCetak->id, 'semester' => request('semester', 'semua'), 'dari' => $dari, 'sampai' => $sampai]) }}">🖨️ Cetak semua ({{ $jumlahSantri }} santri) grup {{ $grupCetak->nama_grup }}</a>
+            <a class="utama" href="{{ route('sr.rapot.cetak', ['grup' => $grupCetak->id, 'semester' => $preset]) }}">🖨️ Cetak semua ({{ $jumlahSantri }} santri) grup {{ $grupCetak->nama_grup }}</a>
         @endif
         <span style="font-size: 12.5px; color: #64748b;">{{ $jumlahSantri }} santri · satu halaman per santri</span>
     </div>
@@ -167,7 +167,7 @@
             <div class="judul">
                 <h2>Rapor Student Root</h2>
                 <p>
-                    Periode {{ $dari && $sampai ? \Carbon\Carbon::parse($dari)->translatedFormat('d M Y') . ' – ' . \Carbon\Carbon::parse($sampai)->translatedFormat('d M Y') : 'seluruh data tercatat' }}
+                    {{ $semesterList[$preset] ?? 'Semester' }} · Tahun Ajaran {{ $tahunAjaran }} · {{ \Carbon\Carbon::parse($dari)->translatedFormat('d M Y') }} – {{ \Carbon\Carbon::parse($sampai)->translatedFormat('d M Y') }}
                 </p>
             </div>
 

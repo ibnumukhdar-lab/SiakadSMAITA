@@ -27,11 +27,10 @@ use Illuminate\Support\Facades\DB;
  */
 class SrRaporController extends Controller
 {
+    /** Periode rapor = PER SEMESTER saja (permintaan Fahri 18 Sep 2026). */
     public const SEMESTER = [
-        'semua' => 'Seluruh data',
-        's1' => 'Semester 1 (Juli–Desember)',
-        's2' => 'Semester 2 (Januari–Juni)',
-        'kustom' => 'Rentang tanggal sendiri',
+        's1' => 'Semester 1 · Juli–Desember',
+        's2' => 'Semester 2 · Januari–Juni',
     ];
 
     public const AMBANG_BAWAAN = ['a' => 40, 'b' => 20, 'c' => 1];
@@ -43,7 +42,7 @@ class SrRaporController extends Controller
     {
         $this->pastikanBolehMasuk();
 
-        [$dari, $sampai, $preset] = $this->rentangTanggal($request);
+        [$dari, $sampai, $preset, $tahunAjaran] = $this->rentangTanggal($request);
         $bolehSemua = $this->bolehSemua();
         $grupSaya = $this->grupSaya();
 
@@ -101,6 +100,7 @@ class SrRaporController extends Controller
             'semesterList' => self::SEMESTER,
             'dari' => $dari,
             'sampai' => $sampai,
+            'tahunAjaran' => $tahunAjaran,
             'bolehSemua' => $bolehSemua,
             'grupSaya' => $grupSaya,
             'grupList' => $bolehSemua ? SrGroup::where('status', 'aktif')->orderBy('nama_grup')->get() : $grupSaya,
@@ -118,7 +118,7 @@ class SrRaporController extends Controller
     {
         $this->pastikanBolehMasuk();
 
-        [$dari, $sampai] = $this->rentangTanggal($request);
+        [$dari, $sampai, $preset, $tahunAjaran] = $this->rentangTanggal($request);
 
         $siswaId = (int) $request->input('siswa', 0);
         $grupId = (string) $request->input('grup');
@@ -171,8 +171,11 @@ class SrRaporController extends Controller
 
         return view('student-root.rapot', [
             'daftar' => $daftar,
+            'preset' => $preset,
+            'semesterList' => self::SEMESTER,
             'dari' => $dari,
             'sampai' => $sampai,
+            'tahunAjaran' => $tahunAjaran,
             'grupCetak' => $grupCetak,
             'ambang' => $this->ambangKarakter(),
             'kepala' => $kepala,
@@ -242,26 +245,23 @@ class SrRaporController extends Controller
     // =====================================================================
     private function rentangTanggal(Request $request): array
     {
-        $preset = (string) $request->input('semester', 'semua');
+        // Tahun ajaran berjalan: Juli–Desember = semester 1, Januari–Juni = semester 2.
+        $tahun = (int) now()->format('Y');
+        $awalTahunAjaran = (int) now()->format('n') >= 7 ? $tahun : $tahun - 1;
+        $semesterAktif = $awalTahunAjaran === $tahun ? 's1' : 's2';
+
+        $preset = (string) $request->input('semester', $semesterAktif);
         if (! array_key_exists($preset, self::SEMESTER)) {
-            $preset = 'semua';
+            $preset = $semesterAktif;
         }
 
-        $tahun = (int) now()->format('Y');
-        $semesterAktif = (int) now()->format('n') >= 7 ? 1 : 2;
-        $awalTahunAjaran = $semesterAktif === 1 ? $tahun : $tahun - 1;
+        [$dari, $sampai] = $preset === 's1'
+            ? ["{$awalTahunAjaran}-07-01", "{$awalTahunAjaran}-12-31"]
+            : [($awalTahunAjaran + 1) . '-01-01', ($awalTahunAjaran + 1) . '-06-30'];
 
-        [$dari, $sampai] = match ($preset) {
-            's1' => ["{$awalTahunAjaran}-07-01", "{$awalTahunAjaran}-12-31"],
-            's2' => [($awalTahunAjaran + 1) . '-01-01', ($awalTahunAjaran + 1) . '-06-30'],
-            'kustom' => [
-                $request->input('dari') ?: now()->startOfYear()->toDateString(),
-                $request->input('sampai') ?: now()->toDateString(),
-            ],
-            default => [null, null],
-        };
+        $tahunAjaran = "{$awalTahunAjaran}/" . ($awalTahunAjaran + 1);
 
-        return [$dari, $sampai, $preset];
+        return [$dari, $sampai, $preset, $tahunAjaran];
     }
 
     // =====================================================================

@@ -15,7 +15,7 @@
                 </div>
                 <div class="flex items-center gap-2 self-start sm:self-auto">
                     @if($grupTerpilih !== '')
-                        <a href="{{ route('sr.rapot.cetak', ['grup' => $grupTerpilih, 'semester' => $preset, 'dari' => $dari, 'sampai' => $sampai]) }}"
+                        <a href="{{ route('sr.rapot.cetak', ['grup' => $grupTerpilih, 'semester' => $preset]) }}"
                            class="inline-flex items-center justify-center h-9 px-3.5 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-[12.5px] font-semibold transition whitespace-nowrap">🖨️ Cetak grup ini ({{ $baris->count() }} santri)</a>
                     @endif
                     <a href="{{ route('sr.mygroup') }}"
@@ -32,7 +32,7 @@
 
             <form action="{{ route('sr.rapot') }}" method="GET"
                   class="bg-white border border-slate-200 rounded-2xl shadow-sm p-3.5 mb-4 grid grid-cols-1 sm:grid-cols-12 gap-2.5">
-                <div class="sm:col-span-4">
+                <div class="sm:col-span-5">
                     <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Periode penilaian</label>
                     <select name="semester" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 focus:border-blue-500 outline-none">
                         @foreach($semesterList as $kunci => $label)
@@ -40,13 +40,12 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="sm:col-span-3">
-                    <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Dari tanggal</label>
-                    <input type="date" name="dari" value="{{ $dari }}" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 focus:border-blue-500 outline-none">
-                </div>
-                <div class="sm:col-span-3">
-                    <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Sampai tanggal</label>
-                    <input type="date" name="sampai" value="{{ $sampai }}" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 focus:border-blue-500 outline-none">
+                <div class="sm:col-span-5">
+                    <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Tahun ajaran</label>
+                    <div class="w-full h-10 rounded-lg border border-slate-200 bg-slate-50 px-2.5 flex items-center text-[13px] font-semibold text-slate-600">
+                        {{ $tahunAjaran }}
+                        <span class="ml-1.5 font-normal text-slate-400">{{ \Carbon\Carbon::parse($dari)->translatedFormat('d M Y') }} – {{ \Carbon\Carbon::parse($sampai)->translatedFormat('d M Y') }}</span>
+                    </div>
                 </div>
                 <div class="sm:col-span-2 flex items-end">
                     <button type="submit" class="w-full h-10 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[12.5px] font-semibold transition">Tampilkan</button>
@@ -65,7 +64,6 @@
                     <input type="text" name="q" value="{{ $q }}" placeholder="nama atau NISN"
                            class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 placeholder:text-slate-400 focus:border-blue-500 outline-none">
                 </div>
-                <input type="hidden" name="semester_kirim" value="1">
             </form>
 
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
@@ -74,7 +72,7 @@
                     <span class="text-[11.5px] text-slate-400">
                         {{ $baris->count() }} santri tampil
                         @if($bolehSemua && $baris->count() !== $semuaSantri) · total {{ $semuaSantri }} santri aktif @endif
-                        · {{ $preset === 'semua' ? 'seluruh data' : 'periode terpilih' }}
+                        · {{ $semesterList[$preset] ?? '' }}
                     </span>
                 </div>
 
@@ -99,7 +97,7 @@
                             </span>
                         </div>
 
-                        <a href="{{ route('sr.rapot.cetak', ['siswa' => $b['id'], 'semester' => $preset, 'dari' => $dari, 'sampai' => $sampai]) }}"
+                        <a href="{{ route('sr.rapot.cetak', ['siswa' => $b['id'], 'semester' => $preset]) }}"
                            target="_blank"
                            class="inline-flex items-center justify-center h-8 px-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12px] font-semibold hover:bg-blue-50 hover:border-blue-300 hover:text-blue-900 transition whitespace-nowrap">
                             🖨️ Cetak
