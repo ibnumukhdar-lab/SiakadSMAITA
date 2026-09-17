@@ -135,6 +135,9 @@ class ProjectSrController extends Controller
                 ->with('error', 'Tidak bisa memindahkan project ke grup yang bukan binaan Anda.');
         }
 
+        // Mentor project SELALU mentor grupnya (tidak bisa diisi/diganti orang lain).
+        $data['mentor_id'] = SrGroup::find($data['grup_id'])?->mentor_id;
+
         $project->update($data);
 
         return redirect()->route('project-sr.show', $project->id)->with('success', 'Project berhasil diperbarui.');

@@ -60,7 +60,15 @@ class SrGroupController extends Controller
             'mentor_id.unique' => 'Guru ini sudah menjadi mentor di grup lain! Silakan pilih guru yang berbeda.'
         ]);
 
+        $mentorLama = $group->mentor_id;
+
         $group->update($request->only(['nama_grup', 'mentor_id', 'tahun_ajaran_mulai', 'status']));
+
+        // Project milik grup ini mengikuti mentor grupnya — supaya tidak ada project yang
+        // masih tercatat di bawah mentor lama (mentor project = mentor grup, selalu konsisten).
+        if ((int) $mentorLama !== (int) $group->mentor_id) {
+            \App\Models\SrProject::where('grup_id', $group->id)->update(['mentor_id' => $group->mentor_id]);
+        }
 
         return back()->with('success', '✅ Informasi grup berhasil diperbarui!');
     }
