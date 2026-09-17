@@ -78,30 +78,55 @@
                                     </div>
                                 </div>
 
-                                <!-- Box Terkotor -->
-                                <div class="rounded-xl border border-rose-200 bg-rose-50/60 p-4">
+                                @php
+                                    // Aturan 17 Sep 2026: kamar terkotor hanya sah bila nilainya < 70%.
+                                    // Kalau semua kamar >= 70%, kartu ini menampilkan "bersih" + kamar perlu diperhatikan.
+                                    $adaTerkotor = (bool) $h->kamar_terkotor_id;
+                                    $idSorot     = $h->kamar_terkotor_id ?: $h->kamar_perhatian_id;
+                                    $kamarSorot  = $adaTerkotor ? $h->kamarTerkotor : $h->kamarPerhatian;
+                                    $skorSorot   = $idSorot ? optional($h->rincianKamars->firstWhere('kamar_id', $idSorot))->total_skor : null;
+                                    $persenSorot = $skorSorot !== null ? \App\Http\Controllers\AsramaPenilaianController::persenSkor($skorSorot) : null;
+                                    $sufiksSorot = $persenSorot !== null ? ' · ' . $skorSorot . '/25 (' . $persenSorot . '%)' : '';
+                                    $kelasSorot  = $adaTerkotor ? 'border-rose-200 bg-rose-50/60' : 'border-amber-200 bg-amber-50/60';
+                                    $kelasTepi   = $h->foto_terkotor ? 'border-t border-dashed ' . ($adaTerkotor ? 'border-rose-200' : 'border-amber-200') . ' pt-3 mt-3' : '';
+                                @endphp
+
+                                <!-- Box Terkotor / Perlu Diperhatikan -->
+                                <div class="rounded-xl border {{ $kelasSorot }} p-4">
                                     <div class="flex items-center justify-between gap-3">
                                         <div>
-                                            <div class="text-[11px] font-bold uppercase tracking-wider text-rose-700 mb-0.5">⚠️ Terkotor (-1)</div>
-                                            <div class="text-sm font-bold text-rose-800">{{ $h->kamarTerkotor->nama_kamar ?? 'Kamar Dihapus' }}</div>
+                                            @if($adaTerkotor)
+                                                <div class="text-[11px] font-bold uppercase tracking-wider text-rose-700 mb-0.5">⚠️ Terkotor (−1){{ $sufiksSorot }}</div>
+                                            @else
+                                                <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 mb-0.5">✅ Semua kamar bersih (≥{{ \App\Http\Controllers\AsramaPenilaianController::BATAS_TERKOTOR_PERSEN }}%) — tanpa poin −1</div>
+                                                <div class="text-[11px] font-bold uppercase tracking-wider text-amber-700 mb-0.5">⚠️ Perlu diperhatikan{{ $sufiksSorot }}</div>
+                                            @endif
+                                            <div class="text-sm font-bold {{ $adaTerkotor ? 'text-rose-800' : 'text-amber-800' }}">{{ $kamarSorot->nama_kamar ?? 'Kamar Dihapus' }}</div>
                                         </div>
                                         @if($h->foto_terkotor)
                                             <a href="{{ url('berkas/' . $h->foto_terkotor) }}" target="_blank" class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 px-2.5 py-1.5 text-xs font-bold transition whitespace-nowrap">📷 Lihat Foto</a>
                                         @endif
                                     </div>
 
-                                    <div class="@if($h->foto_terkotor) border-t border-dashed border-rose-200 pt-3 mt-3 @endif">
+                                    <div class="{{ $kelasTepi }}">
                                         <form action="{{ route('asrama.penilaian.update-foto', $h->id) }}" method="POST" enctype="multipart/form-data" class="flex flex-wrap items-center justify-between gap-2">
                                             @csrf
                                             <input type="hidden" name="jenis" value="terkotor">
-                                            <input type="file" name="foto" required accept="image/*" data-kompres class="text-xs text-rose-800 file:mr-2 file:rounded-lg file:border-0 file:bg-rose-500 file:text-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:cursor-pointer cursor-pointer">
-                                            <button type="submit" class="inline-flex items-center gap-1 rounded-lg {{ $h->foto_terkotor ? 'border border-rose-300 bg-white text-rose-700 hover:bg-rose-50' : 'bg-rose-500 hover:bg-rose-600 text-white' }} px-3 py-1.5 text-xs font-bold transition whitespace-nowrap">
+                                            <input type="file" name="foto" required accept="image/*" data-kompres class="text-xs {{ $adaTerkotor ? 'text-rose-800 file:bg-rose-500' : 'text-amber-800 file:bg-amber-500' }} file:mr-2 file:rounded-lg file:border-0 file:text-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:cursor-pointer cursor-pointer">
+                                            <button type="submit" class="inline-flex items-center gap-1 rounded-lg {{ $h->foto_terkotor ? 'border ' . ($adaTerkotor ? 'border-rose-300 bg-white text-rose-700 hover:bg-rose-50' : 'border-amber-300 bg-white text-amber-700 hover:bg-amber-50') : ($adaTerkotor ? 'bg-rose-500 hover:bg-rose-600 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white') }} px-3 py-1.5 text-xs font-bold transition whitespace-nowrap">
                                                 {{ $h->foto_terkotor ? 'Ganti Foto' : 'Upload' }}
                                             </button>
-                                            <span data-info-kompres class="basis-full text-[11px] font-medium text-rose-700"></span>
+                                            <span data-info-kompres class="basis-full text-[11px] font-medium {{ $adaTerkotor ? 'text-rose-700' : 'text-amber-700' }}"></span>
                                         </form>
                                     </div>
                                 </div>
+
+                                @if($h->catatan_inspektor)
+                                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+                                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">📝 Catatan Inspektor</div>
+                                        <p class="text-[13px] text-slate-700 font-medium whitespace-pre-line">{{ $h->catatan_inspektor }}</p>
+                                    </div>
+                                @endif
 
                             </div>
 

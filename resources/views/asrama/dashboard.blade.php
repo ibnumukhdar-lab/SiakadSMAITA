@@ -118,7 +118,7 @@
                                 <div class="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center text-2xl">⚠️</div>
                                 <div>
                                     <h3 class="text-xl font-black text-gray-800">Perhatian Ekstra (Putra)</h3>
-                                    <p class="text-xs font-bold text-red-600">Rata-rata skor terendah</p>
+                                    <p class="text-xs font-bold text-red-600">Rata-rata di bawah {{ \App\Http\Controllers\AsramaPenilaianController::BATAS_TERKOTOR_PERSEN }}%</p>
                                 </div>
                             </div>
                             
@@ -138,7 +138,7 @@
                                     </div>
                                 @empty
                                     <div class="text-center py-6 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                                        <p class="font-bold text-gray-400 text-sm">Belum ada data sidak putra bulan ini.</p>
+                                        <p class="font-bold text-emerald-600 text-sm">✅ Semua kamar putra bernilai {{ \App\Http\Controllers\AsramaPenilaianController::BATAS_TERKOTOR_PERSEN }}% ke atas bulan ini — tidak ada yang masuk perhatian ekstra.</p>
                                     </div>
                                 @endforelse
                             </div>
@@ -269,7 +269,7 @@
                                 <div class="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center text-2xl">⚠️</div>
                                 <div>
                                     <h3 class="text-xl font-black text-gray-800">Perhatian Ekstra (Putri)</h3>
-                                    <p class="text-xs font-bold text-red-600">Rata-rata skor terendah</p>
+                                    <p class="text-xs font-bold text-red-600">Rata-rata di bawah {{ \App\Http\Controllers\AsramaPenilaianController::BATAS_TERKOTOR_PERSEN }}%</p>
                                 </div>
                             </div>
                             
@@ -289,7 +289,7 @@
                                     </div>
                                 @empty
                                     <div class="text-center py-6 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                                        <p class="font-bold text-gray-400 text-sm">Belum ada data sidak putri bulan ini.</p>
+                                        <p class="font-bold text-emerald-600 text-sm">✅ Semua kamar putri bernilai {{ \App\Http\Controllers\AsramaPenilaianController::BATAS_TERKOTOR_PERSEN }}% ke atas bulan ini — tidak ada yang masuk perhatian ekstra.</p>
                                     </div>
                                 @endforelse
                             </div>

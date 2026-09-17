@@ -15,11 +15,33 @@ use Illuminate\Support\Str;
 class AsramaPenilaianController extends Controller
 {
     // =========================================================
+    // ATURAN BATAS KAMAR TERKOTOR (permintaan Fahri, 17 Sep 2026)
+    // Kamar hanya boleh ditandai TERKOTOR bila nilainya di bawah
+    // BATAS_TERKOTOR_PERSEN dari skor maksimal. Bila semua kamar >= batas itu,
+    // statusnya BERSIH (tidak ada poin -1) dan kamar paling bawah hanya masuk
+    // daftar "perlu diperhatikan" + catatan inspektor.
+    // =========================================================
+    public const SKOR_MAKS = 25;                 // 5 kriteria × skor maksimal 5
+    public const BATAS_TERKOTOR_PERSEN = 70;     // batas bawah (%) untuk menyebut kamar "terkotor"
+
+    /** Ambang nilai absolut: 70% dari 25 = 17,5 → kamar dengan total < 17,5 (yaitu maks 17) yang boleh disebut terkotor. */
+    public static function batasTerkotor(): float
+    {
+        return self::SKOR_MAKS * self::BATAS_TERKOTOR_PERSEN / 100;
+    }
+
+    /** Persentase nilai kamar terhadap skor maksimal. */
+    public static function persenSkor($total): float
+    {
+        return round(((float) $total) / self::SKOR_MAKS * 100, 1);
+    }
+
+    // =========================================================
     // 1. FUNGSI INDEX (HALAMAN HISTORI INSPEKSI) -> asrama/penilaian/index.blade.php
     // =========================================================
     public function index()
     {
-        $histori = AsramaPenilaian::with(['kamarTerbersih', 'kamarTerkotor', 'musyrif'])
+        $histori = AsramaPenilaian::with(['kamarTerbersih', 'kamarTerkotor', 'kamarPerhatian', 'musyrif', 'rincianKamars'])
                     ->where('status', 'final')
                     ->orderBy('tanggal', 'desc')
                     ->get();
@@ -78,12 +100,16 @@ class AsramaPenilaianController extends Controller
         $rankingPutra = $rankingKamar->where('kategori', 'putra')->values();
         $putraAktif = $rankingPutra->filter(fn($k) => $k->jumlah_sidak > 0)->values(); 
         $putraTerbersih = $putraAktif->take(3); 
-        $putraTerkotor = $putraAktif->reverse()->take(3)->values(); 
+        // Aturan 17 Sep 2026: "Perhatian Ekstra" hanya untuk kamar dengan rata-rata DI BAWAH 70% (17,5 dari 25).
+        // Kamar yang rata-ratanya 70% ke atas dianggap bersih, tidak dipajang sebagai terkotor.
+        $putraTerkotor = $putraAktif->filter(fn($k) => $k->rata_rata_skor < self::batasTerkotor())
+                                    ->reverse()->take(3)->values();
 
         $rankingPutri = $rankingKamar->where('kategori', 'putri')->values();
         $putriAktif = $rankingPutri->filter(fn($k) => $k->jumlah_sidak > 0)->values(); 
         $putriTerbersih = $putriAktif->take(3); 
-        $putriTerkotor = $putriAktif->reverse()->take(3)->values(); 
+        $putriTerkotor = $putriAktif->filter(fn($k) => $k->rata_rata_skor < self::batasTerkotor())
+                                    ->reverse()->take(3)->values();
 
         return view('asrama.dashboard', compact(
             'totalKamarPutra', 'totalKamarPutri', 
@@ -208,14 +234,26 @@ class AsramaPenilaianController extends Controller
             return redirect('/asrama/penilaian/hari-ini')->with('error', "Belum ada kamar $kategori yang dinilai hari ini.");
         }
 
-        $maxSkor = $dinilai->max('total_skor');
-        $minSkor = $dinilai->min('total_skor');
+        $dinilai = $dinilai->sortByDesc('total_skor')->values();
+
+        $maxSkor = (int) $dinilai->max('total_skor');
+        $minSkor = (int) $dinilai->min('total_skor');
 
         $kandidatBersih = $dinilai->where('total_skor', $maxSkor)->values();
-        $kandidatKotor = $dinilai->where('total_skor', $minSkor)->values();
+
+        // --- Aturan batas bawah: hanya kamar di bawah 70% yang boleh disebut TERKOTOR ---
+        $batas = self::batasTerkotor();
+        $bawahAmbang = $dinilai->filter(fn ($k) => (float) $k->total_skor < $batas)
+                               ->sortBy('total_skor')->values();
+        $adaTerkotor = $bawahAmbang->isNotEmpty();
+        $kandidatKotor = $adaTerkotor ? $bawahAmbang : collect();
+
+        // Kamar paling bawah (untuk daftar "perlu diperhatikan" bila semua kamar bersih)
+        $terbawah = $dinilai->where('total_skor', $minSkor)->values();
 
         return view('asrama.penilaian.konfirmasi', compact(
-            'penilaian', 'kategori', 'kandidatBersih', 'kandidatKotor', 'maxSkor', 'minSkor'
+            'penilaian', 'kategori', 'kandidatBersih', 'kandidatKotor', 'maxSkor', 'minSkor',
+            'adaTerkotor', 'terbawah', 'batas'
         ));
     }
 
@@ -227,20 +265,56 @@ class AsramaPenilaianController extends Controller
         $request->validate([
             'kategori'           => 'required|in:putra,putri',
             'kamar_terbersih_id' => 'required|exists:asrama_kamars,id',
-            'kamar_terkotor_id'  => 'required|exists:asrama_kamars,id',
+            'kamar_terkotor_id'  => 'nullable|exists:asrama_kamars,id',
+            'catatan_inspektor'  => 'nullable|string|max:1000',
             'foto_terbersih'     => 'nullable|file|mimes:jpg,jpeg,png,webp,gif,heic,heif|max:8192',
             'foto_terkotor'      => 'nullable|file|mimes:jpg,jpeg,png,webp,gif,heic,heif|max:8192',
         ], [
+            'kamar_terbersih_id.required' => 'Pilih dulu kamar terbersih sebelum mengunci finalisasi.',
             'foto_terbersih.mimes' => 'Foto kamar terbersih harus berupa gambar (jpg, png, webp, gif, heic).',
             'foto_terkotor.mimes'  => 'Foto kamar terkotor harus berupa gambar (jpg, png, webp, gif, heic).',
             'foto_terbersih.max'   => 'Foto kamar terbersih terlalu besar (maksimal 8 MB). Coba perkecil dulu atau pilih foto lain.',
             'foto_terkotor.max'    => 'Foto kamar terkotor terlalu besar (maksimal 8 MB). Coba perkecil dulu atau pilih foto lain.',
+            'catatan_inspektor.max' => 'Catatan inspektor terlalu panjang (maksimal 1000 karakter).',
         ]);
 
         $penilaian = AsramaPenilaian::where('tanggal', now()->toDateString())
                         ->where('kategori', $request->kategori)
                         ->where('status', 'draft')
                         ->firstOrFail();
+
+        // ------------------------------------------------------------------
+        // ATURAN BATAS BAWAH (17 Sep 2026):
+        // kamar hanya boleh disebut TERKOTOR bila nilainya < 70% skor maksimal.
+        // Skor dihitung ULANG di server, tidak percaya kiriman form.
+        // ------------------------------------------------------------------
+        $skorKamar = AsramaPenilaianKamar::where('penilaian_id', $penilaian->id)->pluck('total_skor', 'kamar_id');
+
+        if ($skorKamar->isEmpty()) {
+            return back()->with('error', 'Belum ada kamar yang dinilai pada lembar ini, finalisasi dibatalkan.');
+        }
+
+        $batas = self::batasTerkotor();
+        $kandidatTerkotor = $skorKamar->filter(fn ($s) => (float) $s < $batas);
+
+        $kamarTerkotorId = $request->filled('kamar_terkotor_id') ? (int) $request->kamar_terkotor_id : null;
+
+        if ($kamarTerkotorId) {
+            $skorPilih = $skorKamar[$kamarTerkotorId] ?? null;
+
+            if ($skorPilih === null) {
+                return back()->with('error', 'Kamar yang dipilih sebagai terkotor tidak dinilai pada lembar inspeksi ini.');
+            }
+
+            if ((float) $skorPilih >= $batas) {
+                return back()->with('error', 'Kamar itu tidak bisa ditandai terkotor: nilainya ' . self::persenSkor($skorPilih) . '%, sedangkan batas terkotor adalah di bawah ' . self::BATAS_TERKOTOR_PERSEN . '%.');
+            }
+        } elseif ($kandidatTerkotor->isNotEmpty()) {
+            return back()->with('error', 'Masih ada kamar bernilai di bawah ' . self::BATAS_TERKOTOR_PERSEN . '% — pilih salah satu sebagai kamar terkotor sebelum mengunci.');
+        }
+
+        // Kamar "perlu diperhatikan": terkotor bila ada, kalau tidak → kamar paling bawah
+        $kamarPerhatianId = $kamarTerkotorId ?: (int) $skorKamar->sort()->keys()->first();
 
         DB::beginTransaction();
         try {
@@ -258,7 +332,9 @@ class AsramaPenilaianController extends Controller
                 'status' => 'final',
                 'musyrif_id' => Auth::id(),
                 'kamar_terbersih_id' => $request->kamar_terbersih_id,
-                'kamar_terkotor_id' => $request->kamar_terkotor_id,
+                'kamar_terkotor_id' => $kamarTerkotorId,
+                'kamar_perhatian_id' => $kamarPerhatianId,
+                'catatan_inspektor' => $request->filled('catatan_inspektor') ? trim($request->catatan_inspektor) : null,
                 'foto_terbersih' => $path_terbersih,
                 'foto_terkotor' => $path_terkotor,
             ]);
@@ -322,11 +398,23 @@ class AsramaPenilaianController extends Controller
 
             $KategoriJudul = ucfirst($request->kategori);
             $injeksiPoin($request->kamar_terbersih_id, 1, "Kamar Terbersih $KategoriJudul");
-            $injeksiPoin($request->kamar_terkotor_id, -1, "Kamar Terkotor $KategoriJudul");
+
+            // Poin -1 HANYA diberikan bila memang ada kamar di bawah batas (70%)
+            if ($kamarTerkotorId) {
+                $injeksiPoin($kamarTerkotorId, -1, "Kamar Terkotor $KategoriJudul");
+            }
 
             DB::commit();
-            
-            return redirect('/asrama/penilaian')->with('success', "✨ Inspeksi Divisi $KategoriJudul Selesai! Poin kebersihan asrama disuntikkan & Bukti Foto dikirim ke TV Display.");
+
+            $namaPerhatian = optional(AsramaKamar::find($kamarPerhatianId))->nama_kamar;
+
+            if ($kamarTerkotorId) {
+                $pesan = "✨ Inspeksi Divisi $KategoriJudul selesai! Poin +1 (kamar terbersih) dan −1 (kamar terkotor) sudah disuntikkan, bukti foto dikirim ke TV Display.";
+            } else {
+                $pesan = "✅ Inspeksi Divisi $KategoriJudul selesai — semua kamar bernilai " . self::BATAS_TERKOTOR_PERSEN . "% ke atas, jadi tidak ada kamar terkotor dan tidak ada poin pengurangan. Kamar " . ($namaPerhatian ?: '-') . " masuk daftar perlu diperhatikan.";
+            }
+
+            return redirect('/asrama/penilaian')->with('success', $pesan);
         } catch (\Throwable $e) {
             DB::rollBack();
             return back()->with('error', 'Terjadi Kesalahan Sistem: ' . $e->getMessage() . ' (pada baris ' . $e->getLine() . ')');

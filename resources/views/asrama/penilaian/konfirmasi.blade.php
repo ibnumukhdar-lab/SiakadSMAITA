@@ -5,7 +5,8 @@
             <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
                 <div>
                     <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">⚖️ Putusan Final Sidak Asrama {{ ucfirst($kategori) }}</h3>
-                    <p class="text-sm text-slate-500 mt-0.5">Tentukan pemenang mutlak dari kandidat di bawah, lalu sertakan bukti foto untuk TV Display Lobi.</p>
+                    <p class="text-sm text-slate-500 mt-0.5">Tentukan pemenang mutlak dari kandidat di bawah, lalu sertakan bukti foto untuk TV Display Lobi.
+                        Kamar terkotor hanya sah bila nilainya di bawah {{ \App\Http\Controllers\AsramaPenilaianController::BATAS_TERKOTOR_PERSEN }}%.</p>
                 </div>
             </div>
 
@@ -60,28 +61,62 @@
 
                     <!-- ================= KANDIDAT TERKOTOR ================= -->
                     <div class="bg-rose-50 border border-rose-200 rounded-2xl shadow-sm p-5 sm:p-6">
-                        <h4 class="font-extrabold text-rose-800 text-base mb-4 flex items-center gap-2">
-                            ⚠️ Perhatian Ekstra
-                            <span class="bg-rose-200 text-rose-800 px-2 py-0.5 rounded-md text-xs font-bold">Skor: {{ $minSkor }}</span>
-                        </h4>
+                        @if($adaTerkotor)
+                            <h4 class="font-extrabold text-rose-800 text-base mb-2 flex items-center gap-2">
+                                ⚠️ Perhatian Ekstra
+                                <span class="bg-rose-200 text-rose-800 px-2 py-0.5 rounded-md text-xs font-bold">Terendah: {{ $minSkor }} / 25</span>
+                            </h4>
+                            <p class="text-[12px] font-semibold text-rose-700 mb-3.5">
+                                Hanya kamar bernilai <b>di bawah {{ \App\Http\Controllers\AsramaPenilaianController::BATAS_TERKOTOR_PERSEN }}%</b>
+                                (kurang dari {{ $batas }} poin) yang bisa ditandai terkotor. Kamar terpilih menerima poin −1 untuk seluruh penghuninya.
+                            </p>
 
-                        <div class="space-y-2.5">
-                            @foreach($kandidatKotor as $k)
-                                <label class="flex items-center gap-4 p-4 bg-white border border-rose-200 rounded-xl cursor-pointer hover:bg-rose-100/60 hover:border-rose-300 transition shadow-sm">
-                                    <input type="radio" name="kamar_terkotor_id" value="{{ $k->kamar_id }}" class="w-5 h-5 accent-rose-500" {{ $loop->first ? 'checked' : '' }} required>
-                                    <span class="font-bold text-slate-800">{{ $k->kamar->nama_kamar }}</span>
-                                </label>
-                            @endforeach
-                        </div>
+                            <div class="space-y-2.5">
+                                @foreach($kandidatKotor as $k)
+                                    <label class="flex items-center gap-4 p-4 bg-white border border-rose-200 rounded-xl cursor-pointer hover:bg-rose-100/60 hover:border-rose-300 transition shadow-sm">
+                                        <input type="radio" name="kamar_terkotor_id" value="{{ $k->kamar_id }}" class="w-5 h-5 accent-rose-500" {{ $loop->first ? 'checked' : '' }}>
+                                        <span class="font-bold text-slate-800">{{ $k->kamar->nama_kamar }}</span>
+                                        <span class="ms-auto text-[12px] font-black text-rose-700 whitespace-nowrap">{{ $k->total_skor }}/25 · {{ \App\Http\Controllers\AsramaPenilaianController::persenSkor($k->total_skor) }}%</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @else
+                            <h4 class="font-extrabold text-emerald-800 text-base mb-2">✅ Semua Kamar Dinilai Bersih</h4>
+                            <div class="rounded-xl bg-white border border-emerald-200 p-4 text-[13px] text-emerald-800 font-semibold">
+                                Semua kamar bernilai <b>{{ \App\Http\Controllers\AsramaPenilaianController::BATAS_TERKOTOR_PERSEN }}% ke atas</b>, jadi <b>tidak ada kamar terkotor</b> dan <b>tidak ada poin −1</b> pada inspeksi ini.
+                            </div>
+
+                            <div class="mt-4">
+                                <div class="text-[11px] font-bold uppercase tracking-wider text-amber-700 mb-1.5">⚠️ Perlu Diperhatikan (nilai terbawah)</div>
+                                <div class="space-y-2">
+                                    @foreach($terbawah as $t)
+                                        <div class="flex items-center justify-between gap-3 bg-white border border-amber-200 rounded-xl px-4 py-3">
+                                            <span class="font-bold text-slate-800">{{ $t->kamar->nama_kamar }}</span>
+                                            <span class="text-[12px] font-black text-amber-700 whitespace-nowrap">{{ $t->total_skor }}/25 · {{ \App\Http\Controllers\AsramaPenilaianController::persenSkor($t->total_skor) }}%</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <p class="text-[11px] font-semibold text-amber-700 mt-2">Kamar ini masuk daftar perlu diperhatikan (tanpa poin pengurangan) dan bisa kamu beri catatan di bawah.</p>
+                            </div>
+                        @endif
 
                         <div class="mt-5 pt-4 border-t border-rose-200">
-                            <label class="block text-[11px] font-bold uppercase tracking-wider text-rose-800 mb-1.5">📸 Upload Bukti Foto (Opsional)</label>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-rose-800 mb-1.5">📸 {{ $adaTerkotor ? 'Upload Bukti Foto Kamar Terkotor (Opsional)' : 'Upload Foto Kamar Perlu Diperhatikan (Opsional)' }}</label>
                             <input type="file" name="foto_terkotor" accept="image/*" data-kompres class="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-rose-500 file:text-white hover:file:bg-rose-600 cursor-pointer bg-white rounded-xl border border-rose-200">
                             <span data-info-kompres class="block text-[11px] font-semibold text-rose-700 mt-1.5"></span>
                             <p class="text-[11px] font-semibold text-rose-700 mt-2">* Foto peringatan untuk tayang di TV Display. Foto besar dari HP dikecilkan otomatis sebelum dikirim.</p>
                         </div>
                     </div>
 
+                </div>
+
+                <!-- ================= CATATAN INSPEKTOR ================= -->
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 sm:p-6 mb-6">
+                    <label for="catatan_inspektor" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">📝 Catatan Inspektor (opsional)</label>
+                    <textarea id="catatan_inspektor" name="catatan_inspektor" rows="3" maxlength="1000"
+                              placeholder="Contoh: lemari kamar Utsman belum rapi dan lantai depan masih berdebu — mohon diperbaiki besok."
+                              class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500">{{ old('catatan_inspektor') }}</textarea>
+                    <p class="text-[11px] font-semibold text-slate-400 mt-1.5">Tampil di halaman Histori Inspeksi bersama kamar yang perlu diperhatikan.</p>
                 </div>
 
                 <!-- ================= TOMBOL EKSEKUSI ================= -->

@@ -23,6 +23,11 @@ class AsramaPenilaian extends Model
         return $this->belongsTo(AsramaKamar::class, 'kamar_terkotor_id');
     }
 
+    // Kamar yang masuk daftar "perlu diperhatikan" (terendah, walau semua kamar bersih)
+    public function kamarPerhatian() {
+        return $this->belongsTo(AsramaKamar::class, 'kamar_perhatian_id');
+    }
+
     public function rincianKamars() {
         return $this->hasMany(AsramaPenilaianKamar::class, 'penilaian_id');
     }
