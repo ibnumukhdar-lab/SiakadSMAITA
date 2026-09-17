@@ -125,7 +125,14 @@
                             $ab = $ringkasAbsensi[$sid] ?? null;
                             $poin = $poinAsrama[$sid]->poin ?? null;
                             $izinSiswa = $izinBulan[$sid] ?? collect();
-                            $catatan = $izinSiswa->map(fn ($z) => $z->labelJenis() . ' (' . \Carbon\Carbon::parse($z->mulai)->format('d/m') . '–' . \Carbon\Carbon::parse($z->sampai)->format('d/m') . ')')->implode(', ');
+                            $catatan = $izinSiswa->map(function ($z) {
+                                $teks = $z->labelJenis() . ' (' . \Carbon\Carbon::parse($z->mulai)->format('d/m') . ' ' . str_replace(':', '.', $z->jamKeluarText())
+                                    . ' – ' . \Carbon\Carbon::parse($z->sampai)->format('d/m') . ' ' . str_replace(':', '.', $z->jamWajibKembaliText()) . ')';
+                                if ((int) $z->terlambat_menit > 0) {
+                                    $teks .= ' ⚠️ terlambat ' . (int) $z->terlambat_menit . ' menit';
+                                }
+                                return $teks;
+                            })->implode('; ');
                         @endphp
                         <tr>
                             <td class="c">{{ $i + 1 }}</td>

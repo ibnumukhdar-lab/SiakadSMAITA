@@ -5,6 +5,7 @@
             <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
                 <div>
                     <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">⚖️ Putusan Final Sidak Asrama {{ ucfirst($kategori) }}</h3>
+                    <p class="text-[13px] font-bold text-blue-900 mt-1 mb-0">{{ \App\Http\Controllers\AsramaPenilaianController::labelSesi($sesi) }} · jam penilaian {{ \App\Http\Controllers\AsramaPenilaianController::jendelaSesi($sesi) }}</p>
                     <p class="text-sm text-slate-500 mt-0.5">Tentukan pemenang mutlak dari kandidat di bawah, lalu sertakan bukti foto untuk TV Display Lobi.
                         Kamar terkotor hanya sah bila nilainya di bawah {{ \App\Http\Controllers\AsramaPenilaianController::BATAS_TERKOTOR_PERSEN }}%.</p>
                 </div>
@@ -32,6 +33,7 @@
             <form id="form-finalisasi" action="{{ route('asrama.penilaian.finalisasi') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="kategori" value="{{ $kategori }}">
+                <input type="hidden" name="sesi" value="{{ $sesi }}">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
 

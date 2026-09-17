@@ -71,12 +71,26 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Mulai</label>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tanggal Boleh Keluar</label>
                             <input type="date" name="mulai" value="{{ old('mulai', now()->toDateString()) }}" required class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Sampai (harus kembali)</label>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Jam Boleh Keluar</label>
+                            <input type="time" name="jam_keluar" value="{{ old('jam_keluar', '06:00') }}" required class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tanggal Wajib Kembali</label>
                             <input type="date" name="sampai" value="{{ old('sampai', now()->toDateString()) }}" required class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Jam Wajib Kembali</label>
+                            <input type="time" name="jam_wajib_kembali" value="{{ old('jam_wajib_kembali', '17:00') }}" required class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
+                        </div>
+                        <div class="flex items-end">
+                            <p class="text-[12px] text-slate-400 m-0">Santri yang datang melewati jam ini otomatis tercatat <span class="font-semibold text-slate-500">terlambat berapa menit</span> saat kepulangannya dicatat.</p>
                         </div>
                     </div>
 

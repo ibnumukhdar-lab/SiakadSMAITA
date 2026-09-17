@@ -76,19 +76,15 @@ class AsramaIzinController extends Controller
 
         $daftar = $query->orderByDesc('mulai')->orderByDesc('id')->paginate(15)->withQueryString();
 
-        $hariIni = now()->toDateString();
-
-        $diLuar = $this->scopeMilikSaya(AsramaIzin::with(['student', 'kamar']))
+        // Aturan jam (17 Sep 2026): status "di luar" & "belum kembali" dihitung dari
+        // jam boleh keluar dan JAM WAJIB KEMBALI (tanggal + jam), bukan tanggal saja.
+        $izinBerjalan = $this->scopeMilikSaya(AsramaIzin::with(['student', 'kamar']))
             ->where('status', 'disetujui')
-            ->where('mulai', '<=', $hariIni)
-            ->where('sampai', '>=', $hariIni)
-            ->get();
-
-        $terlambat = $this->scopeMilikSaya(AsramaIzin::with(['student', 'kamar']))
-            ->where('status', 'disetujui')
-            ->where('sampai', '<', $hariIni)
             ->orderBy('sampai')
             ->get();
+
+        $diLuar = $izinBerjalan->filter(fn ($z) => $z->sedangDiLuar())->values();
+        $terlambat = $izinBerjalan->filter(fn ($z) => $z->terlambat())->values();
 
         $ringkasan = [
             'diajukan'  => (clone $this->scopeMilikSaya(AsramaIzin::query()))->where('status', 'diajukan')->count(),
@@ -119,15 +115,28 @@ class AsramaIzinController extends Controller
             'student_id'        => 'required|exists:siswas,id',
             'jenis'             => 'required|in:' . implode(',', array_keys(AsramaIzin::JENIS)),
             'mulai'             => 'required|date',
+            'jam_keluar'        => 'required|date_format:H:i',
             'sampai'            => 'required|date|after_or_equal:mulai',
+            'jam_wajib_kembali' => 'required|date_format:H:i',
             'alasan'            => 'required|string|max:1000',
             'tujuan'            => 'nullable|string|max:150',
             'penanggung_jawab'  => 'nullable|string|max:150',
         ], [
             'student_id.required' => 'Pilih dulu siswa yang mengajukan izin.',
             'sampai.after_or_equal' => 'Tanggal kembali tidak boleh lebih awal dari tanggal mulai.',
+            'jam_keluar.required'   => 'Jam boleh keluar wajib diisi.',
+            'jam_keluar.date_format' => 'Format jam keluar tidak dikenal (pakai HH:MM).',
+            'jam_wajib_kembali.required' => 'Jam wajib kembali wajib diisi.',
+            'jam_wajib_kembali.date_format' => 'Format jam wajib kembali tidak dikenal (pakai HH:MM).',
             'alasan.required'     => 'Alasan izin wajib diisi.',
         ]);
+
+        // Bila tanggal keluar & kembali sama, jam wajib kembali harus setelah jam keluar.
+        if ($request->mulai === $request->sampai && (string) $request->jam_wajib_kembali <= (string) $request->jam_keluar) {
+            return back()->withInput()->withErrors([
+                'jam_wajib_kembali' => 'Karena tanggal keluar dan kembali sama, jam wajib kembali harus lebih lambat dari jam keluar (' . $request->jam_keluar . ').',
+            ]);
+        }
 
         // Musyrif hanya boleh mengajukan untuk penghuni kamar binaannya
         $anggota = DB::table('asrama_members as m')
@@ -161,7 +170,9 @@ class AsramaIzinController extends Controller
             'kamar_id'          => $anggota->kamar_id,
             'jenis'             => $request->jenis,
             'mulai'             => $request->mulai,
+            'jam_keluar'        => $request->jam_keluar,
             'sampai'            => $request->sampai,
+            'jam_wajib_kembali' => $request->jam_wajib_kembali,
             'alasan'            => $request->alasan,
             'tujuan'            => $request->tujuan,
             'penanggung_jawab'  => $request->penanggung_jawab,
@@ -169,7 +180,8 @@ class AsramaIzinController extends Controller
             'diajukan_oleh'     => Auth::id(),
         ]);
 
-        return redirect()->route('asrama.izin.index')->with('success', '📨 Pengajuan izin tersimpan dan menunggu persetujuan Kepala Diniyah.');
+        return redirect()->route('asrama.izin.index')->with('success', '📨 Pengajuan izin tersimpan (boleh keluar ' . $request->jam_keluar
+            . ', wajib kembali ' . $request->sampai . ' pukul ' . $request->jam_wajib_kembali . ') dan menunggu persetujuan Kepala Diniyah.');
     }
 
     private function ambilIzin($id): AsramaIzin
@@ -237,17 +249,33 @@ class AsramaIzinController extends Controller
         }
 
         $request->validate([
-            'kembali_pada'    => 'required|date',
+            'kembali_at'      => 'required|date',
             'catatan_kembali' => 'nullable|string|max:500',
+        ], [
+            'kembali_at.required' => 'Isi jam kedatangan santri (tanggal & jam).',
+            'kembali_at.date'     => 'Format jam kedatangan tidak dikenal.',
         ]);
+
+        $kembaliAt = \Carbon\Carbon::parse($request->kembali_at);
+        $terlambat = $izin->menitTerlambat($kembaliAt);
 
         $izin->update([
             'status'          => 'selesai',
-            'kembali_pada'    => $request->kembali_pada,
+            'kembali_at'      => $kembaliAt,
+            'kembali_pada'    => $kembaliAt->toDateString(),
+            'terlambat_menit' => $terlambat,
             'catatan_kembali' => $request->catatan_kembali,
         ]);
 
-        return back()->with('success', '🏠 Kepulangan ' . optional($izin->student)->nama_lengkap . ' sudah dicatat.');
+        $nama = optional($izin->student)->nama_lengkap;
+
+        if ($terlambat > 0) {
+            return back()->with('success', '🏠 ' . $nama . ' dicatat kembali pukul ' . $kembaliAt->format('H:i') . ' — TERLAMBAT '
+                . $terlambat . ' menit dari batas ' . $izin->batasKembaliPada()->format('H:i') . '.');
+        }
+
+        return back()->with('success', '🏠 ' . $nama . ' dicatat kembali pukul ' . $kembaliAt->format('H:i') . ' — tepat waktu (batas '
+            . $izin->batasKembaliPada()->format('H:i') . ').');
     }
 
     // =========================================================

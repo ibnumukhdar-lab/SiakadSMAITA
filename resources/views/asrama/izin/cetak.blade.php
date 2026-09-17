@@ -63,13 +63,17 @@
         <tr><td class="k">Kamar / Kamar Asrama</td><td class="s">:</td><td>{{ $izin->kamar->nama_kamar ?? '-' }} ({{ ucfirst($izin->kamar->kategori ?? '-') }})</td></tr>
         <tr><td class="k">Jenis Izin</td><td class="s">:</td><td>{{ $izin->labelJenis() }}</td></tr>
         <tr><td class="k">Tanggal</td><td class="s">:</td><td>{{ \Carbon\Carbon::parse($izin->mulai)->translatedFormat('d F Y') }} s.d. {{ \Carbon\Carbon::parse($izin->sampai)->translatedFormat('d F Y') }}</td></tr>
+        <tr><td class="k">Jam Boleh Keluar</td><td class="s">:</td><td><strong>{{ str_replace(':', '.', $izin->jamKeluarText()) }} WIB</strong></td></tr>
+        <tr><td class="k">Batas Jam Wajib Kembali</td><td class="s">:</td><td><strong>{{ str_replace(':', '.', $izin->jamWajibKembaliText()) }} WIB</strong> ({{ \Carbon\Carbon::parse($izin->sampai)->translatedFormat('d F Y') }})</td></tr>
         <tr><td class="k">Alasan</td><td class="s">:</td><td>{{ $izin->alasan }}</td></tr>
         <tr><td class="k">Tujuan</td><td class="s">:</td><td>{{ $izin->tujuan ?: '-' }}</td></tr>
         <tr><td class="k">Penanggung Jawab</td><td class="s">:</td><td>{{ $izin->penanggung_jawab ?: '-' }}</td></tr>
         <tr><td class="k">Status</td><td class="s">:</td><td>{{ $izin->labelStatus() }}{{ $izin->kembali_pada ? ' (kembali ' . \Carbon\Carbon::parse($izin->kembali_pada)->format('d/m/Y') . ')' : '' }}</td></tr>
     </table>
 
-    <p class="isi">Demikian surat keterangan ini dibuat untuk dipergunakan sebagaimana mestinya. Santri wajib kembali ke asrama paling lambat pada tanggal tersebut di atas.</p>
+    <p class="isi">Demikian surat keterangan ini dibuat untuk dipergunakan sebagaimana mestinya. Santri wajib kembali ke asrama paling lambat
+        <strong>{{ \Carbon\Carbon::parse($izin->sampai)->translatedFormat('d F Y') }} pukul {{ str_replace(':', '.', $izin->jamWajibKembaliText()) }} WIB</strong>.
+        Keterlambatan akan dicatat pada sistem asrama.</p>
 
     <div class="ttd">
         <div>

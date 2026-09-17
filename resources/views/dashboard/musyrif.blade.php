@@ -26,6 +26,7 @@
                 <a href="{{ route('asrama.penilaian.hariIni') }}" class="sa-btn sa-btn-primary">📝 Inspeksi Hari Ini</a>
                 <a href="{{ route('asrama.penilaian.index') }}" class="sa-btn sa-btn-ghost">📚 Histori Inspeksi</a>
                 <a href="{{ route('asrama.kamar.binaan') }}" class="sa-btn sa-btn-ghost">🏠 Kamar Binaan Saya</a>
+                <a href="{{ route('asrama.absensi.index') }}" class="sa-btn sa-btn-ghost">🌙 Absensi Malam</a>
             </div>
         </div>
 

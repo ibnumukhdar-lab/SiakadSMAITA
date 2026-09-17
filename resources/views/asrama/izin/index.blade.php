@@ -49,12 +49,13 @@
                             <div class="flex flex-wrap items-center justify-between gap-2 bg-white/70 rounded-xl px-3 py-2">
                                 <div class="text-[13px] font-semibold text-slate-700">
                                     {{ $t->student->nama_lengkap ?? 'Siswa' }} · {{ $t->kamar->nama_kamar ?? '-' }}
-                                    <span class="text-slate-400 font-medium">· seharusnya kembali {{ \Carbon\Carbon::parse($t->sampai)->translatedFormat('d M Y') }}</span>
+                                    <span class="text-slate-500 font-medium">· wajib kembali {{ \Carbon\Carbon::parse($t->sampai)->translatedFormat('d M Y') }} pukul {{ $t->jamWajibKembaliText() }}</span>
+                                    <span class="ms-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold bg-rose-100 text-rose-700 border border-rose-200">terlambat {{ $t->menitTerlambat() }} menit</span>
                                 </div>
                                 @can('buka-menu-manajemen-kamar')
                                     <form action="{{ route('asrama.izin.kembali', $t->id) }}" method="POST" class="flex items-center gap-2">
                                         @csrf
-                                        <input type="date" name="kembali_pada" value="{{ now()->toDateString() }}" class="h-8 rounded-lg border border-slate-300 px-2 text-[12px] text-slate-700">
+                                        <input type="datetime-local" name="kembali_at" value="{{ now()->format('Y-m-d\TH:i') }}" class="h-8 rounded-lg border border-slate-300 px-2 text-[12px] text-slate-700">
                                         <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1.5 text-xs font-bold transition whitespace-nowrap">Catat pulang</button>
                                     </form>
                                 @endcan
@@ -71,7 +72,8 @@
                         @foreach($diLuar as $d)
                             <div class="bg-sky-50/60 border border-sky-200 rounded-xl px-3 py-2">
                                 <div class="text-[13px] font-bold text-slate-800">{{ $d->student->nama_lengkap ?? 'Siswa' }}</div>
-                                <div class="text-[12px] text-slate-500">{{ $d->kamar->nama_kamar ?? '-' }} · {{ $d->labelJenis() }} s/d {{ \Carbon\Carbon::parse($d->sampai)->translatedFormat('d M Y') }}</div>
+                                <div class="text-[12px] text-slate-500">{{ $d->kamar->nama_kamar ?? '-' }} · {{ $d->labelJenis() }}</div>
+                                <div class="text-[12px] text-sky-800 font-semibold">🕒 {{ $d->labelWaktu() }}</div>
                             </div>
                         @endforeach
                     </div>
@@ -124,6 +126,7 @@
                                     <div class="text-[13px] text-slate-600 font-semibold mt-1">
                                         {{ $izin->labelJenis() }} · {{ \Carbon\Carbon::parse($izin->mulai)->translatedFormat('d M Y') }} → {{ \Carbon\Carbon::parse($izin->sampai)->translatedFormat('d M Y') }}
                                     </div>
+                                    <div class="text-[12px] text-blue-900 font-bold mt-0.5">🕒 {{ $izin->labelWaktu() }}</div>
                                     <div class="text-[13px] text-slate-500 mt-1">{{ $izin->alasan }}</div>
                                     @if($izin->tujuan)
                                         <div class="text-[12px] text-slate-400 mt-0.5">Tujuan: {{ $izin->tujuan }}</div>
@@ -134,8 +137,17 @@
                                     @if($izin->catatan_penolakan)
                                         <div class="text-[12px] text-rose-600 mt-1 font-semibold">Alasan ditolak: {{ $izin->catatan_penolakan }}</div>
                                     @endif
-                                    @if($izin->kembali_pada)
-                                        <div class="text-[12px] text-emerald-700 mt-1 font-semibold">Kembali {{ \Carbon\Carbon::parse($izin->kembali_pada)->translatedFormat('d M Y') }}{{ $izin->catatan_kembali ? ' · ' . $izin->catatan_kembali : '' }}</div>
+                                    @if($izin->kembali_at || $izin->kembali_pada)
+                                        <div class="text-[12px] mt-1 font-semibold">
+                                            <span class="text-emerald-700">Kembali {{ \Carbon\Carbon::parse($izin->kembali_at ?? $izin->kembali_pada)->translatedFormat('d M Y') }}
+                                                pukul {{ \Carbon\Carbon::parse($izin->kembali_at ?? $izin->kembali_pada)->format('H:i') }}</span>
+                                            @if((int) $izin->terlambat_menit > 0)
+                                                <span class="ms-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">⚠️ terlambat {{ (int) $izin->terlambat_menit }} menit</span>
+                                            @else
+                                                <span class="ms-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">tepat waktu</span>
+                                            @endif
+                                            @if($izin->catatan_kembali) <span class="text-slate-400 font-medium">· {{ $izin->catatan_kembali }}</span> @endif
+                                        </div>
                                     @endif
                                     <div class="text-[11px] text-slate-400 mt-1.5">
                                         Diajukan: {{ $izin->pengaju->name ?? '-' }} · Disetujui: {{ $izin->penyetuju->name ?? '-' }}
@@ -168,7 +180,7 @@
                                         <summary class="cursor-pointer inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-900 text-white text-[13px] font-semibold transition list-none">🏠 Catat Kembali</summary>
                                         <form action="{{ route('asrama.izin.kembali', $izin->id) }}" method="POST" class="mt-2 flex flex-wrap items-center gap-2">
                                             @csrf
-                                            <input type="date" name="kembali_pada" value="{{ now()->toDateString() }}" required class="h-9 rounded-lg border border-slate-300 px-2.5 text-[13px] text-slate-700">
+                                            <input type="datetime-local" name="kembali_at" value="{{ now()->format('Y-m-d\TH:i') }}" required class="h-9 rounded-lg border border-slate-300 px-2.5 text-[13px] text-slate-700">
                                             <input type="text" name="catatan_kembali" maxlength="500" placeholder="catatan (opsional)" class="w-52 h-9 rounded-lg border border-slate-300 px-2.5 text-[13px] text-slate-700 placeholder:text-slate-400">
                                             <button type="submit" class="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-[13px] font-semibold transition">Simpan</button>
                                         </form>

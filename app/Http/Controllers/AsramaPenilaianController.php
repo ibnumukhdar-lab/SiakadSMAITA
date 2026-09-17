@@ -25,6 +25,82 @@ class AsramaPenilaianController extends Controller
     public const SKOR_MAKS = 25;                 // 5 kriteria × skor maksimal 5
     public const BATAS_TERKOTOR_PERSEN = 70;     // batas bawah (%) untuk menyebut kamar "terkotor"
 
+    // =========================================================
+    // DUA SESI INSPEKSI (permintaan Fahri, 17 Sep 2026)
+    // Pagi dinilai 05.00–09.00 WIB, sore 17.00–18.00 WIB.
+    // Sesi hanya menentukan JAM PENGISIAN; penilaian & finalisasi tiap sesi
+    // berdiri sendiri (poin terbersih/terkotor keluar per sesi).
+    // =========================================================
+    public const SESI = [
+        'pagi' => ['label' => 'Sesi Pagi', 'ikon' => '🌅', 'mulai' => '05:00', 'selesai' => '09:00'],
+        'sore' => ['label' => 'Sesi Sore', 'ikon' => '🌇', 'mulai' => '17:00', 'selesai' => '18:00'],
+    ];
+
+    public static function daftarSesi(): array
+    {
+        return self::SESI;
+    }
+
+    public static function labelSesi($sesi): string
+    {
+        return self::SESI[$sesi]['label'] ?? 'Sesi Pagi';
+    }
+
+    /** Jam buka–tutup sesi, mis. "05.00–09.00 WIB". */
+    public static function jendelaSesi($sesi): string
+    {
+        $s = self::SESI[$sesi] ?? self::SESI['pagi'];
+
+        return str_replace(':', '.', $s['mulai']) . '–' . str_replace(':', '.', $s['selesai']) . ' WIB';
+    }
+
+    /** Sesi yang jendelanya sedang terbuka; null bila di luar kedua jendela. */
+    public static function sesiSekarang(): ?string
+    {
+        $jam = now()->format('H:i');
+
+        foreach (self::SESI as $kunci => $s) {
+            if ($jam >= $s['mulai'] && $jam <= $s['selesai']) {
+                return $kunci;
+            }
+        }
+
+        return null;
+    }
+
+    public static function dalamJendela($sesi): bool
+    {
+        if (! isset(self::SESI[$sesi])) {
+            return false;
+        }
+
+        $jam = now()->format('H:i');
+
+        return $jam >= self::SESI[$sesi]['mulai'] && $jam <= self::SESI[$sesi]['selesai'];
+    }
+
+    /**
+     * Boleh mengisi sesi ini?
+     * Musyrif: hanya di dalam jendela jamnya.
+     * Pengelola kamar (Kepala Diniyah / Super Admin): kapan saja, untuk perbaikan data.
+     */
+    public static function bolehIsi($sesi): bool
+    {
+        if (self::dalamJendela($sesi)) {
+            return true;
+        }
+
+        $user = Auth::user();
+
+        return (bool) ($user && $user->can('buka-menu-manajemen-kamar'));
+    }
+
+    public static function pesanTutupSesi($sesi): string
+    {
+        return self::labelSesi($sesi) . ' hanya bisa diisi pada jam ' . self::jendelaSesi($sesi)
+            . '. Kalau memang perlu diisi di luar jam tersebut, minta Kepala Diniyah / Super Admin melakukannya.';
+    }
+
     /** Ambang nilai absolut: 70% dari 25 = 17,5 → kamar dengan total < 17,5 (yaitu maks 17) yang boleh disebut terkotor. */
     public static function batasTerkotor(): float
     {
@@ -38,13 +114,14 @@ class AsramaPenilaianController extends Controller
     }
 
     // =========================================================
-    // 1. FUNGSI INDEX (HALAMAN HISTORI INSPEKSI) -> asrama/penilaian/index.blade.php
+    // 1. FUNGSI INDEX (HALAMAN HISTORI INSPEKSI)
     // =========================================================
     public function index()
     {
         $histori = AsramaPenilaian::with(['kamarTerbersih', 'kamarTerkotor', 'kamarPerhatian', 'musyrif', 'rincianKamars'])
                     ->where('status', 'final')
                     ->orderBy('tanggal', 'desc')
+                    ->orderBy('sesi', 'desc')
                     ->get();
 
         // Lembar DRAFT yang menggantung (bukan hari ini) — dulu menumpuk tanpa bisa dibersihkan.
@@ -59,7 +136,7 @@ class AsramaPenilaianController extends Controller
     }
 
     // =========================================================
-    // 2. FUNGSI DASHBOARD (KLASEMEN) -> asrama/dashboard.blade.php
+    // 2. FUNGSI DASHBOARD (KLASEMEN)
     // =========================================================
     public function dashboard()
     {
@@ -67,12 +144,12 @@ class AsramaPenilaianController extends Controller
         $tahunIni = now()->year;
 
         $semuaKamar = AsramaKamar::where('status', 'aktif')->get();
-        if($semuaKamar->count() == 0) {
-            $semuaKamar = AsramaKamar::all(); 
+        if ($semuaKamar->count() == 0) {
+            $semuaKamar = AsramaKamar::all();
         }
-        
-        $totalKamarPutra = $semuaKamar->filter(fn($k) => strtolower($k->kategori ?? '') == 'putra')->count();
-        $totalKamarPutri = $semuaKamar->filter(fn($k) => strtolower($k->kategori ?? '') == 'putri')->count();
+
+        $totalKamarPutra = $semuaKamar->filter(fn ($k) => strtolower($k->kategori ?? '') == 'putra')->count();
+        $totalKamarPutri = $semuaKamar->filter(fn ($k) => strtolower($k->kategori ?? '') == 'putri')->count();
 
         $inspeksiFinalBulanIni = AsramaPenilaian::where('status', 'final')
                                     ->whereMonth('tanggal', $bulanIni)
@@ -88,10 +165,10 @@ class AsramaPenilaianController extends Controller
         $rankingKamarRaw = $semuaKamar->map(function ($kamar) use ($penilaianDetail, $users) {
             $sidakKamarIni = $penilaianDetail->where('kamar_id', $kamar->id);
             $jumlahSidak = $sidakKamarIni->count();
-            
+
             $rataRata = $jumlahSidak > 0 ? $sidakKamarIni->avg('total_skor') : 0;
 
-            $musyrifId = $kamar->musyrif_id ?? $kamar->pembina_id ?? $kamar->guru_id ?? null;
+            $musyrifId = $kamar->musyrif_id ?? null;
             $namaMusyrif = $musyrifId ? ($users[$musyrifId] ?? 'Belum Diatur') : 'Belum Diatur';
 
             return (object) [
@@ -107,104 +184,121 @@ class AsramaPenilaianController extends Controller
         $rankingKamar = $rankingKamarRaw->sortByDesc('rata_rata_skor')->values();
 
         $rankingPutra = $rankingKamar->where('kategori', 'putra')->values();
-        $putraAktif = $rankingPutra->filter(fn($k) => $k->jumlah_sidak > 0)->values(); 
-        $putraTerbersih = $putraAktif->take(3); 
-        // Aturan 17 Sep 2026: "Perhatian Ekstra" hanya untuk kamar dengan rata-rata DI BAWAH 70% (17,5 dari 25).
-        // Kamar yang rata-ratanya 70% ke atas dianggap bersih, tidak dipajang sebagai terkotor.
-        $putraTerkotor = $putraAktif->filter(fn($k) => $k->rata_rata_skor < self::batasTerkotor())
+        $putraAktif = $rankingPutra->filter(fn ($k) => $k->jumlah_sidak > 0)->values();
+        $putraTerbersih = $putraAktif->take(3);
+        $putraTerkotor = $putraAktif->filter(fn ($k) => $k->rata_rata_skor < self::batasTerkotor())
                                     ->reverse()->take(3)->values();
 
         $rankingPutri = $rankingKamar->where('kategori', 'putri')->values();
-        $putriAktif = $rankingPutri->filter(fn($k) => $k->jumlah_sidak > 0)->values(); 
-        $putriTerbersih = $putriAktif->take(3); 
-        $putriTerkotor = $putriAktif->filter(fn($k) => $k->rata_rata_skor < self::batasTerkotor())
+        $putriAktif = $rankingPutri->filter(fn ($k) => $k->jumlah_sidak > 0)->values();
+        $putriTerbersih = $putriAktif->take(3);
+        $putriTerkotor = $putriAktif->filter(fn ($k) => $k->rata_rata_skor < self::batasTerkotor())
                                     ->reverse()->take(3)->values();
 
         return view('asrama.dashboard', compact(
-            'totalKamarPutra', 'totalKamarPutri', 
+            'totalKamarPutra', 'totalKamarPutri',
             'totalInspeksiPutra', 'totalInspeksiPutri',
-            'rankingPutra', 'rankingPutri', 
-            'putraTerbersih', 'putraTerkotor', 
+            'rankingPutra', 'rankingPutri',
+            'putraTerbersih', 'putraTerkotor',
             'putriTerbersih', 'putriTerkotor'
         ));
     }
 
     // =========================================================
-    // 3. FUNGSI HARI INI (DILENGKAPI AUTO-CLEANUP DATA HANTU)
+    // 3. FUNGSI HARI INI — dua sesi (pagi & sore) × dua divisi
     // =========================================================
     public function hariIni()
     {
-        $tanggal_hari_ini = now()->toDateString();
-        
+        $tanggal = now()->toDateString();
+
         $kamars = AsramaKamar::where('status', 'aktif')->orderBy('nama_kamar', 'asc')->get();
         if ($kamars->count() == 0) {
-            $kamars = AsramaKamar::orderBy('nama_kamar', 'asc')->get(); 
+            $kamars = AsramaKamar::orderBy('nama_kamar', 'asc')->get();
         }
-        
-        $kamar_putra = $kamars->filter(fn($k) => strtolower($k->kategori ?? '') == 'putra');
-        $kamar_putri = $kamars->filter(fn($k) => strtolower($k->kategori ?? '') == 'putri');
 
         if ($kamars->count() == 0) {
             return redirect('/asrama/kamar')->with('error', 'Belum ada data kamar sama sekali di database.');
         }
 
-        $draft_putra = AsramaPenilaian::firstOrCreate(['tanggal' => $tanggal_hari_ini, 'kategori' => 'putra'], ['status' => 'draft']);
-        $draft_putri = AsramaPenilaian::firstOrCreate(['tanggal' => $tanggal_hari_ini, 'kategori' => 'putri'], ['status' => 'draft']);
+        $kamarPerDivisi = [
+            'putra' => $kamars->filter(fn ($k) => strtolower($k->kategori ?? '') == 'putra')->values(),
+            'putri' => $kamars->filter(fn ($k) => strtolower($k->kategori ?? '') == 'putri')->values(),
+        ];
 
-        // =========================================================================
-        // PERBAIKAN: AUTO-CLEANUP DATA HANTU
-        // Menghapus data penilaian kamar yang sudah dihapus/dinonaktifkan
-        // agar angka progress kembali sinkron (contoh: 11 / 11)
-        // =========================================================================
-        $kamar_putra_ids = $kamar_putra->pluck('id')->toArray();
-        if (!empty($kamar_putra_ids)) {
-            AsramaPenilaianKamar::where('penilaian_id', $draft_putra->id)
-                ->whereNotIn('kamar_id', $kamar_putra_ids)
-                ->delete();
+        $lembar = [];
+
+        foreach (array_keys(self::SESI) as $sesi) {
+            foreach (['putra', 'putri'] as $kategori) {
+                $draft = AsramaPenilaian::firstOrCreate(
+                    ['tanggal' => $tanggal, 'kategori' => $kategori, 'sesi' => $sesi],
+                    ['status' => 'draft']
+                );
+
+                $kamarDivisi = $kamarPerDivisi[$kategori];
+                $kamarIds = $kamarDivisi->pluck('id')->toArray();
+
+                // Auto-cleanup data hantu: skor kamar yang sudah dihapus/dinonaktifkan
+                if (! empty($kamarIds)) {
+                    AsramaPenilaianKamar::where('penilaian_id', $draft->id)
+                        ->whereNotIn('kamar_id', $kamarIds)
+                        ->delete();
+                }
+
+                $rincian = AsramaPenilaianKamar::where('penilaian_id', $draft->id)->get();
+                $dinilai = $rincian->pluck('kamar_id')->toArray();
+                $selesai = ($kamarDivisi->count() > 0 && count($dinilai) == $kamarDivisi->count());
+
+                $lembar[$sesi][$kategori] = [
+                    'draft'    => $draft,
+                    'kamar'    => $kamarDivisi,
+                    'dinilai'  => $dinilai,
+                    'skor'     => $rincian->keyBy('kamar_id'),   // untuk mengisi ulang modal saat "Koreksi"
+                    'selesai'  => $selesai,
+                    'kandidat' => $selesai
+                        ? $rincian->sortByDesc('total_skor')->values()
+                        : null,
+                ];
+            }
         }
 
-        $kamar_putri_ids = $kamar_putri->pluck('id')->toArray();
-        if (!empty($kamar_putri_ids)) {
-            AsramaPenilaianKamar::where('penilaian_id', $draft_putri->id)
-                ->whereNotIn('kamar_id', $kamar_putri_ids)
-                ->delete();
-        }
-        // =========================================================================
+        $sesiSekarang = self::sesiSekarang();
 
-        $dinilai_putra = AsramaPenilaianKamar::where('penilaian_id', $draft_putra->id)->pluck('kamar_id')->toArray();
-        $selesai_putra = ($kamar_putra->count() > 0 && count($dinilai_putra) == $kamar_putra->count());
-        $kandidat_putra = $selesai_putra ? AsramaPenilaianKamar::with('kamar')->where('penilaian_id', $draft_putra->id)->orderBy('total_skor', 'desc')->get() : null;
-
-        $dinilai_putri = AsramaPenilaianKamar::where('penilaian_id', $draft_putri->id)->pluck('kamar_id')->toArray();
-        $selesai_putri = ($kamar_putri->count() > 0 && count($dinilai_putri) == $kamar_putri->count());
-        $kandidat_putri = $selesai_putri ? AsramaPenilaianKamar::with('kamar')->where('penilaian_id', $draft_putri->id)->orderBy('total_skor', 'desc')->get() : null;
-
-        return view('asrama.penilaian.hari-ini', compact(
-            'kamar_putra', 'kamar_putri', 'draft_putra', 'draft_putri',
-            'dinilai_putra', 'dinilai_putri', 'selesai_putra', 'selesai_putri',
-            'kandidat_putra', 'kandidat_putri'
-        ));
+        return view('asrama.penilaian.hari-ini', compact('tanggal', 'lembar', 'sesiSekarang'));
     }
 
     // =========================================================
-    // 4. FUNGSI SIMPAN SKOR
+    // 4. FUNGSI SIMPAN SKOR (per kamar, per sesi)
     // =========================================================
     public function simpanSkor(Request $request, $kamar_id)
     {
         $kamar = AsramaKamar::findOrFail($kamar_id);
-        
-        $penilaian = AsramaPenilaian::where('tanggal', now()->toDateString())
-            ->where('kategori', $kamar->kategori)
-            ->where('status', 'draft')
-            ->firstOrFail();
-        
+
         $request->validate([
+            'sesi'   => 'required|in:' . implode(',', array_keys(self::SESI)),
             'skor_1' => 'required|integer|min:1|max:5',
             'skor_2' => 'required|integer|min:1|max:5',
             'skor_3' => 'required|integer|min:1|max:5',
             'skor_4' => 'required|integer|min:1|max:5',
             'skor_5' => 'required|integer|min:1|max:5',
+        ], [
+            'sesi.required' => 'Sesi inspeksi tidak terbaca. Buka halaman Inspeksi Hari Ini lalu coba lagi.',
         ]);
+
+        $sesi = $request->sesi;
+
+        if (! self::bolehIsi($sesi)) {
+            return back()->with('error', self::pesanTutupSesi($sesi));
+        }
+
+        $penilaian = AsramaPenilaian::where('tanggal', now()->toDateString())
+            ->where('kategori', $kamar->kategori)
+            ->where('sesi', $sesi)
+            ->where('status', 'draft')
+            ->first();
+
+        if (! $penilaian) {
+            return back()->with('error', self::labelSesi($sesi) . ' divisi ' . ucfirst($kamar->kategori) . ' hari ini sudah difinalisasi (terkunci).');
+        }
 
         $total_skor = $request->skor_1 + $request->skor_2 + $request->skor_3 + $request->skor_4 + $request->skor_5;
 
@@ -217,30 +311,31 @@ class AsramaPenilaianController extends Controller
             ]
         );
 
-        return back()->with('success', "Skor kamar {$kamar->nama_kamar} berhasil disimpan!");
+        return back()->with('success', '⭐ Skor kamar ' . $kamar->nama_kamar . ' (' . self::labelSesi($sesi) . ') tersimpan!');
     }
 
     // =========================================================
-    // 5. FUNGSI KONFIRMASI PENGUNCIAN
+    // 5. FUNGSI KONFIRMASI PENGUNCIAN (per sesi)
     // =========================================================
     public function konfirmasi(Request $request)
     {
-        $kategori = $request->kategori ?? 'putra'; 
+        $kategori = in_array($request->kategori, ['putra', 'putri'], true) ? $request->kategori : 'putra';
+        $sesi = array_key_exists((string) $request->sesi, self::SESI) ? (string) $request->sesi : (self::sesiSekarang() ?: 'pagi');
 
-        $tanggal_hari_ini = now()->toDateString();
-        $penilaian = AsramaPenilaian::where('tanggal', $tanggal_hari_ini)
+        $penilaian = AsramaPenilaian::where('tanggal', now()->toDateString())
                     ->where('kategori', $kategori)
+                    ->where('sesi', $sesi)
                     ->where('status', 'draft')
                     ->first();
 
-        if (!$penilaian) {
-            return redirect('/asrama/penilaian/hari-ini')->with('error', "Inspeksi $kategori hari ini sudah dikunci (final).");
+        if (! $penilaian) {
+            return redirect('/asrama/penilaian/hari-ini')->with('error', self::labelSesi($sesi) . ' divisi ' . ucfirst($kategori) . ' hari ini sudah dikunci (final).');
         }
 
         $dinilai = AsramaPenilaianKamar::with('kamar')->where('penilaian_id', $penilaian->id)->get();
-        
-        if($dinilai->count() == 0) {
-            return redirect('/asrama/penilaian/hari-ini')->with('error', "Belum ada kamar $kategori yang dinilai hari ini.");
+
+        if ($dinilai->count() == 0) {
+            return redirect('/asrama/penilaian/hari-ini')->with('error', 'Belum ada kamar ' . $kategori . ' yang dinilai pada ' . self::labelSesi($sesi) . ' hari ini.');
         }
 
         $dinilai = $dinilai->sortByDesc('total_skor')->values();
@@ -257,22 +352,22 @@ class AsramaPenilaianController extends Controller
         $adaTerkotor = $bawahAmbang->isNotEmpty();
         $kandidatKotor = $adaTerkotor ? $bawahAmbang : collect();
 
-        // Kamar paling bawah (untuk daftar "perlu diperhatikan" bila semua kamar bersih)
         $terbawah = $dinilai->where('total_skor', $minSkor)->values();
 
         return view('asrama.penilaian.konfirmasi', compact(
-            'penilaian', 'kategori', 'kandidatBersih', 'kandidatKotor', 'maxSkor', 'minSkor',
+            'penilaian', 'kategori', 'sesi', 'kandidatBersih', 'kandidatKotor', 'maxSkor', 'minSkor',
             'adaTerkotor', 'terbawah', 'batas'
         ));
     }
 
     // =========================================================
-    // 6. FUNGSI FINALISASI
+    // 6. FUNGSI FINALISASI (per sesi)
     // =========================================================
     public function finalisasi(Request $request)
     {
         $request->validate([
             'kategori'           => 'required|in:putra,putri',
+            'sesi'               => 'required|in:' . implode(',', array_keys(self::SESI)),
             'kamar_terbersih_id' => 'required|exists:asrama_kamars,id',
             'kamar_terkotor_id'  => 'nullable|exists:asrama_kamars,id',
             'catatan_inspektor'  => 'nullable|string|max:1000',
@@ -287,15 +382,21 @@ class AsramaPenilaianController extends Controller
             'catatan_inspektor.max' => 'Catatan inspektor terlalu panjang (maksimal 1000 karakter).',
         ]);
 
+        $sesi = $request->sesi;
+
         $penilaian = AsramaPenilaian::where('tanggal', now()->toDateString())
                         ->where('kategori', $request->kategori)
+                        ->where('sesi', $sesi)
                         ->where('status', 'draft')
-                        ->firstOrFail();
+                        ->first();
+
+        if (! $penilaian) {
+            return back()->with('error', self::labelSesi($sesi) . ' divisi ' . ucfirst($request->kategori) . ' sudah difinalisasi sebelumnya.');
+        }
 
         // ------------------------------------------------------------------
-        // ATURAN BATAS BAWAH (17 Sep 2026):
-        // kamar hanya boleh disebut TERKOTOR bila nilainya < 70% skor maksimal.
-        // Skor dihitung ULANG di server, tidak percaya kiriman form.
+        // ATURAN BATAS BAWAH: kamar hanya boleh disebut TERKOTOR bila nilainya
+        // < 70% skor maksimal. Skor dihitung ULANG di server.
         // ------------------------------------------------------------------
         $skorKamar = AsramaPenilaianKamar::where('penilaian_id', $penilaian->id)->pluck('total_skor', 'kamar_id');
 
@@ -322,23 +423,23 @@ class AsramaPenilaianController extends Controller
             return back()->with('error', 'Masih ada kamar bernilai di bawah ' . self::BATAS_TERKOTOR_PERSEN . '% — pilih salah satu sebagai kamar terkotor sebelum mengunci.');
         }
 
-        // Kamar "perlu diperhatikan": terkotor bila ada, kalau tidak → kamar paling bawah
         $kamarPerhatianId = $kamarTerkotorId ?: (int) $skorKamar->sort()->keys()->first();
 
         DB::beginTransaction();
         try {
             $path_terbersih = null;
             if ($request->hasFile('foto_terbersih')) {
-                $path_terbersih = $request->file('foto_terbersih')->store('asrama/'.now()->format('Y/m'), 'public');
+                $path_terbersih = $request->file('foto_terbersih')->store('asrama/' . now()->format('Y/m'), 'public');
             }
 
             $path_terkotor = null;
             if ($request->hasFile('foto_terkotor')) {
-                $path_terkotor = $request->file('foto_terkotor')->store('asrama/'.now()->format('Y/m'), 'public');
+                $path_terkotor = $request->file('foto_terkotor')->store('asrama/' . now()->format('Y/m'), 'public');
             }
 
             $penilaian->update([
                 'status' => 'final',
+                'sesi' => $sesi,
                 'musyrif_id' => Auth::id(),
                 'kamar_terbersih_id' => $request->kamar_terbersih_id,
                 'kamar_terkotor_id' => $kamarTerkotorId,
@@ -349,33 +450,34 @@ class AsramaPenilaianController extends Controller
             ]);
 
             // =====================================================
-            // PERBAIKAN: KRITERIA KHUSUS KEBERSIHAN ASRAMA
+            // KRITERIA KHUSUS KEBERSIHAN ASRAMA (poin ke Student Root)
             // =====================================================
-            $injeksiPoin = function($kamar_id, $poin, $gelar) {
-                $kamar = AsramaKamar::find($kamar_id);
-                if (!$kamar) return; 
+            $sesiJudul = self::labelSesi($sesi);
 
-                $anggotaKamar = AsramaMember::where('kamar_id', $kamar_id)->get();
-                
+            $injeksiPoin = function ($kamar_id, $poin, $gelar) use ($sesiJudul) {
+                $kamar = AsramaKamar::find($kamar_id);
+                if (! $kamar) {
+                    return;
+                }
+
+                $anggotaKamar = AsramaMember::where('kamar_id', $kamar_id)->whereNull('tanggal_keluar')->get();
+
                 $namaKriteria = ($poin > 0) ? 'Kamar Terbersih Asrama' : 'Kamar Terkotor Asrama';
                 $kategoriKriteria = ($poin > 0) ? 'positif' : 'negatif';
 
-                // Cari kriteria sesuai kolom ASLI DB (kategori positif/negatif).
-                // CATATAN 2026-09: sebelumnya memakai kolom 'jenis' yang tidak ada
-                // => selalu jatuh ke fallback kriteria pertama (criteria_id SALAH).
                 $kriteriaAsrama = DB::table('sr_point_criteria')
                     ->where('nama_perilaku', $namaKriteria)
                     ->where('kategori', $kategoriKriteria)
                     ->where('poin', $poin)
                     ->first();
 
-                if (!$kriteriaAsrama) {
+                if (! $kriteriaAsrama) {
                     $kriteriaIdBaru = Str::uuid()->toString();
                     DB::table('sr_point_criteria')->insert([
                         'id'             => $kriteriaIdBaru,
                         'nama_perilaku'  => $namaKriteria,
                         'kategori'       => $kategoriKriteria,
-                        'deskripsi'      => 'Poin otomatis hasil inspeksi kebersihan asrama (finalisasi harian).',
+                        'deskripsi'      => 'Poin otomatis hasil inspeksi kebersihan asrama (finalisasi per sesi).',
                         'poin'           => $poin,
                         'tingkat'        => null,
                         'status'         => 'aktif',
@@ -386,20 +488,21 @@ class AsramaPenilaianController extends Controller
                 } else {
                     $kriteriaValid = $kriteriaAsrama->id;
                 }
-                
-                foreach($anggotaKamar as $anggota) {
+
+                foreach ($anggotaKamar as $anggota) {
                     $grupSiswa = DB::table('sr_group_members')->where('student_id', $anggota->student_id)->whereNull('tanggal_keluar')->first();
-                    
+
                     DB::table('sr_point_entries')->insert([
-                        'id' => Str::uuid()->toString(), 
-                        'student_id' => $anggota->student_id, 
+                        'id' => Str::uuid()->toString(),
+                        'student_id' => $anggota->student_id,
                         'group_id' => $grupSiswa ? $grupSiswa->group_id : null,
-                        'criteria_id' => $kriteriaValid, 
-                        'input_by' => Auth::id(), 
-                        'tanggal_kejadian' => now()->toDateString(), 
-                        'poin' => $poin, 
-                        'catatan' => "$gelar Asrama ($kamar->nama_kamar)",
-                        'created_at' => now(), 
+                        'criteria_id' => $kriteriaValid,
+                        'input_by' => Auth::id(),
+                        'tanggal_kejadian' => now()->toDateString(),
+                        'poin' => $poin,
+                        // Pakai tanda hubung biasa (DB server latin1) supaya aman di semua kolom.
+                        'catatan' => $gelar . ' Asrama (' . $kamar->nama_kamar . ') - ' . $sesiJudul,
+                        'created_at' => now(),
                         'updated_at' => now(),
                     ]);
                 }
@@ -408,7 +511,6 @@ class AsramaPenilaianController extends Controller
             $KategoriJudul = ucfirst($request->kategori);
             $injeksiPoin($request->kamar_terbersih_id, 1, "Kamar Terbersih $KategoriJudul");
 
-            // Poin -1 HANYA diberikan bila memang ada kamar di bawah batas (70%)
             if ($kamarTerkotorId) {
                 $injeksiPoin($kamarTerkotorId, -1, "Kamar Terkotor $KategoriJudul");
             }
@@ -418,14 +520,15 @@ class AsramaPenilaianController extends Controller
             $namaPerhatian = optional(AsramaKamar::find($kamarPerhatianId))->nama_kamar;
 
             if ($kamarTerkotorId) {
-                $pesan = "✨ Inspeksi Divisi $KategoriJudul selesai! Poin +1 (kamar terbersih) dan −1 (kamar terkotor) sudah disuntikkan, bukti foto dikirim ke TV Display.";
+                $pesan = "✨ $sesiJudul Divisi $KategoriJudul selesai! Poin +1 (kamar terbersih) dan −1 (kamar terkotor) sudah disuntikkan, bukti foto dikirim ke TV Display.";
             } else {
-                $pesan = "✅ Inspeksi Divisi $KategoriJudul selesai — semua kamar bernilai " . self::BATAS_TERKOTOR_PERSEN . "% ke atas, jadi tidak ada kamar terkotor dan tidak ada poin pengurangan. Kamar " . ($namaPerhatian ?: '-') . " masuk daftar perlu diperhatikan.";
+                $pesan = "✅ $sesiJudul Divisi $KategoriJudul selesai — semua kamar bernilai " . self::BATAS_TERKOTOR_PERSEN . "% ke atas, jadi tidak ada kamar terkotor dan tidak ada poin pengurangan. Kamar " . ($namaPerhatian ?: '-') . " masuk daftar perlu diperhatikan.";
             }
 
             return redirect('/asrama/penilaian')->with('success', $pesan);
         } catch (\Throwable $e) {
             DB::rollBack();
+
             return back()->with('error', 'Terjadi Kesalahan Sistem: ' . $e->getMessage() . ' (pada baris ' . $e->getLine() . ')');
         }
     }
@@ -451,7 +554,6 @@ class AsramaPenilaianController extends Controller
         try {
             $path = $request->file('foto')->store('asrama/' . now()->format('Y/m'), 'public');
 
-            // Hapus berkas lama supaya tidak menumpuk di hosting
             $lama = $penilaian->{$kolom};
             if ($lama && $lama !== $path && Storage::disk('public')->exists($lama)) {
                 Storage::disk('public')->delete($lama);
@@ -470,26 +572,31 @@ class AsramaPenilaianController extends Controller
     }
 
     // =========================================================
-    // 8. FUNGSI RESET PENILAIAN HARI INI
+    // 8. FUNGSI RESET PENILAIAN (per sesi, hanya lembar draft hari ini)
     // =========================================================
     public function reset(Request $request)
     {
-        $request->validate(['kategori' => 'required|in:putra,putri']);
+        $request->validate([
+            'kategori' => 'required|in:putra,putri',
+            'sesi'     => 'required|in:' . implode(',', array_keys(self::SESI)),
+        ]);
+
         $kategori = $request->kategori;
+        $sesi = $request->sesi;
 
         $penilaian = AsramaPenilaian::where('tanggal', now()->toDateString())
                     ->where('kategori', $kategori)
+                    ->where('sesi', $sesi)
                     ->where('status', 'draft')
                     ->first();
 
         if ($penilaian) {
-            // Hapus semua detail skor kamar yang sudah diinput hari ini
             AsramaPenilaianKamar::where('penilaian_id', $penilaian->id)->delete();
-            $label = ucfirst($kategori);
-            return back()->with('success', "🔄 Penilaian Divisi $label hari ini berhasil direset. Silakan mulai ulang.");
+
+            return back()->with('success', "🔄 Penilaian Divisi " . ucfirst($kategori) . ' (' . self::labelSesi($sesi) . ') berhasil direset. Silakan mulai ulang.');
         }
 
-        return back()->with('error', 'Penilaian divisi ini sudah difinalisasi atau belum ada data untuk direset.');
+        return back()->with('error', 'Lembar ' . self::labelSesi($sesi) . ' divisi ' . ucfirst($kategori) . ' sudah difinalisasi atau belum ada data untuk direset.');
     }
 
     // =========================================================
@@ -508,9 +615,9 @@ class AsramaPenilaianController extends Controller
         }
 
         $jumlah = $penilaian->rincianKamars()->count();
-        $penilaian->delete(); // rincian kamar ikut terhapus (cascade)
+        $penilaian->delete();
 
-        return back()->with('success', "🗑️ Lembar draft tanggal " . Carbon::parse($penilaian->tanggal)->translatedFormat('d M Y')
-            . " (divisi " . ucfirst($penilaian->kategori) . ", {$jumlah} kamar belum difinalisasi) dihapus.");
+        return back()->with('success', '🗑️ Lembar draft ' . Carbon::parse($penilaian->tanggal)->translatedFormat('d M Y')
+            . ' (' . self::labelSesi($penilaian->sesi) . ' · divisi ' . ucfirst($penilaian->kategori) . ', ' . $jumlah . ' kamar belum difinalisasi) dihapus.');
     }
 }

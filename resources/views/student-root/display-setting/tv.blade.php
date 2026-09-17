@@ -219,7 +219,8 @@
 
         // Putra
         $latestPutra = \App\Models\AsramaPenilaian::with(['kamarTerbersih.musyrif', 'kamarTerkotor.musyrif', 'kamarPerhatian.musyrif'])
-            ->where('kategori', 'putra')->where('status', 'final')->orderBy('tanggal', 'desc')->first();
+            ->where('kategori', 'putra')->where('status', 'final')
+            ->orderBy('tanggal', 'desc')->orderBy('sesi', 'desc')->first();
         $skorPutra = $skorSidak($latestPutra);
         $nilaiBersihPutra = ($latestPutra && $latestPutra->kamar_terbersih_id) ? ($skorPutra[$latestPutra->kamar_terbersih_id] ?? null) : null;
         $barisBersihPutra = $nilaiBersihPutra !== null ? ' · Nilai ' . $nilaiBersihPutra . '/25 (' . $persenSidak($nilaiBersihPutra) . '%)' : '';
@@ -234,7 +235,8 @@
 
         // Putri
         $latestPutri = \App\Models\AsramaPenilaian::with(['kamarTerbersih.musyrif', 'kamarTerkotor.musyrif', 'kamarPerhatian.musyrif'])
-            ->where('kategori', 'putri')->where('status', 'final')->orderBy('tanggal', 'desc')->first();
+            ->where('kategori', 'putri')->where('status', 'final')
+            ->orderBy('tanggal', 'desc')->orderBy('sesi', 'desc')->first();
         $skorPutri = $skorSidak($latestPutri);
         $nilaiBersihPutri = ($latestPutri && $latestPutri->kamar_terbersih_id) ? ($skorPutri[$latestPutri->kamar_terbersih_id] ?? null) : null;
         $barisBersihPutri = $nilaiBersihPutri !== null ? ' · Nilai ' . $nilaiBersihPutri . '/25 (' . $persenSidak($nilaiBersihPutri) . '%)' : '';
@@ -408,7 +410,7 @@
                         👨‍👦 HASIL INSPEKSI ASRAMA PUTRA
                     </div>
                     @if($latestPutra)
-                        <p class="text-sm font-bold text-gray-500 mt-2 bg-white/50 px-4 py-1 rounded-full">Sidak: {{ \Carbon\Carbon::parse($latestPutra->tanggal)->locale('id')->translatedFormat('l, d F Y') }}</p>
+                        <p class="text-sm font-bold text-gray-500 mt-2 bg-white/50 px-4 py-1 rounded-full">Sidak: {{ \Carbon\Carbon::parse($latestPutra->tanggal)->locale('id')->translatedFormat('l, d F Y') }} · {{ \App\Http\Controllers\AsramaPenilaianController::labelSesi($latestPutra->sesi) }}</p>
                     @endif
                 </div>
                 
@@ -524,7 +526,7 @@
                         👩‍👧 HASIL INSPEKSI ASRAMA PUTRI
                     </div>
                     @if($latestPutri)
-                        <p class="text-sm font-bold text-gray-500 mt-2 bg-white/50 px-4 py-1 rounded-full">Sidak: {{ \Carbon\Carbon::parse($latestPutri->tanggal)->locale('id')->translatedFormat('l, d F Y') }}</p>
+                        <p class="text-sm font-bold text-gray-500 mt-2 bg-white/50 px-4 py-1 rounded-full">Sidak: {{ \Carbon\Carbon::parse($latestPutri->tanggal)->locale('id')->translatedFormat('l, d F Y') }} · {{ \App\Http\Controllers\AsramaPenilaianController::labelSesi($latestPutri->sesi) }}</p>
                     @endif
                 </div>
                 

@@ -45,7 +45,7 @@
                             <div class="flex flex-wrap items-center justify-between gap-2 bg-white/70 rounded-xl px-3 py-2">
                                 <div class="text-[13px] font-semibold text-slate-700">
                                     {{ \Carbon\Carbon::parse($d->tanggal)->translatedFormat('d M Y') }}
-                                    <span class="text-slate-400 font-medium">· divisi {{ ucfirst($d->kategori) }} · {{ $d->rincian_kamars_count }} kamar terisi · petugas {{ $d->musyrif->name ?? '-' }}</span>
+                                    <span class="text-slate-400 font-medium">· {{ \App\Http\Controllers\AsramaPenilaianController::labelSesi($d->sesi) }} · divisi {{ ucfirst($d->kategori) }} · {{ $d->rincian_kamars_count }} kamar terisi · petugas {{ $d->musyrif->name ?? '-' }}</span>
                                 </div>
                                 <form action="{{ route('asrama.penilaian.hapusDraft', $d->id) }}" method="POST" class="m-0" onsubmit="return confirm('Hapus lembar draft tanggal ini beserta skor kamar yang belum difinalisasi?');">
                                     @csrf @method('DELETE')
@@ -68,7 +68,10 @@
                     @foreach($histori as $h)
                         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
                             <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
-                                <div class="text-sm font-bold text-slate-800">{{ \Carbon\Carbon::parse($h->tanggal)->translatedFormat('d M Y') }}</div>
+                                <div class="text-sm font-bold text-slate-800">
+                                    {{ \Carbon\Carbon::parse($h->tanggal)->translatedFormat('d M Y') }}
+                                    <span class="ms-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">{{ \App\Http\Controllers\AsramaPenilaianController::labelSesi($h->sesi) }}</span>
+                                </div>
                                 @if($h->kategori == 'putra')
                                     <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">👦 Divisi Putra</span>
                                 @else
