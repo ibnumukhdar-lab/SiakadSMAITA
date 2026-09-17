@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\SrGroup;
+use App\Models\SrPointCriteria;
 use App\Models\SrPointEntry; // Ditambahkan untuk akses riwayat poin
 
 class SrMyGroupController extends Controller
@@ -114,26 +115,41 @@ class SrMyGroupController extends Controller
     /**
      * Memperbarui riwayat poin dan menghitung ulang total poin siswa.
      */
+    /**
+     * Perbarui satu riwayat poin.
+     *
+     * SEJAK 17 Sep 2026: penilaian poin TIDAK bisa diketik manual lagi — petugas memilih
+     * JENIS PERILAKU (kriteria) dan poin otomatis mengikuti master kriteria. Ini mencegah
+     * kasus lama: poin -1 ditempelkan pada kriteria positif "Membantu guru..." sehingga
+     * laporan/rapor menulis pelanggaran bernama perilaku positif.
+     */
     public function update(Request $request, $id)
     {
-        // Validasi input form
-        $request->validate([
-            'poin' => 'required|numeric',
-            'catatan' => 'nullable|string'
+        $data = $request->validate([
+            'criteria_id' => 'required|exists:sr_point_criteria,id',
+            'catatan' => 'nullable|string|max:500',
+            'tanggal_kejadian' => 'nullable|date',
+        ], [], [
+            'criteria_id' => 'jenis perilaku',
         ]);
 
         try {
             // 1. Temukan datanya
             $riwayat = SrPointEntry::findOrFail($id);
-            
-            // 2. Simpan nilai baru (kolom asli DB = 'catatan'; tidak ada kolom 'keterangan')
-            $riwayat->poin = $request->poin;
-            $riwayat->catatan = $request->catatan;
+            $kriteria = SrPointCriteria::findOrFail($data['criteria_id']);
+
+            // 2. Poin mengikuti master kriteria (bukan ketikan petugas)
+            $riwayat->criteria_id = $kriteria->id;
+            $riwayat->poin = $kriteria->poin;
+            $riwayat->catatan = $data['catatan'] ?? null;
+            if (! empty($data['tanggal_kejadian'])) {
+                $riwayat->tanggal_kejadian = $data['tanggal_kejadian'];
+            }
             $riwayat->save();
 
             // 3. CATATAN 2026-09: total poin siswa TIDAK disimpan sebagai kolom cache
             //    (SUM live), jadi tidak ada update kolom total_poin di sini.
-            return back()->with('success', 'Riwayat aktivitas berhasil diperbarui!');
+            return back()->with('success', 'Riwayat poin diperbarui — poin (' . ($kriteria->poin > 0 ? '+' . $kriteria->poin : $kriteria->poin) . ') otomatis mengikuti jenis perilaku yang dipilih.');
 
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());

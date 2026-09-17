@@ -162,6 +162,7 @@
                                             <button type="button" 
                                                 data-id="{{ $entry->id }}" 
                                                 data-poin="{{ $entry->poin }}" 
+                                                data-criteria="{{ $entry->criteria_id }}"
                                                 data-catatan="{{ $catatan }}"
                                                 onclick="openTailwindModal(this)"
                                                 class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition" title="Edit Data">
@@ -213,8 +214,18 @@
                 @method('PUT')
                 
                 <div>
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Ubah Nilai Poin</label>
-                    <input type="number" name="poin" id="inputPoinTW" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" required>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Jenis Perilaku (Kriteria)</label>
+                    <select name="criteria_id" id="editCriteriaTW" class="w-full" required>
+                        @foreach($criterias as $k)
+                            <option value="{{ $k->id }}" data-poin="{{ $k->poin }}">
+                                {{ $k->kategori == 'positif' ? '✅' : '❌' }} {{ $k->nama_perilaku }} ({{ $k->poin > 0 ? '+'.$k->poin : $k->poin }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-slate-400 mt-1.5">
+                        Poin otomatis: <b id="poinOtomatisTW" class="text-slate-700">-</b> — mengikuti master kriteria,
+                        jadi tidak bisa lagi diketik berbeda dari jenis perilakunya.
+                    </p>
                 </div>
                 
                 <div>
@@ -246,6 +257,15 @@
                 maxOptions: null,
             });
 
+            // Dropdown pencarian untuk JENIS PERILAKU di modal edit (pengganti input poin manual)
+            if (document.getElementById('editCriteriaTW')) {
+                window.tsEditCriteria = new TomSelect("#editCriteriaTW", {
+                    create: false,
+                    maxOptions: null,
+                    onChange: function (nilai) { tampilkanPoinOtomatis(nilai); },
+                });
+            }
+
             // Kunci tombol setelah ditekan: mencegah satu klik terkirim berkali-kali
             var formPoin = document.querySelector('form[action*="input-poin"]');
             if (formPoin) {
@@ -261,19 +281,35 @@
             }
         });
 
+        // Tampilkan poin yang akan dipakai (otomatis dari master kriteria)
+        function tampilkanPoinOtomatis(criteriaId) {
+            var select = document.getElementById('editCriteriaTW');
+            var opsi = select ? select.querySelector('option[value="' + criteriaId + '"]') : null;
+            var poin = opsi ? parseInt(opsi.getAttribute('data-poin'), 10) : NaN;
+            var label = document.getElementById('poinOtomatisTW');
+            if (label) {
+                label.textContent = isNaN(poin) ? '-' : (poin > 0 ? '+' + poin : String(poin));
+            }
+        }
+
         // FUNGSI UNTUK MENGENDALIKAN MODAL POP-UP EDIT (TAILWIND)
         function openTailwindModal(button) {
             // Ambil data dari tombol
             let id = button.getAttribute('data-id');
-            let poin = button.getAttribute('data-poin');
+            let criteria = button.getAttribute('data-criteria');
             let catatan = button.getAttribute('data-catatan');
 
             // Set URL Action
             let baseUrl = "{{ url('/poin') }}";
             document.getElementById('formEditTW').action = baseUrl + '/' + id;
             
-            // Set Isi Input
-            document.getElementById('inputPoinTW').value = poin;
+            // Set isi form: jenis perilaku (poin mengikuti master) + catatan
+            if (window.tsEditCriteria) {
+                window.tsEditCriteria.setValue(criteria, true);
+            } else {
+                document.getElementById('editCriteriaTW').value = criteria;
+            }
+            tampilkanPoinOtomatis(criteria);
             document.getElementById('inputCatatanTW').value = catatan;
             
             // Munculkan Modal dengan Animasi
