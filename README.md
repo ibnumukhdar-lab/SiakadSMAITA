@@ -141,6 +141,21 @@ Modul penilaian project untuk grup binaan Student Root.
   ikut menghitung nilai akhir — supaya nilai tidak terlihat bagus padahal penilaian belum selesai.
 - **Rekap** (`/project-sr/rekap`): tabel siswa × project, nilai akhir + predikat, jumlah project yang
   dilaksanakan, rata-rata per tahap (untuk melihat tahap kuat/lemah), ekspor CSV.
+- **Hapus project**: tombol 🗑️ "Hapus project" tampil jelas di halaman project (dan tombol ikon di daftar
+  project) dengan **popup konfirmasi** yang menyebut nama project, jumlah nilai, jumlah berkas, dan
+  peringatan bila project sudah dinilai. Menghapus project juga menghapus nilai, foto/dokumentasi
+  (termasuk berkasnya di storage), dan portofolionya.
+- **Penyusunan Portofolio** (`/project-sr/portofolio`): halaman ini otomatis menerima project yang sudah
+  menuntaskan seluruh tahap yang dipakai. Isinya:
+  rekap otomatis 5 tahap (status, tanggal, catatan, rata nilai per tahap), tabel nilai seluruh anggota,
+  form narasi (ringkasan, latar belakang, tujuan, pelaksanaan, hasil, refleksi + tempat & tanggal
+  presentasi publik), dan unggahan **foto/dokumentasi** (jpg/png/webp/gif/pdf, maks 5 MB per berkas,
+  bisa beberapa sekaligus, ada kolom keterangan, bisa dihapus per berkas).
+  Tombol **🖨️ Cetak Portofolio** muncul setelah minimal satu berkas diunggah.
+- **Cetak portofolio** (`/project-sr/{id}/portofolio/cetak`): halaman siap cetak A4 (kop sekolah, identitas
+  project, narasi, tabel rekap tahap, tabel nilai anggota + predikat, galeri dokumentasi, kolom tanda
+  tangan mentor & kepala sekolah) — tombol "Cetak / Simpan PDF" memakai dialog cetak browser.
+  Hanya mentor grup (dan Super Admin) yang bisa menyusun; Tata Usaha bisa melihat & mencetak.
 - **Izin**: `buka-menu-project-sr` (Guru, Tata Usaha), `kelola-project-sr` + `nilai-project-sr` (Guru),
   `kelola-master-project-sr` (Tata Usaha). Mentor hanya bisa mengelola project grup binaannya sendiri;
   Super Admin dan Tata Usaha bisa melihat semua.

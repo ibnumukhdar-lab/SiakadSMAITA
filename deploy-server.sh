@@ -29,7 +29,10 @@ ssh -o ConnectTimeout=20 -o BatchMode=yes nizhom "
 echo "== 3/5 tukar folder (folder lama -> _old_<timestamp>) =="
 # -n = jangan mewarisi stdin; tanpa ini, ssh bisa menggantung saat skrip dijalankan
 # dari proses latar belakang/tanpa tty (folder sudah ditukar tapi composer tak jalan -> situs 500).
-ssh -n -o ConnectTimeout=20 -o BatchMode=yes nizhom "
+# PENTING: storage/app dipindah dengan `mv` (instan di filesystem yang sama), BUKAN `cp`.
+# Menyalin storage/app (ratusan MB) memakan menit dan pernah membuat ssh menggantung
+# sebelum langkah composer -> situs 500. Kalau perlu rollback: mv kembali storage/app ke folder _old_.
+ssh -n -o ConnectTimeout=20 -o BatchMode=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=6 nizhom "
   cd ~/public_html &&
   TS=\$(date +%Y%m%d_%H%M%S) &&
   mv siakad.smaitarafah.sch.id siakad.smaitarafah.sch.id_old_\$TS &&
@@ -38,20 +41,26 @@ ssh -n -o ConnectTimeout=20 -o BatchMode=yes nizhom "
   chmod -R u+rwX storage bootstrap/cache &&
   mkdir -p storage/framework/views storage/framework/cache/data storage/framework/sessions storage/logs &&
   touch storage/framework/views/.gitignore storage/logs/.gitignore &&
-  # Upload (storage/app) tidak pernah ikut tar -> salin dari folder lama setelah swap
-  cp -a ../siakad.smaitarafah.sch.id_old_\$TS/storage/app/. storage/app/ &&
-  echo \"   backup lama: siakad.smaitarafah.sch.id_old_\$TS\"
+  # Upload (storage/app) tidak ikut tar -> PINDAHKAN dari folder lama (instan, tanpa salin)
+  rm -rf storage/app &&
+  mv ../siakad.smaitarafah.sch.id_old_\$TS/storage/app ./storage/app &&
+  echo '   backup lama: siakad.smaitarafah.sch.id_old_'\$TS
 "
 
 echo "== 4/5 composer + cache =="
-ssh -n -o ConnectTimeout=20 -o BatchMode=yes nizhom "
+ssh -n -o ConnectTimeout=20 -o BatchMode=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=6 nizhom "
   cd ~/public_html/siakad.smaitarafah.sch.id &&
   rm -f bootstrap/cache/packages.php bootstrap/cache/services.php &&
   composer install --no-dev --no-interaction --prefer-dist --no-progress 2>&1 | tail -2 &&
   php artisan migrate --force &&
-  php artisan config:cache && php artisan view:cache
+  php artisan config:cache && php artisan view:cache &&
+  test -d vendor && test -f vendor/autoload.php && echo '   vendor OK'
 "
 
 echo "== 5/5 verifikasi =="
-curl -sk -o /dev/null -w "   https://siakad.smaitarafah.sch.id -> HTTP %{http_code}\n" --max-time 25 https://siakad.smaitarafah.sch.id/
+KODE=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 25 https://siakad.smaitarafah.sch.id/)
+echo "   https://siakad.smaitarafah.sch.id -> HTTP $KODE"
+if [ "$KODE" != "200" ]; then
+  echo "   !! situs tidak 200. Cek: vendor ada? migrasi jalan? Jalankan langkah 4 manual."
+fi
 echo "SELESAI"
