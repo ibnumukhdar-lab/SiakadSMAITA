@@ -54,7 +54,7 @@
                                     </td>
                                     <td class="px-4 py-3">
                                         <div class="flex justify-center gap-1.5">
-                                            <a href="{{ route('asrama.absensi.form', [$kamar->id, 'tanggal' => now()->toDateString(), 'sesi' => 'tidur']) }}" title="Isi absensi kamar ini" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-700 hover:bg-blue-50 transition">📋</a>
+                                            <a href="{{ route('asrama.absensi.form', [$kamar->id, 'tanggal' => now()->toDateString()]) }}" title="Isi absensi kamar ini" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-700 hover:bg-blue-50 transition">📋</a>
                                             <a href="{{ route('asrama.kamar.show', $kamar->id) }}" title="Lihat penghuni" class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-700 hover:bg-blue-50 transition">👥</a>
                                         </div>
                                     </td>
@@ -99,7 +99,7 @@
                             <span class="text-[13px] font-bold text-slate-800">{{ $p }}/{{ $kap }}</span>
                         </div>
                         <div class="flex items-center gap-2 mt-3">
-                            <a href="{{ route('asrama.absensi.form', [$kamar->id, 'tanggal' => now()->toDateString(), 'sesi' => 'tidur']) }}" class="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-900 text-white text-[13px] font-semibold">📋 Absensi</a>
+                            <a href="{{ route('asrama.absensi.form', [$kamar->id, 'tanggal' => now()->toDateString()]) }}" class="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-900 text-white text-[13px] font-semibold">📋 Absensi</a>
                             <a href="{{ route('asrama.kamar.show', $kamar->id) }}" class="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-white border border-slate-300 text-slate-700 text-[13px] font-semibold">👥 Penghuni</a>
                         </div>
                     </div>

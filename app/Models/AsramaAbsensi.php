@@ -10,13 +10,15 @@ class AsramaAbsensi extends Model
 
     protected $guarded = [];
 
-    /** Sesi absensi harian asrama. */
+    /**
+     * Absensi asrama = SATU sesi sehari, yaitu malam/jam tidur
+     * (permintaan Fahri, 17 Sep 2026). Kolom `sesi` di DB tetap dipakai
+     * supaya tidak perlu ubah skema bila nanti sesi lain ditambahkan.
+     */
+    public const SESI_UTAMA = 'tidur';
+
     public const SESI = [
-        'subuh'   => 'Subuh',
-        'pagi'    => 'Apel Pagi',
-        'maghrib' => 'Maghrib',
-        'isya'    => 'Isya',
-        'tidur'   => 'Tidur',
+        'tidur' => 'Tidur Malam',
     ];
 
     /** Status kehadiran yang dikenal sistem. */

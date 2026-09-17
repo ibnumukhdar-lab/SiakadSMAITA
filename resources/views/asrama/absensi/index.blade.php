@@ -5,7 +5,7 @@
             <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
                 <div>
                     <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">📋 Absensi Asrama</h3>
-                    <p class="text-sm text-slate-500 mt-0.5">Isi kehadiran santri per kamar dan per sesi</p>
+                    <p class="text-sm text-slate-500 mt-0.5">Absensi malam (jam tidur) — sekali sehari, per kamar</p>
                 </div>
                 <a href="{{ route('asrama.absensi.rekap', ['bulan' => substr($tanggal, 0, 7), 'kategori' => $kategori]) }}" class="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 text-[13px] font-semibold shadow-sm transition whitespace-nowrap">📊 Rekap Bulanan</a>
             </div>
@@ -17,20 +17,12 @@
                 <div class="mb-4 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm font-semibold">❌ {{ session('error') }}</div>
             @endif
 
-            {{-- Saring: tanggal, sesi, divisi --}}
+            {{-- Saring: tanggal + divisi --}}
             <form method="GET" action="{{ route('asrama.absensi.index') }}" class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 mb-5">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                     <div>
-                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tanggal</label>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tanggal Malam</label>
                         <input type="date" name="tanggal" value="{{ $tanggal }}" max="{{ now()->toDateString() }}" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Sesi</label>
-                        <select name="sesi" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
-                            @foreach(\App\Models\AsramaAbsensi::SESI as $kunci => $label)
-                                <option value="{{ $kunci }}" @selected($sesi === $kunci)>{{ $label }}</option>
-                            @endforeach
-                        </select>
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Divisi</label>
@@ -46,8 +38,7 @@
 
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm px-5 py-4 mb-5 flex flex-wrap items-center justify-between gap-3">
                 <div class="text-[13px] font-semibold text-slate-600">
-                    Sesi <span class="text-blue-900 font-bold">{{ \App\Models\AsramaAbsensi::labelSesi($sesi) }}</span>
-                    · {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d F Y') }}
+                    🌙 Absensi Malam <span class="text-blue-900 font-bold">{{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d F Y') }}</span>
                 </div>
                 <div class="text-[13px] font-semibold text-slate-600">
                     Terisi <span class="text-blue-900 font-bold">{{ $kamarSelesai }}/{{ $jumlahKamar }}</span> kamar
@@ -98,7 +89,7 @@
                             @endif
 
                             <div class="mt-4 pt-3 border-t border-slate-100">
-                                <a href="{{ route('asrama.absensi.form', [$k->id, 'tanggal' => $tanggal, 'sesi' => $sesi]) }}"
+                                <a href="{{ route('asrama.absensi.form', [$k->id, 'tanggal' => $tanggal]) }}"
                                    class="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg {{ $jml > 0 ? 'bg-white border border-slate-300 text-slate-700' : 'bg-blue-900 text-white' }} text-[13px] font-semibold">
                                     {{ $jml > 0 ? '✏️ Ubah Absensi' : '📋 Isi Absensi' }}
                                 </a>

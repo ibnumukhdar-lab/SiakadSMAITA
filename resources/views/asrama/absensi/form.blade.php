@@ -6,11 +6,11 @@
                 <div>
                     <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">📋 Absensi Kamar {{ $kamar->nama_kamar }}</h3>
                     <p class="text-sm text-slate-500 mt-0.5">
-                        {{ \App\Models\AsramaAbsensi::labelSesi($sesi) }} · {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d F Y') }}
+                        🌙 Absensi Malam (jam tidur) · {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d F Y') }}
                         · {{ ucfirst($kamar->kategori) }} · Musyrif: {{ $kamar->musyrif->name ?? '-' }}
                     </p>
                 </div>
-                <a href="{{ route('asrama.absensi.index', ['tanggal' => $tanggal, 'sesi' => $sesi, 'kategori' => $kamar->kategori]) }}" class="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 text-[13px] font-semibold shadow-sm transition whitespace-nowrap">⬅️ Daftar Kamar</a>
+                <a href="{{ route('asrama.absensi.index', ['tanggal' => $tanggal, 'kategori' => $kamar->kategori]) }}" class="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 text-[13px] font-semibold shadow-sm transition whitespace-nowrap">⬅️ Daftar Kamar</a>
             </div>
 
             @if(session('error'))

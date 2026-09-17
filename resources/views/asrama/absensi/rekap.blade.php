@@ -31,19 +31,6 @@
                 </div>
             </form>
 
-            <div class="mb-5">
-                <div class="text-sm font-bold text-slate-700">Sesi yang pernah diisi bulan ini</div>
-                <div class="flex flex-wrap gap-2 mt-2">
-                    @forelse($sesiTerisi as $sesiKunci => $hari)
-                        <span class="inline-flex items-center rounded-full px-3 py-1 text-[12px] font-bold bg-white text-slate-600 border border-slate-200">
-                            {{ \App\Models\AsramaAbsensi::labelSesi($sesiKunci) }} · {{ $hari }} hari
-                        </span>
-                    @empty
-                        <span class="text-[13px] text-slate-400">Belum ada absensi pada bulan {{ \App\Http\Controllers\AsramaPeringkatController::labelBulan($bulan) }}.</span>
-                    @endforelse
-                </div>
-            </div>
-
             @if($baris->isEmpty())
                 <div class="text-center p-12 bg-white border border-dashed border-slate-300 rounded-2xl">
                     <span class="text-5xl block mb-3">📭</span>

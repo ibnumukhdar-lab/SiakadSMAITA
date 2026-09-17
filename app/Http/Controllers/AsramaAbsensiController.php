@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * ABSENSI ASRAMA (Tahap B, 17 Sep 2026)
- * Musyrif mengisi absensi per kamar binaannya per sesi (subuh/apel/maghrib/isya/tidur).
+ * Absensi diisi SATU kali sehari (malam / jam tidur) per kamar binaan musyrif.
  * Kepala Diniyah (pemegang buka-menu-manajemen-kamar) bisa semua kamar.
  */
 class AsramaAbsensiController extends Controller
@@ -59,15 +59,17 @@ class AsramaAbsensiController extends Controller
         return $t > now()->toDateString() ? now()->toDateString() : $t;
     }
 
+    /**
+     * Hanya SATU sesi absensi sehari: malam / jam tidur (permintaan Fahri, 17 Sep 2026).
+     * Nilai sesi dipatok di server supaya halaman lama yang masih mengirim ?sesi=… tetap aman.
+     */
     private function sesiValid(Request $request): string
     {
-        $s = (string) $request->input('sesi');
-
-        return array_key_exists($s, AsramaAbsensi::SESI) ? $s : 'tidur';
+        return AsramaAbsensi::SESI_UTAMA;
     }
 
     // =========================================================
-    // 1. Pilih tanggal + sesi, lihat status pengisian tiap kamar
+    // 1. Pilih tanggal, lihat status pengisian absensi malam tiap kamar
     // =========================================================
     public function index(Request $request)
     {
@@ -175,7 +177,9 @@ class AsramaAbsensiController extends Controller
         $request->validate([
             'kamar_id'     => 'required|exists:asrama_kamars,id',
             'tanggal'      => 'required|date',
-            'sesi'         => 'required|in:' . implode(',', array_keys(AsramaAbsensi::SESI)),
+            // Nilai sesi DIPATOK server (SESI_UTAMA = tidur); halaman/browser lama
+            // yang masih mengirim ?sesi=isya tidak boleh ditolak validasi.
+            'sesi'         => 'nullable|string|max:20',
             'status'       => 'required|array',
             'status.*'     => 'required|in:' . implode(',', array_keys(AsramaAbsensi::STATUS)),
             'keterangan'   => 'nullable|array',
@@ -188,6 +192,7 @@ class AsramaAbsensiController extends Controller
         $kamar = AsramaKamar::findOrFail($request->kamar_id);
         $this->pastikanBoleh($kamar);
 
+        $sesi    = AsramaAbsensi::SESI_UTAMA;   // satu-satunya sesi: malam / jam tidur
         $tanggal = Carbon::parse($request->tanggal)->toDateString();
 
         if ($tanggal > now()->toDateString()) {
@@ -217,7 +222,7 @@ class AsramaAbsensiController extends Controller
                 $ket = is_string($ket) ? trim($ket) : null;
 
                 AsramaAbsensi::updateOrCreate(
-                    ['tanggal' => $tanggal, 'sesi' => $request->sesi, 'student_id' => $sid],
+                    ['tanggal' => $tanggal, 'sesi' => $sesi, 'student_id' => $sid],
                     [
                         'kamar_id'     => $kamar->id,
                         'status'       => $status,
@@ -236,9 +241,8 @@ class AsramaAbsensiController extends Controller
         }
 
         return redirect()
-            ->route('asrama.absensi.index', ['tanggal' => $tanggal, 'sesi' => $request->sesi, 'kategori' => $kamar->kategori])
-            ->with('success', '✅ Absensi ' . $kamar->nama_kamar . ' sesi ' . AsramaAbsensi::labelSesi($request->sesi)
-                . ' tersimpan untuk ' . $jumlah . ' siswa.');
+            ->route('asrama.absensi.index', ['tanggal' => $tanggal, 'kategori' => $kamar->kategori])
+            ->with('success', '✅ Absensi malam ' . $kamar->nama_kamar . ' tersimpan untuk ' . $jumlah . ' siswa.');
     }
 
     // =========================================================
@@ -277,13 +281,6 @@ class AsramaAbsensiController extends Controller
             ->orderByRaw("SUM(a.status IN ('alpa','telat')) DESC")
             ->get();
 
-        $sesiTerisi = DB::table('asrama_absensi')
-            ->whereBetween('tanggal', [$awal, $akhir])
-            ->whereIn('kamar_id', $kamarIds)
-            ->selectRaw('sesi, COUNT(DISTINCT tanggal) AS hari')
-            ->groupBy('sesi')
-            ->pluck('hari', 'sesi');
-
         $siswaBermasalah = DB::table('asrama_absensi as a')
             ->join('siswas as s', 's.id', '=', 'a.student_id')
             ->leftJoin('asrama_kamars as k', 'k.id', '=', 'a.kamar_id')
@@ -302,7 +299,7 @@ class AsramaAbsensiController extends Controller
         $kamarList = $this->daftarKamar()->orderBy('kategori')->orderBy('nama_kamar')->get();
 
         return view('asrama.absensi.rekap', compact(
-            'bulan', 'kategori', 'baris', 'sesiTerisi', 'siswaBermasalah', 'kamarList'
+            'bulan', 'kategori', 'baris', 'siswaBermasalah', 'kamarList'
         ));
     }
 }

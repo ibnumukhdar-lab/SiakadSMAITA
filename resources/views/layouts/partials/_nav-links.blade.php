@@ -171,7 +171,7 @@
                     <span class="w-5 text-center text-[14px] shrink-0">🏆</span> Peringkat Bulanan
                 </a>
                 <a href="{{ route('asrama.absensi.index') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
-                    <span class="w-5 text-center text-[14px] shrink-0">📋</span> Absensi Asrama
+                    <span class="w-5 text-center text-[14px] shrink-0">🌙</span> Absensi Malam
                 </a>
                 <a href="{{ route('asrama.izin.index') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
                     <span class="w-5 text-center text-[14px] shrink-0">🚪</span> Izin Pulang / Keluar
