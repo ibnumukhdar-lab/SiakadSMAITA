@@ -10,15 +10,64 @@
     summary.nav-sum::-webkit-details-marker { display: none; }
     summary.nav-user { list-style: none; }
     summary.nav-user::-webkit-details-marker { display: none; }
-    .chev { transition: transform .2s ease; }
+    .chev { transition: transform .24s cubic-bezier(.22,.61,.36,1); }
     .nav-sec[open] > summary .chev { transform: rotate(180deg); }
 
-    .drawer-mask { display: none; }
-    #navDrawer:checked ~ .drawer-mask { display: block; }
-    .drawer-panel { display: none; }
-    #navDrawer:checked ~ .drawer-panel { display: flex; }
+    /* ===== Kelompok menu: pemisah garis halus + label seragam ===== */
+    .nav-grup { margin-top: 14px; padding-top: 14px; border-top: 1px solid #eef2f7; }
+    .nav-grup:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
+    .nav-grup-label {
+        padding: 0 12px 7px;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: #94a3b8;
+    }
+
+    /* ===== Ikon: warna diseragamkan (abu tenang), berwarna saat aktif/hover ===== */
+    .nav-ico { filter: grayscale(1); opacity: .75; transition: filter .24s ease, opacity .24s ease, transform .24s ease; }
+    .nav-item:hover .nav-ico,
+    .nav-item.nav-aktif .nav-ico,
+    .nav-sum:hover .nav-ico,
+    .nav-sec[open] > .nav-sum .nav-ico {
+        filter: none;
+        opacity: 1;
+        transform: translateY(-1px);
+    }
+    .nav-item.nav-aktif .nav-ico { transform: none; }
+
+    /* ===== Drawer HP: keluar-masuk halus (bukan lompat) ===== */
+    .drawer-panel {
+        transform: translateX(-102%);
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, opacity;
+        transition: transform .42s cubic-bezier(.22,.61,.36,1), opacity .34s ease;
+    }
+    #navDrawer:checked ~ .drawer-panel {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .drawer-mask {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .38s ease;
+    }
+    #navDrawer:checked ~ .drawer-mask {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    /* Saat drawer terbuka: halaman di belakang tidak ikut bergulir */
+    body:has(#navDrawer:checked) { overflow: hidden; }
+
     .nav-user[open] .user-pop { display: block; }
     .user-pop { display: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .drawer-panel, .drawer-mask, .nav-ico, .chev { transition: none; }
+    }
 </style>
 
 {{-- ============ MOBILE: top bar + drawer (checkbox CSS, tanpa Alpine) ============ --}}

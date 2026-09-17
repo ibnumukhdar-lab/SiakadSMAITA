@@ -159,7 +159,6 @@
             $s = $d['siswa'];
             $poinPos = collect($d['positif'])->sum('poin');
             $poinNeg = collect($d['negatif'])->sum('poin');
-            $maksTren = max(collect($d['bulanan'])->max('pos') ?? 1, collect($d['bulanan'])->max('neg') ?? 1, 1);
             $tahapKolom = $tahapKolom ?? [];
             $predProject = $predikatNilai($d['project_rata']);
         @endphp
@@ -198,29 +197,6 @@
                     <div class="label">Total Poin</div>
                     <div class="angka {{ $d['total'] < 0 ? 'merah' : 'hijau' }}">{{ $d['total'] > 0 ? '+' : '' }}{{ $d['total'] }}</div>
                     <div class="keterangan">@if($d['peringkat']) peringkat {{ $d['peringkat'] }} dari {{ $semuaSantri }} santri @endif</div>
-                </div>
-            </div>
-
-            {{-- Tren Bulanan: lebar penuh, di bawah kartu poin --}}
-            <div class="baris-kartu" style="margin-top: 10px;">
-                <div class="kartu">
-                    <div class="label">Tren Bulanan</div>
-                    @if($d['bulanan'])
-                        <div style="margin-top: 6px;">
-                            @foreach($d['bulanan'] as $b)
-                                <div class="tren">
-                                    <span class="bl">{{ $b['label'] }}</span>
-                                    <div class="bar"><div class="p" style="width: {{ round($b['pos'] / $maksTren * 100) }}%"></div></div>
-                                    <span class="n">{{ $b['pos'] }}</span>
-                                    <div class="bar"><div class="m" style="width: {{ round($b['neg'] / $maksTren * 100) }}%"></div></div>
-                                    <span class="n">{{ $b['neg'] }}</span>
-                                    <span class="t {{ $b['total'] >= 0 ? 'hijau' : 'merah' }}">{{ $b['total'] > 0 ? '+' : '' }}{{ $b['total'] }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="keterangan">Belum ada catatan poin pada periode ini.</div>
-                    @endif
                 </div>
             </div>
 

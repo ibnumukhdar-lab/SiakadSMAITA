@@ -341,26 +341,40 @@ class SrRaporController extends Controller
         })->all();
     }
 
-    /** Perilaku menonjol (positif/negatif) — maksimal 4 teratas. */
+    /**
+     * Perilaku menonjol (positif/negatif) untuk rapor.
+     *
+     * Maksimal 6 baris (permintaan Fahri 17 Sep 2026): 5 perilaku terbanyak + 1 baris "Lain-lain"
+     * yang menggabungkan sisanya, supaya tabel tetap rapi dan muat satu halaman.
+     */
     private function perilaku(int $siswaId, ?string $dari, ?string $sampai, bool $positif): array
     {
-        $q = DB::table('sr_point_entries as e')
-            ->join('sr_point_criteria as c', 'c.id', '=', 'e.criteria_id')
-            ->whereNull('e.deleted_at')->where('e.student_id', $siswaId)
-            ->where('e.poin', $positif ? '>' : '<', 0)
+        $batas = 5;
+
+        $dasar = function () use ($siswaId, $dari, $sampai, $positif) {
+            $q = DB::table('sr_point_entries as e')
+                ->join('sr_point_criteria as c', 'c.id', '=', 'e.criteria_id')
+                ->whereNull('e.deleted_at')->where('e.student_id', $siswaId)
+                ->where('e.poin', $positif ? '>' : '<', 0);
+
+            if ($dari) {
+                $q->whereDate('e.tanggal_kejadian', '>=', $dari);
+            }
+            if ($sampai) {
+                $q->whereDate('e.tanggal_kejadian', '<=', $sampai);
+            }
+
+            return $q;
+        };
+
+        $teratas = $dasar()
             ->selectRaw('c.id as criteria_id, c.kategori, c.nama_perilaku, COUNT(*) as jumlah, SUM(e.poin) as poin, MAX(e.catatan) as catatan')
             ->groupBy('c.id', 'c.kategori', 'c.nama_perilaku')
             ->orderBy('poin', $positif ? 'desc' : 'asc')
-            ->limit(4);
+            ->limit($batas)
+            ->get();
 
-        if ($dari) {
-            $q->whereDate('e.tanggal_kejadian', '>=', $dari);
-        }
-        if ($sampai) {
-            $q->whereDate('e.tanggal_kejadian', '<=', $sampai);
-        }
-
-        return $q->get()->map(function ($r) use ($positif) {
+        $hasil = $teratas->map(function ($r) use ($positif) {
             // Kalau kategori kriteria tidak sesuai tanda poin (data lama), pakai catatannya.
             $cocok = $positif ? $r->kategori === 'positif' : $r->kategori === 'negatif';
 
@@ -370,6 +384,21 @@ class SrRaporController extends Controller
                 'poin' => (int) $r->poin,
             ];
         })->all();
+
+        // Sisa di luar 5 teratas -> satu baris "Lain-lain"
+        $sisa = $dasar()->whereNotIn('c.id', $teratas->pluck('criteria_id')->all() ?: ['-'])
+            ->selectRaw('COUNT(*) as jumlah, COALESCE(SUM(e.poin), 0) as poin')
+            ->first();
+
+        if ($sisa && (int) $sisa->jumlah > 0) {
+            $hasil[] = [
+                'nama' => 'Lain-lain',
+                'jumlah' => (int) $sisa->jumlah,
+                'poin' => (int) $sisa->poin,
+            ];
+        }
+
+        return array_slice($hasil, 0, 6);
     }
 
     /** Rekap project per siswa: daftar project grupnya + nilai akhir (terbobot, tahap terisi). */
