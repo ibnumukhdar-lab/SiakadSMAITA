@@ -145,7 +145,7 @@ class PenilaianRaporController extends Controller
             ->leftJoin('users as u', 'u.id', '=', 'k.musyrif_id')
             ->whereIn('m.student_id', $daftarSiswa->pluck('id'))
             ->whereNull('m.tanggal_keluar')
-            ->select('m.student_id', 'k.id as kamar_id', 'k.nama_kamar', 'k.kategori', 'u.name as musyrif')
+            ->select('m.student_id', 'k.id as kamar_id', 'k.nama_kamar', 'k.kategori', 'u.name as musyrif', 'u.nipa as musyrif_nipa')
             ->get()
             ->keyBy('student_id');
 
@@ -157,6 +157,7 @@ class PenilaianRaporController extends Controller
                 'kamar' => $info->nama_kamar ?? null,
                 'kategori' => $info->kategori ?? null,
                 'musyrif' => $info->musyrif ?? null,
+                'musyrif_nipa' => $info->musyrif_nipa ?? null,
                 'wajib' => $musyrifDivisi[$info->kategori ?? ''] ?? 0,
                 'adab' => $this->rincian($s->id, $periodeId, 'adab', $hasilAdab[$s->id] ?? []),
                 'keasramaan' => $this->rincian($s->id, $periodeId, 'keasramaan', $hasilAsrama[$s->id] ?? []),
@@ -172,6 +173,7 @@ class PenilaianRaporController extends Controller
             'pengaturan' => \App\Models\Pengaturan::first(),
             'ambang' => PenilaianPengaturan::ambang(),
             'kepalaDiniyah' => $this->namaKepalaDiniyah(),
+            'kepalaKulliyyah' => $this->kepalaKulliyyah(),
         ]);
     }
 
@@ -310,13 +312,20 @@ class PenilaianRaporController extends Controller
 
     private function namaKepalaDiniyah(): ?string
     {
-        $nama = DB::table('users as u')
+        return optional($this->kepalaKulliyyah())->nama;
+    }
+
+    /** Nama + NIPA Kepala Kulliyyat Diiniyyah Al-Arafah (role 'Kepala Diniyah' di database). */
+    private function kepalaKulliyyah(): ?object
+    {
+        $baris = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', function ($j) {
                 $j->on('r.id', '=', 'mr.role_id')->where('r.name', '=', 'Kepala Diniyah');
             })
-            ->value('u.name');
+            ->select('u.name as nama', 'u.nipa')
+            ->first();
 
-        return $nama ?: null;
+        return $baris ?: null;
     }
 }

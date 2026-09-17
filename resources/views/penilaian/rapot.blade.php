@@ -111,6 +111,7 @@
         .ttd .kolom { flex: 1; }
         .ttd .ruang { height: 52px; }
         .ttd .nama { font-weight: 700; border-top: 1px solid #94a3b8; padding-top: 3px; }
+        .ttd .nipa { font-size: 10px; color: #475569; margin-top: 2px; letter-spacing: .3px; }
 
         .kaki { margin-top: 12px; font-size: 10px; color: #64748b; display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 6px; }
 
@@ -155,6 +156,7 @@
             .garis { height: 11px; }
             .ttd { margin-top: 8px; font-size: 10px; }
             .ttd .ruang { height: 30px; }
+            .ttd .nipa { font-size: 9px; margin-top: 1px; }
             .kaki { margin-top: 6px; font-size: 9px; padding-top: 4px; }
         }
 
@@ -227,13 +229,13 @@
                 <div class="baris"><span class="k">Status</span><span class="v">{{ $s->status }}</span></div>
             </div>
 
-            @include('penilaian.partials._tabel-rapot', ['judul' => '🕌 Rincian Penilaian Adab', 'data' => $adab])
-            @include('penilaian.partials._tabel-rapot', ['judul' => '🛏️ Rincian Penilaian Keasramaan', 'data' => $asrama])
+            @include('penilaian.partials._tabel-rapot', ['judul' => 'A. Rincian Penilaian Adab', 'data' => $adab])
+            @include('penilaian.partials._tabel-rapot', ['judul' => 'B. Rincian Penilaian Keasramaan', 'data' => $asrama])
 
-            <div class="judul-tabel">📊 Rekap Nilai Adab &amp; Keasramaan</div>
+            <div class="judul-tabel">Rekap Nilai Adab &amp; Keasramaan</div>
             <div class="nilai">
                 <div class="kartu {{ $kelasKartu($adab['predikat'] ?? null) }}">
-                    <div class="label">🕌 Nilai Adab</div>
+                    <div class="label">A. Nilai Adab</div>
                     @if($adaAdab)
                         <div class="angka">{{ number_format($adab['rata'], 2) }} <small>/ 100</small></div>
                         <div class="meta">
@@ -256,7 +258,7 @@
                 </div>
 
                 <div class="kartu {{ $kelasKartu($asrama['predikat'] ?? null) }}">
-                    <div class="label">🛏️ Nilai Keasramaan</div>
+                    <div class="label">B. Nilai Keasramaan</div>
                     @if($adaAsrama)
                         <div class="angka">{{ number_format($asrama['rata'], 2) }} <small>/ 100</small></div>
                         <div class="meta">
@@ -311,17 +313,20 @@
                 <div class="kolom">
                     <div>Kepala Kulliyyat Diiniyyah Al-Arafah</div>
                     <div class="ruang"></div>
-                    <div class="nama">{{ $kepalaDiniyah ?: '...................' }}</div>
+                    <div class="nama">{{ optional($kepalaKulliyyah)->nama ?: '...................' }}</div>
+                    <div class="nipa">NIPA: {{ optional($kepalaKulliyyah)->nipa ?: 'YMA. ...........' }}</div>
                 </div>
                 <div class="kolom">
                     <div>Orang Tua / Wali</div>
                     <div class="ruang"></div>
                     <div class="nama">...................</div>
+                    <div class="nipa">&nbsp;</div>
                 </div>
                 <div class="kolom">
                     <div>Musyrif / Musyrifah</div>
                     <div class="ruang"></div>
                     <div class="nama">{{ $d['musyrif'] ?: '...................' }}</div>
+                    <div class="nipa">NIPA: {{ $d['musyrif_nipa'] ?: 'YMA. ...........' }}</div>
                 </div>
             </div>
 
