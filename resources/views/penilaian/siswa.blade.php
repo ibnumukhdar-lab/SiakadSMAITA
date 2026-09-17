@@ -47,11 +47,37 @@
                                 </div>
                             @endforeach
                         </div>
+
                     </div>
                 @empty
                     <div class="text-[13px] text-slate-400">Belum ada nilai penilaian untuk siswa ini.</div>
                 @endforelse
             </div>
+
+            {{-- ===== CATATAN MUSYRIF / PEMBINA (per periode penilaian) ===== --}}
+            @if(!empty($periodeCatatanList))
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5 px-1">
+                    <span class="text-[11.5px] text-slate-400">Catatan tercetak pada rapor periode yang dipilih</span>
+                    <form method="GET" action="{{ route('penilaian.siswa', $siswa->id) }}" class="flex items-center gap-2">
+                        <label for="pilihPeriodeCatatan" class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Periode</label>
+                        <select id="pilihPeriodeCatatan" name="periode" onchange="this.form.submit()"
+                                class="h-8 rounded-lg border border-slate-300 bg-white px-2 text-[12px] text-slate-700 outline-none focus:border-blue-500">
+                            @foreach($periodeCatatanList as $p)
+                                <option value="{{ $p->id }}" @selected($p->id === $periodeCatatanId)>{{ $p->nama }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
+
+                @include('partials._kotak-catatan-rapot', [
+                    'jenis' => 'adab',
+                    'siswa' => $siswa,
+                    'catatan' => $catatanAktif ?? null,
+                    'kunci' => ['penilaian_periode_id' => $periodeCatatanId],
+                    'boleh' => $bolehCatatanAdab ?? false,
+                    'judul' => 'Catatan Musyrif / Pembina',
+                ])
+            @endif
 
             {{-- ===== NILAI PROJECT STUDENT ROOT ===== --}}
             @if(!empty($projectBaris))

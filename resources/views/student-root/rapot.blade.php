@@ -328,9 +328,15 @@
             <div class="catatan">
                 <div class="t">Kesimpulan</div>
                 <div>{{ $kesimpulan($d['total'], $d['pos'], $d['neg']) }}</div>
+                @php $nota = $catatan[$s->id] ?? null; @endphp
                 <div class="t" style="margin-top: 9px;">Catatan Mentor</div>
-                <div class="garis"></div>
-                <div class="garis"></div>
+                @if($nota)
+                    <div style="white-space: pre-line;">{{ $nota->isi }}</div>
+                    <div style="color:#64748b; font-size:9.5px; margin-top:2px;">— {{ $nota->penulis->name ?? 'Mentor' }}@if($nota->penulis && $nota->penulis->nipa) · NIPA: {{ $nota->penulis->nipa_tampil }}@endif</div>
+                @else
+                    <div class="garis"></div>
+                    <div class="garis"></div>
+                @endif
             </div>
 
             <div class="ttd">

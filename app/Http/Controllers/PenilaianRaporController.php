@@ -164,8 +164,12 @@ class PenilaianRaporController extends Controller
             ];
         });
 
+        // Catatan musyrif per santri untuk periode yang dicetak (18 Sep 2026)
+        $catatan = \App\Models\CatatanRaport::untukAdab($daftarSiswa->pluck('id')->all(), $periodeId);
+
         return view('penilaian.rapot', [
             'daftar' => $daftar,
+            'catatan' => $catatan,
             'periode' => $periodeList->firstWhere('id', $periodeId),
             'periodeId' => $periodeId,
             'periodeList' => $periodeList,

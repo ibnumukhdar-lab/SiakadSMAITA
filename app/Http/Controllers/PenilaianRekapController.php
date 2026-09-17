@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PenilaianJawaban;
 use App\Models\PenilaianKriteria;
 use App\Models\PenilaianPengaturan;
+use Illuminate\Support\Facades\Auth;
 use App\Models\PenilaianPeriode;
 use App\Models\PenilaianSesi;
 use App\Models\Siswa;
@@ -137,6 +138,14 @@ class PenilaianRekapController extends Controller
             ];
         });
 
+        // Periode untuk kotak catatan rapor (bisa dipilih lewat ?periode=)
+        $periodeCatatanId = (int) request()->input('periode', 0)
+            ?: (int) (PenilaianPeriode::aktifSekarang()?->id ?? PenilaianPeriode::orderByDesc('id')->value('id') ?? 0);
+        $catatanPeriodeAktif = $periodeCatatanId
+            ? \App\Models\CatatanRaport::with('penulis')->where('jenis', 'adab')
+                ->where('siswa_id', $siswa->id)->where('penilaian_periode_id', $periodeCatatanId)->first()
+            : null;
+
         // Nilai akhir per periode (rata-rata seluruh penilai)
         $perPeriode = [];
         foreach ($sesi->groupBy('periode_id') as $periodeId => $kumpulan) {
@@ -195,6 +204,13 @@ class PenilaianRekapController extends Controller
             'kamar' => DB::table('asrama_members as m')->join('asrama_kamars as k', 'k.id', '=', 'm.kamar_id')
                 ->where('m.student_id', $siswa->id)->value('k.nama_kamar'),
             'ambang' => PenilaianPengaturan::ambang(),
+            'catatanPeriode' => \App\Models\CatatanRaport::with('penulis')
+                ->where('jenis', 'adab')->where('siswa_id', $siswa->id)->get()
+                ->keyBy('penilaian_periode_id'),
+            'catatanAktif' => $catatanPeriodeAktif,
+            'periodeCatatanId' => $periodeCatatanId,
+            'periodeCatatanList' => PenilaianPeriode::orderByDesc('aktif')->orderByDesc('nama')->get(),
+            'bolehCatatanAdab' => \App\Models\CatatanRaport::bolehTulisAdab(Auth::user(), $siswa),
         ]);
     }
 

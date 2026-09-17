@@ -88,6 +88,15 @@
                 </div>
             </div>
 
+            @include('partials._kotak-catatan-rapot', [
+                'jenis' => 'student_root',
+                'siswa' => $siswa,
+                'catatan' => $catatanSr ?? null,
+                'kunci' => ['tahun_ajaran' => $tahunAjaran, 'semester' => $semester],
+                'boleh' => $bolehCatatanSr ?? false,
+                'judul' => 'Catatan Mentor — Rapor Student Root (' . \App\Models\CatatanRaport::labelSr($tahunAjaran, $semester) . ')',
+            ])
+
         </div>
     </div>
 </x-app-layout>

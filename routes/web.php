@@ -151,6 +151,13 @@ Route::middleware(['auth', 'permission:buka-menu-penilaian'])->group(function ()
     Route::delete('/penilaian/sesi/{id}', [PenilaianIsiController::class, 'hapusSesi'])->where('id', '[0-9]+')->name('penilaian.sesi.hapus');
 });
 
+// Catatan rapor per santri (Adab & Keasramaan + Student Root) — dipakai halaman isian
+// penilaian/santri dan riwayat poin Student Root. Hak tulis diperiksa di controller.
+Route::middleware(['auth'])->group(function () {
+    Route::post('/catatan-rapot', [App\Http\Controllers\CatatanRaportController::class, 'simpan'])->name('catatan.simpan');
+    Route::delete('/catatan-rapot/{id}', [App\Http\Controllers\CatatanRaportController::class, 'hapus'])->where('id', '[0-9]+')->name('catatan.hapus');
+});
+
 // Master penilaian: pertanyaan, periode, ambang predikat (Tata Usaha / Super Admin).
 Route::middleware(['auth', 'permission:kelola-master-penilaian'])->prefix('penilaian/master')->group(function () {
     Route::get('/', [PenilaianMasterController::class, 'index'])->name('penilaian.master');

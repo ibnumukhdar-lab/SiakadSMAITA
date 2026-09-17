@@ -304,9 +304,15 @@
                 <div>{{ $kesimpulan('Adab', $adab) }}</div>
                 <div>{{ $kesimpulan('Keasramaan', $asrama) }}</div>
 
+                @php $nota = $catatan[$s->id] ?? null; @endphp
                 <div class="t" style="margin-top:8px;">Catatan Musyrif / Pembina</div>
-                <div class="garis"></div>
-                <div class="garis"></div>
+                @if($nota)
+                    <div style="white-space: pre-line;">{{ $nota->isi }}</div>
+                    <div style="color:#64748b; font-size:9.5px; margin-top:2px;">— {{ $nota->penulis->name ?? 'Musyrif' }}@if($nota->penulis && $nota->penulis->nipa) · NIPA: {{ $nota->penulis->nipa_tampil }}@endif</div>
+                @else
+                    <div class="garis"></div>
+                    <div class="garis"></div>
+                @endif
             </div>
 
             <div class="ttd">

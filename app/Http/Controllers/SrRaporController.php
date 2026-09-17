@@ -169,8 +169,12 @@ class SrRaporController extends Controller
 
         $kepala = $this->kepalaSekolah();
 
+        // Catatan mentor per santri untuk semester yang dicetak (18 Sep 2026)
+        $catatan = \App\Models\CatatanRaport::untukSr($daftarSiswa->pluck('id')->all(), $tahunAjaran, $preset);
+
         return view('student-root.rapot', [
             'daftar' => $daftar,
+            'catatan' => $catatan,
             'preset' => $preset,
             'semesterList' => self::SEMESTER,
             'dari' => $dari,

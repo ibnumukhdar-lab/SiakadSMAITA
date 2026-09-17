@@ -107,6 +107,13 @@ class SrPointEntryController extends Controller
         // Hitung total akumulasi poin
         $total_poin = SrPointEntry::where('student_id', $id)->sum('poin');
 
-        return view('student-root.poin.history', compact('siswa', 'histories', 'total_poin'));
+        // Catatan mentor pada rapor Student Root untuk semester berjalan (18 Sep 2026)
+        [$tahunAjaran, $semester] = \App\Models\CatatanRaport::periodeSrBerjalan();
+        $catatanSr = \App\Models\CatatanRaport::untukSr([$siswa->id], $tahunAjaran, $semester)->first();
+        $bolehCatatanSr = \App\Models\CatatanRaport::bolehTulisSr(Auth::user(), $siswa);
+
+        return view('student-root.poin.history', compact(
+            'siswa', 'histories', 'total_poin', 'catatanSr', 'bolehCatatanSr', 'tahunAjaran', 'semester'
+        ));
     }
 }
