@@ -210,7 +210,12 @@
         <div class="hal">
             <div class="judul">
                 <h2>Rapot Penilaian Adab &amp; Keasramaan</h2>
-                <p>Periode {{ $periode->nama ?? '-' }} · Tahun Ajaran {{ $tahunAjaran }}</p>
+                <p>
+                    Periode {{ $periode->nama ?? '-' }}
+                    @if($tahunAjaran && $tahunAjaran !== ($periode->nama ?? null))
+                        · Tahun Ajaran {{ $tahunAjaran }}
+                    @endif
+                </p>
             </div>
 
             <div class="identitas">
@@ -222,11 +227,15 @@
                 <div class="baris"><span class="k">Status</span><span class="v">{{ $s->status }}</span></div>
             </div>
 
+            @include('penilaian.partials._tabel-rapot', ['judul' => '🕌 Rincian Penilaian Adab', 'data' => $adab])
+            @include('penilaian.partials._tabel-rapot', ['judul' => '🛏️ Rincian Penilaian Keasramaan', 'data' => $asrama])
+
+            <div class="judul-tabel">📊 Rekap Nilai Adab &amp; Keasramaan</div>
             <div class="nilai">
                 <div class="kartu {{ $kelasKartu($adab['predikat'] ?? null) }}">
                     <div class="label">🕌 Nilai Adab</div>
                     @if($adaAdab)
-                        <div class="angka">{{ $adab['rata'] }} <small>/ 100</small></div>
+                        <div class="angka">{{ number_format($adab['rata'], 2) }} <small>/ 100</small></div>
                         <div class="meta">
                             Predikat <span class="predikat">{{ $adab['predikat'] }}</span>
                             · dinilai {{ count($adab['penilai']) }} dari {{ (int) ($d['wajib'] ?? 0) }} musyrif divisi
@@ -249,7 +258,7 @@
                 <div class="kartu {{ $kelasKartu($asrama['predikat'] ?? null) }}">
                     <div class="label">🛏️ Nilai Keasramaan</div>
                     @if($adaAsrama)
-                        <div class="angka">{{ $asrama['rata'] }} <small>/ 100</small></div>
+                        <div class="angka">{{ number_format($asrama['rata'], 2) }} <small>/ 100</small></div>
                         <div class="meta">
                             Predikat <span class="predikat">{{ $asrama['predikat'] }}</span>
                             · dinilai {{ count($asrama['penilai']) }} dari {{ (int) ($d['wajib'] ?? 0) }} musyrif divisi
@@ -269,9 +278,6 @@
                     @endif
                 </div>
             </div>
-
-            @include('penilaian.partials._tabel-rapot', ['judul' => '🕌 Rincian Penilaian Adab', 'data' => $adab])
-            @include('penilaian.partials._tabel-rapot', ['judul' => '🛏️ Rincian Penilaian Keasramaan', 'data' => $asrama])
 
             <div class="total">
                 <div>
@@ -303,9 +309,9 @@
 
             <div class="ttd">
                 <div class="kolom">
-                    <div>Musyrif / Musyrifah</div>
+                    <div>Kepala Kulliyyat Diiniyyah Al-Arafah</div>
                     <div class="ruang"></div>
-                    <div class="nama">{{ $d['musyrif'] ?: '...................' }}</div>
+                    <div class="nama">{{ $kepalaDiniyah ?: '...................' }}</div>
                 </div>
                 <div class="kolom">
                     <div>Orang Tua / Wali</div>
@@ -313,9 +319,9 @@
                     <div class="nama">...................</div>
                 </div>
                 <div class="kolom">
-                    <div>Kepala Diniyah</div>
+                    <div>Musyrif / Musyrifah</div>
                     <div class="ruang"></div>
-                    <div class="nama">{{ $kepalaDiniyah ?: '...................' }}</div>
+                    <div class="nama">{{ $d['musyrif'] ?: '...................' }}</div>
                 </div>
             </div>
 
