@@ -1,13 +1,13 @@
-{{-- Tabel rincian aspek untuk rapot (dipakai dua kali: Adab & Keasramaan).
-     $judul = judul tabel, $data = hasil rincian() dari PenilaianRaporController --}}
+{{-- Tabel rincian aspek rapor: NILAI 0-100 + predikat (skor 1-5 tidak ditampilkan).
+     $judul = judul tabel, $data = hasil rincian() dari PenilaianRaporController, $ambang = ambang predikat --}}
 <div class="judul-tabel">{{ $judul }}</div>
 <table>
     <thead>
         <tr>
             <th style="width:26px;">No</th>
             <th>Aspek Penilaian</th>
-            <th style="width:64px;">Skor</th>
-            <th style="width:110px;">Keterangan</th>
+            <th style="width:74px;">Nilai</th>
+            <th style="width:64px;">Predikat</th>
         </tr>
     </thead>
     <tbody>
@@ -16,25 +16,28 @@
                 <td class="c">{{ $i + 1 }}</td>
                 <td>{{ $a['pertanyaan'] }}</td>
                 <td class="c">
-                    @if($a['rata'] !== null)
-                        <strong>{{ number_format($a['rata'], 2) }}</strong> <span style="color:#94a3b8;">/ 5</span>
-                        <div class="bar-skor"><span style="width: {{ min(100, (int) round($a['rata'] / 5 * 100)) }}%"></span></div>
+                    @if($a['nilai'] !== null)
+                        <strong>{{ number_format($a['nilai'], 2) }}</strong>
+                        <div class="bar-skor"><span style="width: {{ min(100, (int) round($a['nilai'])) }}%"></span></div>
                     @else
                         <span class="kosong">-</span>
                     @endif
                 </td>
-                <td>{{ $a['label'] ?? '—' }}</td>
+                <td class="c">{{ $a['predikat'] ?? '—' }}</td>
             </tr>
         @empty
             <tr><td colspan="4" class="c kosong">Belum ada aspek penilaian aktif.</td></tr>
         @endforelse
         @if($data['aspek_terisi'] > 0)
             <tr>
-                <td colspan="2" style="text-align:right; font-weight:700;">Rata-rata skor aspek</td>
-                <td class="c"><strong>{{ number_format($data['rata_aspek'], 2) }}</strong> <span style="color:#94a3b8;">/ 5</span></td>
-                <td>{{ \App\Http\Controllers\PenilaianRaporController::labelSkala($data['rata_aspek']) }}</td>
+                <td colspan="2" style="text-align:right; font-weight:700;">Rata-rata nilai {{ $data['label_jenis'] ?? '' }}</td>
+                <td class="c"><strong>{{ number_format($data['nilai_aspek'], 2) }}</strong></td>
+                <td class="c"><strong>{{ $data['predikat_aspek'] }}</strong></td>
             </tr>
         @endif
     </tbody>
 </table>
-<p class="skala">Skala: 1 Sangat kurang · 2 Kurang · 3 Cukup · 4 Baik · 5 Sangat baik. Nilai per aspek = rata-rata dari semua musyrif/musyrifah yang menilai.</p>
+<p class="skala">
+    Nilai 0–100 = rata-rata semua musyrif/musyrifah yang menilai aspek ini.
+    Predikat: A ≥ {{ (int) ($ambang['a'] ?? 90) }} · B ≥ {{ (int) ($ambang['b'] ?? 80) }} · C ≥ {{ (int) ($ambang['c'] ?? 70) }} · D &lt; {{ (int) ($ambang['c'] ?? 70) }}.
+</p>

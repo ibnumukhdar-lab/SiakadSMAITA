@@ -57,9 +57,20 @@
         .kop h1 { margin: 0; font-size: 17px; letter-spacing: .2px; }
         .kop p { margin: 2px 0 0; font-size: 11px; color: #64748b; letter-spacing: 1px; text-transform: uppercase; }
 
-        .judul { text-align: center; margin: 12px 0; }
-        .judul h2 { margin: 0; font-size: 14.5px; letter-spacing: 1.4px; text-transform: uppercase; }
+        .judul { text-align: center; margin: 0 0 12px; padding: 10px 0 9px; border-top: 2.5px solid #1e3a8a; border-bottom: 1px solid #cbd5e1; }
+        .judul h2 { margin: 0; font-size: 15.5px; letter-spacing: 1.4px; text-transform: uppercase; }
         .judul p { margin: 3px 0 0; font-size: 11.5px; color: #475569; }
+
+        /* Kotak rata-rata keseluruhan (paling bawah) */
+        .total { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+                 border: 1.5px solid #1e3a8a; border-radius: 10px; padding: 9px 14px; margin-top: 12px; background: #f8fafc; }
+        .total .t { font-size: 12px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: #1e3a8a; }
+        .total .sub { font-size: 10.5px; color: #64748b; margin-top: 2px; line-height: 1.45; }
+        .total .kanan { display: flex; align-items: center; gap: 10px; }
+        .total .angka-total { font-size: 26px; font-weight: 800; line-height: 1; color: #0f172a; }
+        .total .angka-total small { font-size: 11.5px; font-weight: 600; color: #94a3b8; }
+        .total .predikat-besar { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px;
+                                 border-radius: 9px; border: 1.5px solid #1e3a8a; background: #fff; font-weight: 800; font-size: 17px; color: #1e3a8a; }
 
         /* ===== Identitas ===== */
         .identitas { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 18px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 9px 12px; font-size: 11.5px; }
@@ -113,32 +124,38 @@
 
             /* Ukuran cetak dipadatkan supaya SATU santri pas di SATU halaman A4 */
             .kop { padding-bottom: 6px; }
+            .hal { padding: 0; }
             .kop .inisial { width: 42px; height: 42px; font-size: 18px; border-radius: 8px; }
             .kop h1 { font-size: 15px; }
             .kop p { font-size: 10px; }
-            .judul { margin: 8px 0; }
+            .judul { margin: 0 0 8px; padding: 8px 0 7px; }
             .judul h2 { font-size: 13px; }
             .judul p { font-size: 10.5px; }
-            .identitas { font-size: 10.5px; padding: 6px 10px; gap: 2px 16px; }
-            .nilai { margin: 8px 0; gap: 8px; }
-            .kartu { padding: 7px 10px; }
+            .identitas { font-size: 10.5px; padding: 5px 10px; gap: 1px 16px; }
+            .nilai { margin: 6px 0; gap: 8px; }
+            .kartu { padding: 6px 10px; }
             .kartu .label { font-size: 10px; }
-            .kartu .angka { font-size: 21px; }
+            .kartu .angka { font-size: 19px; }
             .kartu .meta { font-size: 9.5px; margin-top: 2px; line-height: 1.35; }
             .predikat { width: 24px; height: 24px; font-size: 12.5px; }
             .judul-tabel { font-size: 10.5px; margin: 6px 0 3px; }
             table { font-size: 9.5px; margin-bottom: 3px; }
-            th, td { padding: 2px 5px; }
+            th, td { padding: 1.5px 5px; }
             th { font-size: 9px; }
             .bar-skor { height: 3px; margin-top: 2px; }
             .bar-skor span { height: 3px; }
-            .skala { font-size: 9px; }
-            .catatan { padding: 7px 10px; margin-top: 7px; font-size: 10px; line-height: 1.5; }
+            .skala { font-size: 8.5px; margin-top: 2px; }
+            .total { padding: 6px 11px; margin-top: 6px; border-width: 1.5px; }
+            .total .t { font-size: 11px; }
+            .total .sub { font-size: 9.5px; }
+            .total .angka-total { font-size: 20px; }
+            .total .predikat-besar { width: 28px; height: 28px; font-size: 15px; }
+            .catatan { padding: 6px 10px; margin-top: 6px; font-size: 9.8px; line-height: 1.45; }
             .catatan .t { font-size: 9.5px; }
-            .garis { height: 12px; }
-            .ttd { margin-top: 10px; font-size: 10px; }
-            .ttd .ruang { height: 34px; }
-            .kaki { margin-top: 8px; font-size: 9px; padding-top: 4px; }
+            .garis { height: 11px; }
+            .ttd { margin-top: 8px; font-size: 10px; }
+            .ttd .ruang { height: 30px; }
+            .kaki { margin-top: 6px; font-size: 9px; padding-top: 4px; }
         }
 
         @media (max-width: 700px) {
@@ -178,17 +195,19 @@
             $asrama = $d['keasramaan'];
             $adaAdab = ($adab['rata'] ?? null) !== null;
             $adaAsrama = ($asrama['rata'] ?? null) !== null;
+
+            // Rata-rata nilai KESELURUHAN rapor = rata-rata semua aspek Adab + Keasramaan yang sudah dinilai.
+            $semuaNilai = collect([$adab['aspek'] ?? [], $asrama['aspek'] ?? []])
+                ->flatten(1)
+                ->pluck('nilai')
+                ->filter(fn ($n) => $n !== null)
+                ->values();
+            $jumlahAspekTerisi = $semuaNilai->count();
+            $nilaiKeseluruhan = $jumlahAspekTerisi > 0 ? round($semuaNilai->avg(), 2) : null;
+            $predikatKeseluruhan = \App\Models\PenilaianPengaturan::predikat($nilaiKeseluruhan);
         @endphp
 
         <div class="hal">
-            <div class="kop">
-                <div class="inisial">{{ strtoupper(substr($namaSekolah, 0, 1)) }}</div>
-                <div>
-                    <h1>{{ $namaSekolah }}</h1>
-                    <p>{{ $motto }}</p>
-                </div>
-            </div>
-
             <div class="judul">
                 <h2>Rapot Penilaian Adab &amp; Keasramaan</h2>
                 <p>Periode {{ $periode->nama ?? '-' }} · Tahun Ajaran {{ $tahunAjaran }}</p>
@@ -253,6 +272,24 @@
 
             @include('penilaian.partials._tabel-rapot', ['judul' => '🕌 Rincian Penilaian Adab', 'data' => $adab])
             @include('penilaian.partials._tabel-rapot', ['judul' => '🛏️ Rincian Penilaian Keasramaan', 'data' => $asrama])
+
+            <div class="total">
+                <div>
+                    <div class="t">Rata-rata Nilai Keseluruhan</div>
+                    <div class="sub">
+                        Dihitung dari {{ $jumlahAspekTerisi }} aspek yang sudah dinilai (Adab + Keasramaan).
+                        Predikat: A ≥ {{ (int) ($ambang['a'] ?? 90) }} · B ≥ {{ (int) ($ambang['b'] ?? 80) }} · C ≥ {{ (int) ($ambang['c'] ?? 70) }} · D &lt; {{ (int) ($ambang['c'] ?? 70) }}.
+                    </div>
+                </div>
+                <div class="kanan">
+                    @if($nilaiKeseluruhan !== null)
+                        <div class="angka-total">{{ number_format($nilaiKeseluruhan, 2) }}<small> / 100</small></div>
+                        <div class="predikat-besar">{{ $predikatKeseluruhan }}</div>
+                    @else
+                        <div class="angka-total"><span class="kosong">belum dinilai</span></div>
+                    @endif
+                </div>
+            </div>
 
             <div class="catatan">
                 <div class="t">Kesimpulan</div>

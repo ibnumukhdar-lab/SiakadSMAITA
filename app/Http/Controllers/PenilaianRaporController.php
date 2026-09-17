@@ -275,27 +275,36 @@ class PenilaianRaporController extends Controller
             }
         }
 
+        // Rapor TIDAK menampilkan skor 1-5: tiap aspek langsung dikonversi ke NILAI 0-100.
         $aspek = $kriteria->map(function ($k) use ($rataAspek) {
             $data = $rataAspek[$k->id] ?? null;
+            $rataSkor = $data ? round($data['rata'], 2) : null;
+            $nilai = $rataSkor !== null ? round($rataSkor / 5 * 100, 2) : null;
 
             return [
                 'pertanyaan' => $k->pertanyaan,
-                'rata' => $data ? round($data['rata'], 2) : null,
+                'rata' => $rataSkor,
+                'nilai' => $nilai,
+                'predikat' => PenilaianPengaturan::predikat($nilai),
                 'label' => $data ? self::labelSkala($data['rata']) : null,
                 'jumlah_penilai' => $data['jumlah'] ?? 0,
             ];
         });
 
-        $terisi = $aspek->filter(fn ($a) => $a['rata'] !== null)->count();
-        $rataAspekSemua = $terisi > 0
-            ? round($aspek->sum(fn ($a) => $a['rata'] ?? 0) / $terisi, 2)
+        $terisi = $aspek->filter(fn ($a) => $a['nilai'] !== null)->count();
+        $nilaiAspekSemua = $terisi > 0
+            ? round($aspek->sum(fn ($a) => $a['nilai'] ?? 0) / $terisi, 2)
             : null;
 
         return array_merge($this->ringkas($entri), [
+            'jenis' => $jenis,
+            'label_jenis' => PenilaianSesi::JENIS[$jenis] ?? ucfirst($jenis),
             'aspek' => $aspek,
             'jumlah_aspek' => $kriteria->count(),
             'aspek_terisi' => $terisi,
-            'rata_aspek' => $rataAspekSemua,
+            'nilai_aspek' => $nilaiAspekSemua,
+            'predikat_aspek' => PenilaianPengaturan::predikat($nilaiAspekSemua),
+            'rata_aspek' => $nilaiAspekSemua === null ? null : round($nilaiAspekSemua / 100 * 5, 2),
         ]);
     }
 
