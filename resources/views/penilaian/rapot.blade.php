@@ -232,10 +232,10 @@
             @include('penilaian.partials._tabel-rapot', ['judul' => 'A. Rincian Penilaian Adab', 'data' => $adab])
             @include('penilaian.partials._tabel-rapot', ['judul' => 'B. Rincian Penilaian Keasramaan', 'data' => $asrama])
 
-            <div class="judul-tabel">Rekap Nilai Adab &amp; Keasramaan</div>
+            <div class="judul-tabel">C. Rekap Nilai Adab &amp; Keasramaan</div>
             <div class="nilai">
                 <div class="kartu {{ $kelasKartu($adab['predikat'] ?? null) }}">
-                    <div class="label">A. Nilai Adab</div>
+                    <div class="label">Nilai Adab</div>
                     @if($adaAdab)
                         <div class="angka">{{ number_format($adab['rata'], 2) }} <small>/ 100</small></div>
                         <div class="meta">
@@ -258,7 +258,7 @@
                 </div>
 
                 <div class="kartu {{ $kelasKartu($asrama['predikat'] ?? null) }}">
-                    <div class="label">B. Nilai Keasramaan</div>
+                    <div class="label">Nilai Keasramaan</div>
                     @if($adaAsrama)
                         <div class="angka">{{ number_format($asrama['rata'], 2) }} <small>/ 100</small></div>
                         <div class="meta">
