@@ -72,7 +72,10 @@ class SrRaporController extends Controller
         $grupSiswa = $this->petaGrupSiswa($siswa->pluck('id')->all());
         $kamarSiswa = $this->petaKamar($siswa->pluck('id')->all());
 
-        $baris = $siswa->map(function ($s) use ($poin, $project, $grupSiswa, $peringkat, $kamarSiswa) {
+        // Catatan mentor per santri (isian langsung di daftar) — 18 Sep 2026
+        $catatan = \App\Models\CatatanRaport::untukSr($siswa->pluck('id')->all(), $tahunAjaran, $preset);
+
+        $baris = $siswa->map(function ($s) use ($poin, $project, $grupSiswa, $peringkat, $kamarSiswa, $catatan) {
             $p = $poin[$s->id] ?? ['total' => 0, 'pos' => 0, 'neg' => 0];
             $pr = $project[$s->id] ?? ['rata' => null, 'jumlah' => 0];
 
@@ -82,8 +85,10 @@ class SrRaporController extends Controller
                 'nisn' => $s->nisn,
                 'kelas' => $s->kelas,
                 'grup' => $grupSiswa[$s->id]['grup'] ?? null,
+                'grup_id' => $grupSiswa[$s->id]['grup_id'] ?? null,
                 'mentor' => $grupSiswa[$s->id]['mentor'] ?? null,
                 'kamar' => $kamarSiswa[$s->id] ?? null,
+                'catatan' => $catatan[$s->id] ?? null,
                 'total' => (int) $p['total'],
                 'pos' => (int) $p['pos'],
                 'neg' => (int) $p['neg'],
@@ -106,6 +111,10 @@ class SrRaporController extends Controller
             'grupList' => $bolehSemua ? SrGroup::where('status', 'aktif')->orderBy('nama_grup')->get() : $grupSaya,
             'grupTerpilih' => (string) $request->input('grup'),
             'q' => (string) $request->input('q'),
+            'catatan' => $catatan,
+            'catatanGrupMentor' => \App\Models\SrGroup::where('mentor_id', \Illuminate\Support\Facades\Auth::id())->pluck('id')->all(),
+            'bolehCatatanSemua' => \Illuminate\Support\Facades\Auth::user()->hasRole('Super Admin'),
+            'labelPeriodeSr' => \App\Models\CatatanRaport::labelSr($tahunAjaran, $preset),
             'ambang' => $this->ambangKarakter(),
             'semuaSantri' => $bolehSemua ? Siswa::where('status', 'Aktif')->count() : $baris->count(),
         ]);
@@ -496,13 +505,15 @@ class SrRaporController extends Controller
             ->join('sr_groups as g', 'g.id', '=', 'm.group_id')
             ->leftJoin('users as u', 'u.id', '=', 'g.mentor_id')
             ->whereIn('m.student_id', $siswaIds)->whereNull('m.tanggal_keluar')
-            ->select('m.student_id', 'g.nama_grup', 'u.name as mentor', 'u.nipa as mentor_nipa')
+            ->select('m.student_id', 'g.id as group_id', 'g.nama_grup', 'g.mentor_id', 'u.name as mentor', 'u.nipa as mentor_nipa')
             ->get();
 
         $hasil = [];
         foreach ($baris as $b) {
             $hasil[$b->student_id] = [
                 'grup' => $b->nama_grup,
+                'grup_id' => $b->group_id,
+                'mentor_id' => $b->mentor_id,
                 'mentor' => $b->mentor,
                 'mentor_nipa' => $b->mentor_nipa,
             ];

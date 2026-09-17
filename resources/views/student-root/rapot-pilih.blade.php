@@ -77,7 +77,11 @@
                 </div>
 
                 @forelse($baris as $b)
-                    <div class="flex flex-wrap items-center gap-3 px-3 sm:px-4 py-3 border-b border-slate-100 last:border-0">
+                    @php
+                        $bolehCatatanBaris = $bolehCatatanSemua || in_array($b['grup_id'], $catatanGrupMentor ?? [], true);
+                    @endphp
+                    <div class="px-3 sm:px-4 py-3 border-b border-slate-100 last:border-0">
+                        <div class="flex flex-wrap items-center gap-3">
                         <div class="min-w-0 flex-1">
                             <div class="text-[13.5px] font-semibold text-slate-800 truncate">{{ $b['nama'] }}</div>
                             <div class="text-[11.5px] text-slate-400 truncate">
@@ -102,6 +106,18 @@
                            class="inline-flex items-center justify-center h-8 px-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12px] font-semibold hover:bg-blue-50 hover:border-blue-300 hover:text-blue-900 transition whitespace-nowrap">
                             🖨️ Cetak
                         </a>
+                        </div>
+
+                        <div class="mt-2">
+                            @include('partials._catatan-baris', [
+                                'jenis' => 'student_root',
+                                'siswaId' => $b['id'],
+                                'catatan' => $b['catatan'] ?? null,
+                                'kunci' => ['tahun_ajaran' => $tahunAjaran, 'semester' => $preset],
+                                'boleh' => $bolehCatatanBaris,
+                                'keterangan' => $labelPeriodeSr ?? '',
+                            ])
+                        </div>
                     </div>
                 @empty
                     <div class="px-4 py-8 text-center text-[13px] text-slate-400">Tidak ada santri yang bisa dicetak pada pilihan ini.</div>

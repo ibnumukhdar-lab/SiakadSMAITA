@@ -93,13 +93,21 @@ class PenilaianRaporController extends Controller
                 'nisn' => $s->nisn,
                 'kelas' => $s->kelas,
                 'kamar' => $petaKamar[$s->id] ?? null,
+                'kategori' => $kategoriSiswa[$s->id] ?? null,
                 'wajib' => $musyrifDivisi[$kategoriSiswa[$s->id] ?? ''] ?? 0,
                 'adab' => $this->ringkas($hasilAdab[$s->id] ?? []),
                 'keasramaan' => $this->ringkas($hasilAsrama[$s->id] ?? []),
             ];
         });
 
+        // Catatan musyrif per santri (isian langsung di daftar) — 18 Sep 2026
+        $catatan = \App\Models\CatatanRaport::untukAdab($siswa->pluck('id')->all(), $periodeId);
+
         return view('penilaian.rapot-pilih', [
+            'catatan' => $catatan,
+            'divisiSaya' => \App\Models\CatatanRaport::divisiMusyrif((int) \Illuminate\Support\Facades\Auth::id()),
+            'bolehCatatanSemua' => \Illuminate\Support\Facades\Auth::user()->hasRole('Super Admin')
+                || \Illuminate\Support\Facades\Auth::user()->hasRole('Kepala Diniyah'),
             'periodeList' => $periodeList,
             'periodeId' => $periodeId,
             'periode' => $periodeList->firstWhere('id', $periodeId),
