@@ -58,7 +58,7 @@ ssh -n -o ConnectTimeout=20 -o BatchMode=yes -o ServerAliveInterval=15 -o Server
 "
 
 echo "== 5/5 verifikasi =="
-KODE=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 25 https://siakad.smaitarafah.sch.id/)
+KODE=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 25 https://siakad.smaitarafah.sch.id/ || true)
 echo "   https://siakad.smaitarafah.sch.id -> HTTP $KODE"
 if [ "$KODE" != "200" ]; then
   echo "   !! situs tidak 200. Cek: vendor ada? migrasi jalan? Jalankan langkah 4 manual."
