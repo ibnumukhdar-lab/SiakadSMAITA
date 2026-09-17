@@ -52,8 +52,9 @@
 
                         <div class="mt-5 pt-4 border-t border-emerald-200">
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-emerald-800 mb-1.5">📸 Upload Bukti Foto (Opsional)</label>
-                            <input type="file" name="foto_terbersih" accept="image/*" class="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer bg-white rounded-xl border border-emerald-200">
-                            <p class="text-[11px] font-semibold text-emerald-700 mt-2">* Foto ini akan langsung tayang di TV Display.</p>
+                            <input type="file" name="foto_terbersih" accept="image/*" data-kompres class="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer bg-white rounded-xl border border-emerald-200">
+                            <span data-info-kompres class="block text-[11px] font-semibold text-emerald-700 mt-1.5"></span>
+                            <p class="text-[11px] font-semibold text-emerald-700 mt-2">* Foto ini akan langsung tayang di TV Display. Foto besar dari HP dikecilkan otomatis sebelum dikirim.</p>
                         </div>
                     </div>
 
@@ -75,8 +76,9 @@
 
                         <div class="mt-5 pt-4 border-t border-rose-200">
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-rose-800 mb-1.5">📸 Upload Bukti Foto (Opsional)</label>
-                            <input type="file" name="foto_terkotor" accept="image/*" class="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-rose-500 file:text-white hover:file:bg-rose-600 cursor-pointer bg-white rounded-xl border border-rose-200">
-                            <p class="text-[11px] font-semibold text-rose-700 mt-2">* Foto peringatan untuk tayang di TV Display.</p>
+                            <input type="file" name="foto_terkotor" accept="image/*" data-kompres class="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-rose-500 file:text-white hover:file:bg-rose-600 cursor-pointer bg-white rounded-xl border border-rose-200">
+                            <span data-info-kompres class="block text-[11px] font-semibold text-rose-700 mt-1.5"></span>
+                            <p class="text-[11px] font-semibold text-rose-700 mt-2">* Foto peringatan untuk tayang di TV Display. Foto besar dari HP dikecilkan otomatis sebelum dikirim.</p>
                         </div>
                     </div>
 
@@ -126,4 +128,6 @@
             })
         }
     </script>
+
+    @include('partials.kompres-foto')
 </x-app-layout>

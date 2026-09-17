@@ -167,6 +167,9 @@
                 <a href="{{ route('asrama.penilaian.index') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
                     <span class="w-5 text-center text-[14px] shrink-0">📚</span> Histori Inspeksi
                 </a>
+                <a href="{{ route('asrama.peringkat') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                    <span class="w-5 text-center text-[14px] shrink-0">🏆</span> Peringkat Bulanan
+                </a>
             </div>
         </details>
     </div>

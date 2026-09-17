@@ -9,6 +9,7 @@ use App\Models\AsramaPenilaianKamar;
 use App\Models\AsramaMember;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class AsramaPenilaianController extends Controller
@@ -227,8 +228,13 @@ class AsramaPenilaianController extends Controller
             'kategori'           => 'required|in:putra,putri',
             'kamar_terbersih_id' => 'required|exists:asrama_kamars,id',
             'kamar_terkotor_id'  => 'required|exists:asrama_kamars,id',
-            'foto_terbersih'     => 'nullable|image|max:3072', 
-            'foto_terkotor'      => 'nullable|image|max:3072', 
+            'foto_terbersih'     => 'nullable|file|mimes:jpg,jpeg,png,webp,gif,heic,heif|max:8192',
+            'foto_terkotor'      => 'nullable|file|mimes:jpg,jpeg,png,webp,gif,heic,heif|max:8192',
+        ], [
+            'foto_terbersih.mimes' => 'Foto kamar terbersih harus berupa gambar (jpg, png, webp, gif, heic).',
+            'foto_terkotor.mimes'  => 'Foto kamar terkotor harus berupa gambar (jpg, png, webp, gif, heic).',
+            'foto_terbersih.max'   => 'Foto kamar terbersih terlalu besar (maksimal 8 MB). Coba perkecil dulu atau pilih foto lain.',
+            'foto_terkotor.max'    => 'Foto kamar terkotor terlalu besar (maksimal 8 MB). Coba perkecil dulu atau pilih foto lain.',
         ]);
 
         $penilaian = AsramaPenilaian::where('tanggal', now()->toDateString())
@@ -328,26 +334,42 @@ class AsramaPenilaianController extends Controller
     }
 
     // =========================================================
-    // 7. FUNGSI UPLOAD FOTO SUSULAN (DARI HALAMAN HISTORI)
+    // 7. FUNGSI UPLOAD / GANTI FOTO (DARI HALAMAN HISTORI)
     // =========================================================
     public function updateFoto(Request $request, $id)
     {
         $request->validate([
             'jenis' => 'required|in:terbersih,terkotor',
-            'foto'  => 'required|image|max:3072',
+            'foto'  => 'required|file|mimes:jpg,jpeg,png,webp,gif,heic,heif|max:8192',
+        ], [
+            'foto.required' => 'Pilih dulu file fotonya sebelum menekan Upload.',
+            'foto.mimes'    => 'Berkas harus berupa gambar (jpg, png, webp, gif, heic).',
+            'foto.max'      => 'Fotonya terlalu besar (maksimal 8 MB). Coba perkecil dulu atau pilih foto lain.',
         ]);
 
         $penilaian = AsramaPenilaian::findOrFail($id);
+        $kolom = $request->jenis === 'terbersih' ? 'foto_terbersih' : 'foto_terkotor';
 
-        $path = $request->file('foto')->store('asrama/'.now()->format('Y/m'), 'public');
+        DB::beginTransaction();
+        try {
+            $path = $request->file('foto')->store('asrama/' . now()->format('Y/m'), 'public');
 
-        if ($request->jenis == 'terbersih') {
-            $penilaian->update(['foto_terbersih' => $path]);
-        } else {
-            $penilaian->update(['foto_terkotor' => $path]);
+            // Hapus berkas lama supaya tidak menumpuk di hosting
+            $lama = $penilaian->{$kolom};
+            if ($lama && $lama !== $path && Storage::disk('public')->exists($lama)) {
+                Storage::disk('public')->delete($lama);
+            }
+
+            $penilaian->update([$kolom => $path]);
+
+            DB::commit();
+
+            return back()->with('success', '📸 Foto ' . $request->jenis . ' berhasil diunggah dan disimpan!');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return back()->with('error', 'Gagal mengunggah foto: ' . $e->getMessage());
         }
-
-        return back()->with('success', '📸 Foto susulan berhasil diunggah dan disimpan!');
     }
 
     // =========================================================

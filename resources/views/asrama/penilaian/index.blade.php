@@ -21,6 +21,17 @@
                 </div>
             @endif
 
+            @if($errors->any())
+                <div class="mb-5 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3.5 rounded-xl text-sm">
+                    <p class="font-bold mb-1.5">Ada yang perlu diperbaiki:</p>
+                    <ul class="list-disc list-inside space-y-0.5 font-medium">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             @if($histori->isEmpty())
                 <div class="text-center p-12 bg-white border border-dashed border-slate-300 rounded-2xl">
                     <span class="text-5xl block mb-3">📭</span>
@@ -54,16 +65,17 @@
                                         @endif
                                     </div>
 
-                                    @if(!$h->foto_terbersih)
-                                        <div class="border-t border-dashed border-emerald-200 pt-3 mt-3">
-                                            <form action="{{ route('asrama.penilaian.update-foto', $h->id) }}" method="POST" enctype="multipart/form-data" class="flex items-center justify-between gap-3">
-                                                @csrf
-                                                <input type="hidden" name="jenis" value="terbersih">
-                                                <input type="file" name="foto" required class="text-xs text-emerald-800 file:mr-2 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:cursor-pointer cursor-pointer">
-                                                <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold transition whitespace-nowrap">Upload</button>
-                                            </form>
-                                        </div>
-                                    @endif
+                                    <div class="@if($h->foto_terbersih) border-t border-dashed border-emerald-200 pt-3 mt-3 @endif">
+                                        <form action="{{ route('asrama.penilaian.update-foto', $h->id) }}" method="POST" enctype="multipart/form-data" class="flex flex-wrap items-center justify-between gap-2">
+                                            @csrf
+                                            <input type="hidden" name="jenis" value="terbersih">
+                                            <input type="file" name="foto" required accept="image/*" data-kompres class="text-xs text-emerald-800 file:mr-2 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:cursor-pointer cursor-pointer">
+                                            <button type="submit" class="inline-flex items-center gap-1 rounded-lg {{ $h->foto_terbersih ? 'border border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50' : 'bg-emerald-600 hover:bg-emerald-700 text-white' }} px-3 py-1.5 text-xs font-bold transition whitespace-nowrap">
+                                                {{ $h->foto_terbersih ? 'Ganti Foto' : 'Upload' }}
+                                            </button>
+                                            <span data-info-kompres class="basis-full text-[11px] font-medium text-emerald-700"></span>
+                                        </form>
+                                    </div>
                                 </div>
 
                                 <!-- Box Terkotor -->
@@ -78,16 +90,17 @@
                                         @endif
                                     </div>
 
-                                    @if(!$h->foto_terkotor)
-                                        <div class="border-t border-dashed border-rose-200 pt-3 mt-3">
-                                            <form action="{{ route('asrama.penilaian.update-foto', $h->id) }}" method="POST" enctype="multipart/form-data" class="flex items-center justify-between gap-3">
-                                                @csrf
-                                                <input type="hidden" name="jenis" value="terkotor">
-                                                <input type="file" name="foto" required class="text-xs text-rose-800 file:mr-2 file:rounded-lg file:border-0 file:bg-rose-500 file:text-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:cursor-pointer cursor-pointer">
-                                                <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 text-xs font-bold transition whitespace-nowrap">Upload</button>
-                                            </form>
-                                        </div>
-                                    @endif
+                                    <div class="@if($h->foto_terkotor) border-t border-dashed border-rose-200 pt-3 mt-3 @endif">
+                                        <form action="{{ route('asrama.penilaian.update-foto', $h->id) }}" method="POST" enctype="multipart/form-data" class="flex flex-wrap items-center justify-between gap-2">
+                                            @csrf
+                                            <input type="hidden" name="jenis" value="terkotor">
+                                            <input type="file" name="foto" required accept="image/*" data-kompres class="text-xs text-rose-800 file:mr-2 file:rounded-lg file:border-0 file:bg-rose-500 file:text-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:cursor-pointer cursor-pointer">
+                                            <button type="submit" class="inline-flex items-center gap-1 rounded-lg {{ $h->foto_terkotor ? 'border border-rose-300 bg-white text-rose-700 hover:bg-rose-50' : 'bg-rose-500 hover:bg-rose-600 text-white' }} px-3 py-1.5 text-xs font-bold transition whitespace-nowrap">
+                                                {{ $h->foto_terkotor ? 'Ganti Foto' : 'Upload' }}
+                                            </button>
+                                            <span data-info-kompres class="basis-full text-[11px] font-medium text-rose-700"></span>
+                                        </form>
+                                    </div>
                                 </div>
 
                             </div>
@@ -103,4 +116,6 @@
 
         </div>
     </div>
+
+    @include('partials.kompres-foto')
 </x-app-layout>

@@ -401,6 +401,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('penilaian/finalisasi', [App\Http\Controllers\AsramaPenilaianController::class, 'finalisasi'])->name('penilaian.finalisasi'); // Tombol Magic Eksekusi
         
         Route::post('penilaian/update-foto/{id}', [\App\Http\Controllers\AsramaPenilaianController::class, 'updateFoto'])->name('penilaian.update-foto');
+
+        // 3. Peringkat Kebersihan Kamar per Bulan (rekap 5 kamar poin tertinggi)
+        Route::get('peringkat', [\App\Http\Controllers\AsramaPeringkatController::class, 'index'])->name('peringkat');
     });
 
     // ==========================================
