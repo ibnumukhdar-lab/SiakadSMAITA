@@ -32,6 +32,31 @@
                 </div>
             @endif
 
+            @if($drafts->isNotEmpty())
+                <div class="mb-5 bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h4 class="text-[14px] font-bold text-amber-800">⚠️ {{ $drafts->count() }} lembar inspeksi berstatus DRAFT dan belum difinalisasi</h4>
+                            <p class="text-[12px] text-amber-700/80 mt-0.5">Lembar dari hari-hari sebelumnya. Hapus bila memang batal, supaya laporan bulanan tidak tercampur.</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 space-y-2">
+                        @foreach($drafts as $d)
+                            <div class="flex flex-wrap items-center justify-between gap-2 bg-white/70 rounded-xl px-3 py-2">
+                                <div class="text-[13px] font-semibold text-slate-700">
+                                    {{ \Carbon\Carbon::parse($d->tanggal)->translatedFormat('d M Y') }}
+                                    <span class="text-slate-400 font-medium">· divisi {{ ucfirst($d->kategori) }} · {{ $d->rincian_kamars_count }} kamar terisi · petugas {{ $d->musyrif->name ?? '-' }}</span>
+                                </div>
+                                <form action="{{ route('asrama.penilaian.hapusDraft', $d->id) }}" method="POST" class="m-0" onsubmit="return confirm('Hapus lembar draft tanggal ini beserta skor kamar yang belum difinalisasi?');">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-white border border-amber-300 text-amber-800 hover:bg-amber-100 text-[12px] font-bold transition whitespace-nowrap">🗑️ Hapus draft</button>
+                                </form>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             @if($histori->isEmpty())
                 <div class="text-center p-12 bg-white border border-dashed border-slate-300 rounded-2xl">
                     <span class="text-5xl block mb-3">📭</span>

@@ -380,6 +380,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('kamar-binaan', [App\Http\Controllers\AsramaKamarController::class, 'kamarBinaan'])->name('kamar.binaan');
 
         // 1. Manajemen Kamar (hanya pemegang buka-menu-manajemen-kamar)
+        // Rute khusus didaftarkan SEBELUM resource supaya tidak tertangkap 'kamar/{kamar}'.
+        Route::get('kamar-riwayat', [App\Http\Controllers\AsramaKamarController::class, 'riwayat'])
+            ->name('kamar.riwayat')->middleware('permission:buka-menu-manajemen-kamar');
+        Route::get('kamar-cetak', [App\Http\Controllers\AsramaKamarController::class, 'cetak'])
+            ->name('kamar.cetak')->middleware('permission:buka-menu-manajemen-kamar');
+
         Route::resource('kamar', App\Http\Controllers\AsramaKamarController::class)
             ->middleware('permission:buka-menu-manajemen-kamar');
         Route::post('kamar/{id}/add-member', [App\Http\Controllers\AsramaKamarController::class, 'addMember'])
@@ -404,6 +410,29 @@ Route::middleware(['auth'])->group(function () {
 
         // 3. Peringkat Kebersihan Kamar per Bulan (rekap 5 kamar poin tertinggi)
         Route::get('peringkat', [\App\Http\Controllers\AsramaPeringkatController::class, 'index'])->name('peringkat');
+
+        // --- Hapus lembar draft inspeksi yang menggantung (Tahap A) ---
+        Route::delete('penilaian/draft/{id}', [App\Http\Controllers\AsramaPenilaianController::class, 'hapusDraft'])->name('penilaian.hapusDraft');
+
+        // 4. ABSENSI ASRAMA (Tahap B) — musyrif: kamar binaan; Kepala Diniyah: semua kamar
+        Route::get('absensi', [App\Http\Controllers\AsramaAbsensiController::class, 'index'])->name('absensi.index');
+        Route::get('absensi/rekap', [App\Http\Controllers\AsramaAbsensiController::class, 'rekap'])->name('absensi.rekap');
+        Route::get('absensi/kamar/{kamar_id}', [App\Http\Controllers\AsramaAbsensiController::class, 'form'])->name('absensi.form');
+        Route::post('absensi/simpan', [App\Http\Controllers\AsramaAbsensiController::class, 'simpan'])->name('absensi.simpan');
+
+        // 5. IZIN PULANG / KELUAR SANTRI (Tahap B)
+        Route::get('izin', [App\Http\Controllers\AsramaIzinController::class, 'index'])->name('izin.index');
+        Route::get('izin/baru', [App\Http\Controllers\AsramaIzinController::class, 'create'])->name('izin.create');
+        Route::post('izin', [App\Http\Controllers\AsramaIzinController::class, 'store'])->name('izin.store');
+        Route::get('izin/{id}/cetak', [App\Http\Controllers\AsramaIzinController::class, 'cetak'])->name('izin.cetak');
+        Route::post('izin/{id}/setujui', [App\Http\Controllers\AsramaIzinController::class, 'setujui'])->name('izin.setujui');
+        Route::post('izin/{id}/tolak', [App\Http\Controllers\AsramaIzinController::class, 'tolak'])->name('izin.tolak');
+        Route::post('izin/{id}/kembali', [App\Http\Controllers\AsramaIzinController::class, 'kembali'])->name('izin.kembali');
+        Route::delete('izin/{id}', [App\Http\Controllers\AsramaIzinController::class, 'destroy'])->name('izin.destroy');
+
+        // 6. ANALITIK KAMAR + RAPOR ASRAMA PER SISWA (Tahap C)
+        Route::get('analitik', [App\Http\Controllers\AsramaAnalitikController::class, 'index'])->name('analitik');
+        Route::get('analitik/rapor', [App\Http\Controllers\AsramaAnalitikController::class, 'rapor'])->name('analitik.rapor');
     });
 
     // ==========================================

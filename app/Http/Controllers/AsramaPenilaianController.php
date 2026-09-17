@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\AsramaKamar;
 use App\Models\AsramaPenilaian;
@@ -46,7 +47,15 @@ class AsramaPenilaianController extends Controller
                     ->orderBy('tanggal', 'desc')
                     ->get();
 
-        return view('asrama.penilaian.index', compact('histori'));
+        // Lembar DRAFT yang menggantung (bukan hari ini) — dulu menumpuk tanpa bisa dibersihkan.
+        $drafts = AsramaPenilaian::with('musyrif')
+                    ->withCount('rincianKamars')
+                    ->where('status', 'draft')
+                    ->where('tanggal', '<', now()->toDateString())
+                    ->orderBy('tanggal', 'desc')
+                    ->get();
+
+        return view('asrama.penilaian.index', compact('histori', 'drafts'));
     }
 
     // =========================================================
@@ -481,5 +490,27 @@ class AsramaPenilaianController extends Controller
         }
 
         return back()->with('error', 'Penilaian divisi ini sudah difinalisasi atau belum ada data untuk direset.');
+    }
+
+    // =========================================================
+    // 9. HAPUS LEMBAR DRAFT YANG MENGGANTUNG (bukan hari ini)
+    // =========================================================
+    public function hapusDraft($id)
+    {
+        $penilaian = AsramaPenilaian::findOrFail($id);
+
+        if ($penilaian->status !== 'draft') {
+            return back()->with('error', 'Hanya lembar berstatus draft yang boleh dihapus.');
+        }
+
+        if (Carbon::parse($penilaian->tanggal)->toDateString() >= now()->toDateString()) {
+            return back()->with('error', 'Lembar draft hari ini jangan dihapus di sini — pakai tombol Reset pada halaman Inspeksi Hari Ini.');
+        }
+
+        $jumlah = $penilaian->rincianKamars()->count();
+        $penilaian->delete(); // rincian kamar ikut terhapus (cascade)
+
+        return back()->with('success', "🗑️ Lembar draft tanggal " . Carbon::parse($penilaian->tanggal)->translatedFormat('d M Y')
+            . " (divisi " . ucfirst($penilaian->kategori) . ", {$jumlah} kamar belum difinalisasi) dihapus.");
     }
 }
