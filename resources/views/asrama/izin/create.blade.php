@@ -1,4 +1,15 @@
 <x-app-layout>
+    <!-- Tom Select: kolom ketik-langsung-cari (pola sama dengan halaman Kelola Penghuni) -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.default.min.css" rel="stylesheet">
+    <style>
+        .ts-control { border-radius: 0.5rem !important; border: 1px solid #cbd5e1 !important; padding: 0.5rem 0.625rem !important; font-size: 0.875rem !important; box-shadow: none !important; background-color: #fff !important; min-height: 40px; }
+        .ts-control.focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 1px #3b82f6 !important; }
+        .ts-dropdown { border-radius: 0.5rem !important; font-size: 0.875rem !important; border: 1px solid #cbd5e1 !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,.1) !important; }
+        .ts-dropdown .option { padding: 7px 10px !important; }
+        .ts-dropdown .active { background-color: #eff6ff !important; color: #1e3a8a !important; }
+        .ts-dropdown .optgroup-header { font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8 !important; background: #f8fafc !important; }
+    </style>
+
     <div class="py-8">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -33,8 +44,8 @@
                     @csrf
 
                     <div>
-                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Santri</label>
-                        <select name="student_id" required class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
+                        <label for="pilih-santri" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Santri</label>
+                        <select id="pilih-santri" name="student_id" required placeholder="Ketik nama santri...">
                             <option value="">-- pilih santri --</option>
                             @php $kamarTerakhir = null; @endphp
                             @foreach($penghuni as $p)
@@ -43,10 +54,11 @@
                                     <optgroup label="Kamar {{ $p->nama_kamar }} ({{ ucfirst($p->kategori) }})">
                                     @php $kamarTerakhir = $p->nama_kamar; @endphp
                                 @endif
-                                <option value="{{ $p->student_id }}" @selected($pilihSiswa === (int) $p->student_id)>{{ $p->nama_lengkap }} — {{ $p->kelas ?? '-' }}</option>
+                                <option value="{{ $p->student_id }}" @selected($pilihSiswa === (int) $p->student_id)>{{ $p->nama_lengkap }} — {{ $p->kelas ?? '-' }} · {{ $p->nama_kamar }}</option>
                             @endforeach
                             </optgroup>
                         </select>
+                        <p class="text-[12px] text-slate-400 mt-1.5 m-0">Ketik beberapa huruf namanya (atau nama kamar) — daftar menyaring otomatis, tidak perlu scroll.</p>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -92,4 +104,30 @@
             @endif
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var el = document.getElementById('pilih-santri');
+            if (!el || typeof TomSelect === 'undefined') return;
+
+            new TomSelect(el, {
+                create: false,
+                maxOptions: null,
+                openOnFocus: true,
+                sortField: { field: 'text', direction: 'asc' },
+                placeholder: 'Ketik nama santri...',
+                // Cari berdasarkan nama, kelas, maupun kamar (optgroup tetap tampil sebagai pengelompok)
+                render: {
+                    option: function (data, escape) {
+                        return '<div class="py-0.5"><span class="font-semibold">' + escape(data.text.split(' — ')[0]) + '</span>'
+                             + '<span class="text-slate-400"> — ' + escape((data.text.split(' — ')[1] || '')) + '</span></div>';
+                    },
+                    item: function (data, escape) {
+                        return '<div>' + escape(data.text) + '</div>';
+                    }
+                }
+            });
+        });
+    </script>
 </x-app-layout>
