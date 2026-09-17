@@ -71,6 +71,14 @@
                 <a href="{{ route('sr.mygroup') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
                     <span class="w-5 text-center text-[14px] shrink-0">👥</span> Grup Binaan Saya
                 </a>
+                <a href="{{ route('sr.rapot') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                    <span class="w-5 text-center text-[14px] shrink-0">🖨️</span> Rapot Student Root
+                </a>
+                @endcan
+                @can('buka-menu-master-student-root')
+                <a href="{{ route('sr.rapot') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                    <span class="w-5 text-center text-[14px] shrink-0">🖨️</span> Rapot Student Root
+                </a>
                 @endcan
                 @can('buka-menu-project-sr')
                 <a href="{{ route('project-sr.index') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">

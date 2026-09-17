@@ -343,6 +343,11 @@ Route::middleware(['auth'])->group(function () {
     // Rute Histori Poin Siswa (Untuk tombol Lihat History)
     Route::get('student-root/poin/history/{id}', [App\Http\Controllers\SrPointEntryController::class, 'history'])->name('sr.poin.history');
 
+    // Rapor Student Root — dicetak per siswa oleh MENTOR grupnya sendiri (17 Sep 2026).
+    // Pengawas (Super Admin / Kepala Diniyah / Kepala Sekolah / Tata Usaha) boleh mencetak semua santri.
+    Route::get('student-root/rapot', [App\Http\Controllers\SrRaporController::class, 'index'])->name('sr.rapot');
+    Route::get('student-root/rapot/cetak', [App\Http\Controllers\SrRaporController::class, 'cetak'])->name('sr.rapot.cetak');
+
     // Halaman 2: Dashboard Karakter (Rekap Poin)
     Route::get('student-root/dashboard', [App\Http\Controllers\SrDashboardController::class, 'index'])->name('sr.dashboard');
     
