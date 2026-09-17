@@ -9,6 +9,8 @@ use App\Models\BeeWeek;
 use App\Models\SrGroup;
 use App\Models\AsramaKamar;
 use App\Models\AsramaPenilaian;
+use App\Models\PenilaianPeriode;
+use App\Models\PenilaianSesi;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -183,9 +185,54 @@ class DashboardController extends Controller
             ->limit(8)
             ->get(['id', 'tanggal', 'kategori', 'status']);
 
+        // Progres Penilaian Adab & Keasramaan (wajib: seluruh santri divisi saya).
+        $divisiSaya = AsramaKamar::where('musyrif_id', $me)
+            ->where('status', 'aktif')
+            ->distinct()
+            ->pluck('kategori')
+            ->all();
+        $divisiSaya = count($divisiSaya) === 1 ? $divisiSaya[0] : null;
+
+        $totalWajib = $divisiSaya
+            ? DB::table('asrama_members as m')
+                ->join('asrama_kamars as k', 'k.id', '=', 'm.kamar_id')
+                ->where('k.status', 'aktif')
+                ->where('k.kategori', $divisiSaya)
+                ->whereNull('m.tanggal_keluar')
+                ->count()
+            : 0;
+
+        $periodeAktifPenilaian = PenilaianPeriode::aktifSekarang();
+
+        $progresPenilaian = [];
+        foreach (PenilaianSesi::JENIS as $jenis => $labelJenis) {
+            $sesiSaya = PenilaianSesi::where('jenis', $jenis)
+                ->where('penilai_id', $me)
+                ->when($periodeAktifPenilaian, fn ($q) => $q->where('periode_id', $periodeAktifPenilaian->id))
+                ->first();
+
+            $terisi = $sesiSaya
+                ? DB::table('penilaian_jawaban')->where('sesi_id', $sesiSaya->id)->distinct()->count('siswa_id')
+                : 0;
+
+            $progresPenilaian[$jenis] = [
+                'jenis' => $jenis,
+                'label' => $labelJenis,
+                'terisi' => $terisi,
+                'total' => $totalWajib,
+                'kurang' => max(0, $totalWajib - $terisi),
+                'persen' => $totalWajib > 0 ? min(100, (int) round($terisi / $totalWajib * 100)) : 0,
+                'sesi_id' => $sesiSaya->id ?? null,
+                'status' => $sesiSaya->status ?? null,
+            ];
+        }
+
+        $divisiPenilaian = $divisiSaya;
+
         return view('dashboard.musyrif', compact(
             'kamarBinaan', 'kamarIds', 'penghuni', 'totalPenghuni',
-            'finalBulanIni', 'finalHariIni', 'draftHariIni', 'riwayat'
+            'finalBulanIni', 'finalHariIni', 'draftHariIni', 'riwayat',
+            'progresPenilaian', 'divisiPenilaian'
         ));
     }
 

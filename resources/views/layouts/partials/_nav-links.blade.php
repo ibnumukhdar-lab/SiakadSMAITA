@@ -115,6 +115,9 @@
                 </svg>
             </summary>
             <div class="mt-0.5 space-y-0.5">
+                <a href="{{ route('penilaian.kelengkapan') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                    <span class="w-5 text-center text-[14px] shrink-0">✅</span> Kelengkapan Penilaian
+                </a>
                 <a href="{{ route('penilaian.rapot') }}" class="flex items-center gap-3 ps-10 pe-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
                     <span class="w-5 text-center text-[14px] shrink-0">🖨️</span> Rapot Adab &amp; Keasramaan
                 </a>

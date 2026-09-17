@@ -54,8 +54,9 @@ class PenilaianRaporController extends Controller
 
         $kamarList = AsramaKamar::with('musyrif')->where('status', 'aktif')->orderBy('kategori')->orderBy('nama_kamar')->get();
 
-        $hasilAdab = $periodeId ? PenilaianSesi::hasilPeriode($periodeId, 'adab') : [];
-        $hasilAsrama = $periodeId ? PenilaianSesi::hasilPeriode($periodeId, 'keasramaan') : [];
+        $hasilAdab = $periodeId ? $this->tanpaAdmin(PenilaianSesi::hasilPeriode($periodeId, 'adab')) : [];
+        $hasilAsrama = $periodeId ? $this->tanpaAdmin(PenilaianSesi::hasilPeriode($periodeId, 'keasramaan')) : [];
+        $musyrifDivisi = $this->musyrifPerDivisi();
 
         $query = Siswa::query()->where('status', 'Aktif');
 
@@ -78,13 +79,21 @@ class PenilaianRaporController extends Controller
             ->pluck('k.nama_kamar', 'm.student_id')
             ->toArray();
 
-        $baris = $siswa->map(function ($s) use ($hasilAdab, $hasilAsrama, $petaKamar) {
+        $kategoriSiswa = $siswa->isEmpty() ? [] : DB::table('asrama_members as m')
+            ->join('asrama_kamars as k', 'k.id', '=', 'm.kamar_id')
+            ->whereIn('m.student_id', $siswa->pluck('id'))
+            ->whereNull('m.tanggal_keluar')
+            ->pluck('k.kategori', 'm.student_id')
+            ->toArray();
+
+        $baris = $siswa->map(function ($s) use ($hasilAdab, $hasilAsrama, $petaKamar, $musyrifDivisi, $kategoriSiswa) {
             return [
                 'id' => $s->id,
                 'nama' => $s->nama_lengkap,
                 'nisn' => $s->nisn,
                 'kelas' => $s->kelas,
                 'kamar' => $petaKamar[$s->id] ?? null,
+                'wajib' => $musyrifDivisi[$kategoriSiswa[$s->id] ?? ''] ?? 0,
                 'adab' => $this->ringkas($hasilAdab[$s->id] ?? []),
                 'keasramaan' => $this->ringkas($hasilAsrama[$s->id] ?? []),
             ];
@@ -127,10 +136,11 @@ class PenilaianRaporController extends Controller
             $daftarSiswa = Siswa::whereIn('id', $anggota ?: [0])->where('status', 'Aktif')->orderBy('nama_lengkap')->get();
         }
 
-        $hasilAdab = $periodeId ? PenilaianSesi::hasilPeriode($periodeId, 'adab') : [];
-        $hasilAsrama = $periodeId ? PenilaianSesi::hasilPeriode($periodeId, 'keasramaan') : [];
+        $hasilAdab = $periodeId ? $this->tanpaAdmin(PenilaianSesi::hasilPeriode($periodeId, 'adab')) : [];
+        $hasilAsrama = $periodeId ? $this->tanpaAdmin(PenilaianSesi::hasilPeriode($periodeId, 'keasramaan')) : [];
+        $musyrifDivisi = $this->musyrifPerDivisi();
 
-        $petaKamar = $daftarSiswa->isEmpty() ? collect() : DB::table('asrama_members as m')
+        $petaKamar = $daftarSiswa->isEmpty() ? [] : DB::table('asrama_members as m')
             ->join('asrama_kamars as k', 'k.id', '=', 'm.kamar_id')
             ->leftJoin('users as u', 'u.id', '=', 'k.musyrif_id')
             ->whereIn('m.student_id', $daftarSiswa->pluck('id'))
@@ -139,7 +149,7 @@ class PenilaianRaporController extends Controller
             ->get()
             ->keyBy('student_id');
 
-        $daftar = $daftarSiswa->map(function ($s) use ($hasilAdab, $hasilAsrama, $petaKamar, $periodeId) {
+        $daftar = $daftarSiswa->map(function ($s) use ($hasilAdab, $hasilAsrama, $petaKamar, $periodeId, $musyrifDivisi) {
             $info = $petaKamar[$s->id] ?? null;
 
             return [
@@ -147,6 +157,7 @@ class PenilaianRaporController extends Controller
                 'kamar' => $info->nama_kamar ?? null,
                 'kategori' => $info->kategori ?? null,
                 'musyrif' => $info->musyrif ?? null,
+                'wajib' => $musyrifDivisi[$info->kategori ?? ''] ?? 0,
                 'adab' => $this->rincian($s->id, $periodeId, 'adab', $hasilAdab[$s->id] ?? []),
                 'keasramaan' => $this->rincian($s->id, $periodeId, 'keasramaan', $hasilAsrama[$s->id] ?? []),
             ];
@@ -162,6 +173,54 @@ class PenilaianRaporController extends Controller
             'ambang' => PenilaianPengaturan::ambang(),
             'kepalaDiniyah' => $this->namaKepalaDiniyah(),
         ]);
+    }
+
+    /**
+     * Buang lembar milik Super Admin dari hitungan rapor.
+     * Rapor = rata-rata musyrif/musyrifah pembina (Super Admin hanya jalan perbaikan data).
+     */
+    private function tanpaAdmin(array $hasil): array
+    {
+        $adminIds = $this->adminIds();
+
+        foreach ($hasil as $siswaId => $entri) {
+            $siswa = array_values(array_filter($entri, fn ($e) => ! in_array((int) ($e['penilai_id'] ?? 0), $adminIds, true)));
+
+            if ($siswa === []) {
+                unset($hasil[$siswaId]);
+            } else {
+                $hasil[$siswaId] = $siswa;
+            }
+        }
+
+        return $hasil;
+    }
+
+    private function adminIds(): array
+    {
+        static $ids = null;
+
+        if ($ids === null) {
+            $ids = \App\Models\User::role('Super Admin')->pluck('id')->map(fn ($v) => (int) $v)->all();
+        }
+
+        return $ids;
+    }
+
+    /** Jumlah penilai WAJIB per divisi = musyrif/musyrifah pemilik kamar aktif divisi itu. */
+    private function musyrifPerDivisi(): array
+    {
+        $baris = DB::table('asrama_kamars')
+            ->where('status', 'aktif')
+            ->whereNotNull('musyrif_id')
+            ->select('kategori', DB::raw('COUNT(DISTINCT musyrif_id) as jml'))
+            ->groupBy('kategori')
+            ->pluck('jml', 'kategori');
+
+        return [
+            'putra' => (int) ($baris['putra'] ?? 0),
+            'putri' => (int) ($baris['putri'] ?? 0),
+        ];
     }
 
     /** Nilai akhir satu jenis dari daftar sesi (rata-rata persentase antar penilai). */

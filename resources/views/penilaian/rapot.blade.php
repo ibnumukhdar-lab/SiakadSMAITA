@@ -210,9 +210,12 @@
                         <div class="angka">{{ $adab['rata'] }} <small>/ 100</small></div>
                         <div class="meta">
                             Predikat <span class="predikat">{{ $adab['predikat'] }}</span>
-                            · dinilai {{ count($adab['penilai']) }} musyrif
+                            · dinilai {{ count($adab['penilai']) }} dari {{ (int) ($d['wajib'] ?? 0) }} musyrif divisi
                             @if(! empty($adab['penilai']))
                                 <br>Pengisi: {{ implode(', ', $adab['penilai']) }}
+                            @endif
+                            @if((int) ($d['wajib'] ?? 0) > count($adab['penilai']))
+                                <br><b>⚠️ baru {{ count($adab['penilai']) }} dari {{ (int) ($d['wajib'] ?? 0) }} penilai wajib divisi — nilai belum lengkap</b>
                             @endif
                             @if($adab['ada_draft'] ?? false)
                                 <br>⚠️ masih ada lembar yang belum difinalisasi
@@ -230,9 +233,12 @@
                         <div class="angka">{{ $asrama['rata'] }} <small>/ 100</small></div>
                         <div class="meta">
                             Predikat <span class="predikat">{{ $asrama['predikat'] }}</span>
-                            · dinilai {{ count($asrama['penilai']) }} musyrif
+                            · dinilai {{ count($asrama['penilai']) }} dari {{ (int) ($d['wajib'] ?? 0) }} musyrif divisi
                             @if(! empty($asrama['penilai']))
                                 <br>Pengisi: {{ implode(', ', $asrama['penilai']) }}
+                            @endif
+                            @if((int) ($d['wajib'] ?? 0) > count($asrama['penilai']))
+                                <br><b>⚠️ baru {{ count($asrama['penilai']) }} dari {{ (int) ($d['wajib'] ?? 0) }} penilai wajib divisi — nilai belum lengkap</b>
                             @endif
                             @if($asrama['ada_draft'] ?? false)
                                 <br>⚠️ masih ada lembar yang belum difinalisasi

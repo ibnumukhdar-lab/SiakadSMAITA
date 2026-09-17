@@ -74,9 +74,11 @@
                         <div class="flex items-center gap-1.5">
                             <span class="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11.5px] font-bold {{ $b['adab']['rata'] !== null ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-slate-50 text-slate-400 border-slate-200' }}">
                                 Adab {{ $b['adab']['rata'] !== null ? $b['adab']['rata'] . ' (' . $b['adab']['predikat'] . ')' : '-' }}
+                                <span class="text-slate-400 font-normal">{{ count($b['adab']['penilai']) }}/{{ $b['wajib'] }}</span>
                             </span>
                             <span class="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11.5px] font-bold {{ $b['keasramaan']['rata'] !== null ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200' }}">
                                 Asrama {{ $b['keasramaan']['rata'] !== null ? $b['keasramaan']['rata'] . ' (' . $b['keasramaan']['predikat'] . ')' : '-' }}
+                                <span class="text-slate-400 font-normal">{{ count($b['keasramaan']['penilai']) }}/{{ $b['wajib'] }}</span>
                             </span>
                         </div>
 

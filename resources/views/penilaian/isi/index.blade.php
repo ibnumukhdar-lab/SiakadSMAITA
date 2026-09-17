@@ -37,7 +37,7 @@
 
             @if($jumlahKamarBinaan === 0 && ! auth()->user()->hasRole('Super Admin'))
                 <div class="bg-amber-50 border-l-4 border-amber-400 text-amber-900 p-3.5 mb-3 rounded shadow-sm text-[13px] leading-relaxed">
-                    ⚠️ Anda belum dipetakan sebagai musyrif kamar mana pun, jadi belum ada santri binaan yang bisa dinilai.
+                    ⚠️ Divisi Anda belum terpetakan (kamar binaan belum diisi), jadi belum ada santri yang bisa dinilai.
                     Hubungi <strong>Kepala Diniyah</strong> untuk memetakan kamar Anda (menu Manajemen Kamar).
                 </div>
             @endif
@@ -48,7 +48,8 @@
                 <p class="text-[12.5px] text-slate-500 mb-3">
                     Satu lembar penilaian per periode, diisi <strong>musyrif/musyrifah</strong> — tiap musyrif punya
                     lembarnya sendiri; bila satu siswa dinilai lebih dari satu musyrif, nilainya dirata-ratakan di rekap.
-                    <br>Penilaian diisi <strong>per anak</strong>: buka kamar binaan Anda, lalu nilai penghuninya satu per satu.
+                    <br>Penilaian diisi <strong>per anak</strong>: buka kamar di divisi Anda, lalu nilai penghuninya satu per satu.
+                    Setiap musyrif/musyrifah <strong>wajib</strong> menilai seluruh santri divisinya — rapor memakai rata-ratanya.
                 </p>
 
                 @if($periodeList->isEmpty())
@@ -87,7 +88,7 @@
                         <div class="min-w-0 flex-1">
                             <div class="text-[13.5px] font-semibold text-slate-800 truncate">{{ $s->periode->nama ?? '-' }}</div>
                             <div class="text-[11.5px] text-slate-400">
-                                {{ \App\Models\PenilaianSesi::PERAN[$s->penilai_peran] ?? '-' }} · {{ $terisi }}/{{ $total }} anak binaan terisi
+                                {{ \App\Models\PenilaianSesi::PERAN[$s->penilai_peran] ?? '-' }} · {{ $terisi }}/{{ $total }} santri divisi terisi
                                 @if($s->difinalkan_pada) · difinalkan {{ $s->difinalkan_pada->format('d/m/Y H:i') }}@endif
                             </div>
                         </div>

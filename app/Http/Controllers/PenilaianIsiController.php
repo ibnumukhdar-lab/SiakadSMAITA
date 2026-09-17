@@ -15,12 +15,15 @@ use Illuminate\Support\Facades\DB;
 /**
  * Pengisian penilaian Adab & Keasramaan (kuesioner skala 1-5 PER SISWA).
  *
- * ATURAN (permintaan Fahri, 17 Sep 2026):
+ * ATURAN (permintaan Fahri, 17 Sep 2026; diperbarui 17 Sep 2026 malam):
  * 1. Yang menilai HANYA musyrif/musyrifah pemilik lembar (izin nilai-adab / nilai-keasramaan).
- *    Musyrif hanya mengakses anak KAMAR BINAANNYA (asrama_kamars.musyrif_id).
- * 2. Alur per anak: daftar kamar binaan -> daftar penghuni kamar -> formulir satu anak.
+ * 2. CAKUPAN = SELURUH DIVISI, dan WAJIB: setiap musyrif menilai semua santri PUTRA,
+ *    setiap musyrifah menilai semua santri PUTRI (divisi dibaca dari kategori kamar binaannya).
+ *    Rapor nanti menampilkan RATA-RATA skor semua musyrif/musyrifah - karena itu semuanya wajib mengisi.
+ * 3. Alur per anak: daftar kamar DIVISI -> daftar penghuni kamar -> formulir satu anak.
  *    Tidak ada daftar seluruh siswa sekolah di satu halaman.
- * 3. TIDAK ada penilaian serentak per kamar (isi cepat dihapus); semua dinilai satu per satu.
+ * 4. TIDAK ada penilaian serentak per kamar (isi cepat dihapus); semua dinilai satu per satu.
+ * 5. Kelengkapan siapa-sudah-menilai dipantau di halaman Kelengkapan Penilaian.
  *
  * Satu "sesi" = satu lembar penilaian dari satu penilai untuk satu periode.
  * Super Admin tetap bisa membuka kamar mana pun sebagai jalan perbaikan data.
@@ -56,6 +59,14 @@ class PenilaianIsiController extends Controller
             ->whereNull('tanggal_keluar')
             ->count();
 
+        // Cakupan wajib = seluruh divisi (putra/putri), bukan hanya kamar binaan.
+        $divisi = $this->divisiSaya();
+        $kamarWajib = $this->kamarDivisi();
+        $totalWajib = DB::table('asrama_members')
+            ->whereIn('kamar_id', $kamarWajib->pluck('id')->all() ?: [0])
+            ->whereNull('tanggal_keluar')
+            ->count();
+
         return view('penilaian.isi.index', [
             'jenis' => $jenis,
             'labelJenis' => PenilaianSesi::JENIS[$jenis],
@@ -68,6 +79,9 @@ class PenilaianIsiController extends Controller
             'peranBawaan' => $this->peranBawaan(),
             'jumlahKamarBinaan' => $kamarBinaan->count(),
             'totalBinaan' => $totalBinaan,
+            'divisi' => $divisi,
+            'jumlahKamarWajib' => $kamarWajib->count(),
+            'totalWajib' => $totalWajib,
         ]);
     }
 
@@ -86,9 +100,9 @@ class PenilaianIsiController extends Controller
                 ->with('error', 'Belum ada pertanyaan aktif untuk ' . PenilaianSesi::JENIS[$jenis] . '. Tambahkan dulu di Master Penilaian.');
         }
 
-        if ($this->kamarSaya()->isEmpty() && ! Auth::user()->hasRole('Super Admin')) {
+        if ($this->divisiSaya() === null && ! Auth::user()->hasRole('Super Admin')) {
             return redirect()->route('penilaian.isi', $jenis)
-                ->with('error', 'Kamar binaan Anda belum dipetakan, jadi belum ada santri yang bisa dinilai. Hubungi Kepala Diniyah untuk memetakan kamar Anda.');
+                ->with('error', 'Divisi Anda belum terpetakan (kamar binaan belum diisi), jadi belum ada santri yang bisa dinilai. Hubungi Kepala Diniyah untuk memetakan kamar Anda.');
         }
 
         $sesi = PenilaianSesi::firstOrCreate(
@@ -113,11 +127,14 @@ class PenilaianIsiController extends Controller
         $kriteria = PenilaianKriteria::daftarAktif($sesi->jenis);
 
         $jumlahKriteria = $kriteria->count();
-        $jumlahKamar = $this->kamarSaya()->count();
-        $tanpaKamar = $this->kamarSaya()->isEmpty() && ! Auth::user()->hasRole('Super Admin');
+        $divisi = $this->divisiSaya();
+        $kamarBinaanIds = $this->kamarSaya()->pluck('id')->all();
+        $kamarWajib = $this->kamarDivisi();
+        $jumlahKamar = $kamarWajib->count();
+        $tanpaKamar = $divisi === null && ! Auth::user()->hasRole('Super Admin');
 
-        $kamarList = $this->kamarSaya()
-            ->map(function ($kamar) use ($hasil, $jumlahKriteria) {
+        $kamarList = $kamarWajib
+            ->map(function ($kamar) use ($hasil, $jumlahKriteria, $kamarBinaanIds) {
                 $anggotaIds = $this->anggotaKamarIds($kamar->id);
 
                 $sudah = 0;
@@ -137,6 +154,7 @@ class PenilaianIsiController extends Controller
                     'nama' => $kamar->nama_kamar,
                     'kategori' => $kamar->kategori,
                     'musyrif' => optional($kamar->musyrif)->name,
+                    'binaan_saya' => in_array($kamar->id, $kamarBinaanIds, true),
                     'total' => count($anggotaIds),
                     'sudah' => $sudah,
                     'lengkap' => $lengkap,
@@ -159,6 +177,8 @@ class PenilaianIsiController extends Controller
             'jumlahKamar' => $jumlahKamar,
             'tanpaKamar' => $tanpaKamar,
             'jumlahKriteria' => $jumlahKriteria,
+            'divisi' => $divisi,
+            'jumlahKamarBinaan' => count($kamarBinaanIds),
         ]);
     }
 
@@ -173,7 +193,7 @@ class PenilaianIsiController extends Controller
         abort_if($sesi->status === 'final', 403, 'Penilaian sudah difinalkan.');
 
         $kamar = AsramaKamar::with('musyrif')->findOrFail($kamarId);
-        abort_unless($this->bolehKamar($kamar), 403, 'Kamar ini bukan kamar binaan Anda.');
+        abort_unless($this->bolehKamar($kamar), 403, 'Kamar ini bukan bagian dari divisi Anda (putra/putri).');
 
         $anggotaIds = $this->anggotaKamarIds($kamar->id);
         $anggota = Siswa::whereIn('id', $anggotaIds ?: [0])
@@ -204,7 +224,7 @@ class PenilaianIsiController extends Controller
         abort_if($sesi->status === 'final', 403, 'Penilaian ini sudah difinalkan.');
 
         $siswa = Siswa::findOrFail($siswaId);
-        $this->pastikanSiswaBinaan($siswa->id);
+        $this->pastikanSiswaDivisi($siswa->id);
 
         $kamar = $this->kamarSiswa($siswa->id);
         $kamarId = $this->kamarIdSiswa($siswa->id);
@@ -236,7 +256,7 @@ class PenilaianIsiController extends Controller
             return redirect()->route('penilaian.sesi', $sesi->id)->with('error', 'Penilaian sudah difinalkan, tidak bisa diubah.');
         }
 
-        $this->pastikanSiswaBinaan((int) $siswaId);
+        $this->pastikanSiswaDivisi((int) $siswaId);
 
         $kriteria = PenilaianKriteria::daftarAktif($sesi->jenis);
         if ($kriteria->isEmpty()) {
@@ -343,7 +363,7 @@ class PenilaianIsiController extends Controller
         }
     }
 
-    /** Kamar yang boleh diakses: musyrif = kamar binaannya; Super Admin = semua kamar. */
+    /** Kamar BINAAN saya (untuk penanda di daftar kamar). Super Admin = semua kamar. */
     private function kamarSaya()
     {
         $query = AsramaKamar::with('musyrif')->where('status', 'aktif');
@@ -355,13 +375,56 @@ class PenilaianIsiController extends Controller
         return $query->get();
     }
 
+    /**
+     * Divisi penilai: 'putra' atau 'putri', dibaca dari kategori kamar binaan saya.
+     * null = belum terpetakan (tidak bisa menilai). Super Admin bebas (tanpa divisi).
+     */
+    private function divisiSaya(): ?string
+    {
+        if (Auth::user()->hasRole('Super Admin')) {
+            return null;
+        }
+
+        $kategori = AsramaKamar::where('musyrif_id', Auth::id())
+            ->where('status', 'aktif')
+            ->distinct()
+            ->pluck('kategori')
+            ->all();
+
+        return count($kategori) === 1 ? $kategori[0] : null;
+    }
+
+    /**
+     * Kamar yang WAJIB saya nilai: seluruh kamar aktif pada divisi saya.
+     * Super Admin: semua kamar aktif (jalan perbaikan).
+     */
+    private function kamarDivisi()
+    {
+        $query = AsramaKamar::with('musyrif')->where('status', 'aktif');
+
+        if (Auth::user()->hasRole('Super Admin')) {
+            return $query->orderBy('nama_kamar')->get();
+        }
+
+        $divisi = $this->divisiSaya();
+
+        if ($divisi === null) {
+            return collect();
+        }
+
+        return $query->where('kategori', $divisi)->orderBy('nama_kamar')->get();
+    }
+
+    /** Kamar boleh diakses bila masih satu divisi (Super Admin: semua). */
     private function bolehKamar(AsramaKamar $kamar): bool
     {
         if (Auth::user()->hasRole('Super Admin')) {
             return true;
         }
 
-        return (int) $kamar->musyrif_id === (int) Auth::id();
+        $divisi = $this->divisiSaya();
+
+        return $divisi !== null && $kamar->kategori === $divisi;
     }
 
     /** Daftar id siswa (penghuni aktif) sebuah kamar. */
@@ -397,22 +460,22 @@ class PenilaianIsiController extends Controller
         return $id ? (int) $id : null;
     }
 
-    /** Pastikan siswa memang penghuni kamar binaan penilai (Super Admin bebas). */
-    private function pastikanSiswaBinaan(int $siswaId): void
+    /** Pastikan siswa memang penghuni kamar pada DIVISI penilai (Super Admin bebas). */
+    private function pastikanSiswaDivisi(int $siswaId): void
     {
         if (Auth::user()->hasRole('Super Admin')) {
             return;
         }
 
-        $kamarIds = $this->kamarSaya()->pluck('id')->all();
+        $kamarIds = $this->kamarDivisi()->pluck('id')->all();
 
-        $milikSaya = DB::table('asrama_members')
+        $satuDivisi = DB::table('asrama_members')
             ->where('student_id', $siswaId)
             ->whereNull('tanggal_keluar')
             ->whereIn('kamar_id', $kamarIds ?: [0])
             ->exists();
 
-        abort_unless($milikSaya, 403, 'Santri ini bukan penghuni kamar binaan Anda.');
+        abort_unless($satuDivisi, 403, 'Santri ini bukan bagian dari divisi Anda (putra/putri).');
     }
 
     private function peranBawaan(): string

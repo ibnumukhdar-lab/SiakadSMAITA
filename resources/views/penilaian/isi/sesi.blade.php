@@ -49,13 +49,14 @@
 
             @if($tanpaKamar)
                 <div class="bg-amber-50 border-l-4 border-amber-400 text-amber-900 p-3.5 rounded shadow-sm text-[13px] leading-relaxed">
-                    ⚠️ Anda belum dipetakan sebagai musyrif kamar mana pun, jadi belum ada santri binaan yang bisa dinilai.
+                    ⚠️ Divisi Anda belum terpetakan (kamar binaan belum diisi), jadi belum ada santri yang bisa dinilai.
                     Hubungi <strong>Kepala Diniyah</strong> untuk memetakan kamar Anda.
                 </div>
             @else
                 {{-- ===== ATURAN + PROGRES ===== --}}
                 <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-900 p-3.5 mb-3 rounded shadow-sm text-[12.5px] leading-relaxed">
-                    Penilaian diisi <strong>per anak</strong>: pilih kamar binaan Anda di bawah, lalu nilai penghuninya <strong>satu per satu</strong>
+                    Anda menilai <strong>seluruh santri divisi {{ ucfirst($divisi) }}</strong> (putra hanya menilai putra, putri hanya menilai putri).
+                    Penilaian diisi <strong>per anak</strong>: pilih kamar mana pun di divisi Anda, lalu nilai penghuninya <strong>satu per satu</strong>
                     ({{ $jumlahKriteria }} pertanyaan, skala 1–5). Bukan penilaian serentak seluruh kamar.
                 </div>
 
@@ -65,7 +66,7 @@
                     @endphp
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
                         <div class="text-[13px] font-semibold text-slate-700">
-                            Terisi <strong class="text-blue-900">{{ $terisi }}</strong> dari {{ $totalSiswa }} anak binaan
+                            Terisi <strong class="text-blue-900">{{ $terisi }}</strong> dari {{ $totalSiswa }} santri divisi (wajib lengkap)
                         </div>
                         <div class="text-[12px] text-slate-400">{{ $kamarSelesai }}/{{ $kamarList->count() }} kamar lengkap</div>
                     </div>
@@ -99,8 +100,8 @@
                 {{-- ===== DAFTAR KAMAR BINAAN ===== --}}
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between gap-2">
-                        <h4 class="text-[13.5px] font-bold text-slate-800">🏠 Kamar binaan saya</h4>
-                        <span class="text-[11.5px] text-slate-400">{{ $kamarList->count() }} kamar</span>
+                        <h4 class="text-[13.5px] font-bold text-slate-800">🏠 Kamar divisi {{ ucfirst($divisi) }} (semuanya wajib dinilai)</h4>
+                        <span class="text-[11.5px] text-slate-400">{{ $kamarList->count() }} kamar · {{ $jumlahKamarBinaan }} kamar binaan Anda</span>
                     </div>
 
                     @if($kamarList->isEmpty())
@@ -116,10 +117,14 @@
                                     <div class="min-w-0">
                                         <div class="text-[13.5px] font-bold text-slate-800 truncate">
                                             {{ $k->nama }}
-                                            <span class="text-[10.5px] font-black uppercase tracking-wide {{ $k->kategori === 'putri' ? 'text-rose-500' : 'text-blue-600' }}">{{ $k->kategori }}</span>
-                                        </div>
+                                            <div class="text-[10.5px] font-black uppercase tracking-wide {{ $k->kategori === 'putri' ? 'text-rose-500' : 'text-blue-600' }}">{{ $k->kategori }}</span>
+                                            @if($k->binaan_saya)
+                                                <span class="ml-1 inline-flex items-center rounded-md bg-blue-50 text-blue-800 border border-blue-200 px-1.5 py-0.5 text-[10px] font-bold align-middle">binaan saya</span>
+                                            @endif
+                                            </div>
                                         <div class="text-[11.5px] text-slate-400">
                                             {{ $k->total }} penghuni · sudah dinilai {{ $k->sudah }} · lengkap {{ $k->lengkap }}
+                                            @if(! $k->binaan_saya && $k->musyrif) · binaan {{ $k->musyrif }} @endif
                                         </div>
                                     </div>
 

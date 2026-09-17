@@ -120,5 +120,58 @@
                 </div>
             </div>
         </div>
+
+        {{-- PENGINGAT: Penilaian Adab & Keasramaan (wajib seluruh santri divisi) --}}
+        <div class="sa-card" style="margin-top:14px;">
+            <div class="sa-card-h">
+                <h2>📋 Penilaian Adab &amp; Keasramaan</h2>
+                <a class="lnk" href="{{ route('penilaian.kelengkapan') }}">Kelengkapan penilaian →</a>
+            </div>
+            <div class="sa-card-b">
+                @if(! $divisiPenilaian)
+                    <div class="sa-empty"><span class="big">📋</span>Divisi Anda belum dipetakan (kamar binaan belum diisi). Hubungi Kepala Diniyah.</div>
+                @else
+                    <div class="ds" style="margin-bottom:8px;">
+                        Divisi <b>{{ ucfirst($divisiPenilaian) }}</b> · Anda wajib menilai <b>{{ $progresPenilaian['adab']['total'] }}</b> santri
+                    </div>
+                    @foreach($progresPenilaian as $p)
+                        <div style="margin-bottom:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px; margin-bottom:4px;">
+                                <span style="font-weight:600; color:#334155;">{{ $p['label'] }}</span>
+                                <span style="color:#64748b;">
+                                    {{ $p['terisi'] }} / {{ $p['total'] }}
+                                    @if($p['kurang'] === 0 && $p['total'] > 0)
+                                        <span class="sa-pill sa-pill-pos" style="margin-left:6px;">Lengkap</span>
+                                    @else
+                                        <span class="sa-pill sa-pill-amber" style="margin-left:6px;">Kurang {{ $p['kurang'] }}</span>
+                                    @endif
+                                </span>
+                            </div>
+                            <div style="height:8px; border-radius:999px; background:#f1f5f9; overflow:hidden;">
+                                <div style="height:8px; border-radius:999px; background: {{ $p['kurang'] === 0 && $p['total'] > 0 ? '#10b981' : '#1e3a8a' }}; width: {{ $p['persen'] }}%;"></div>
+                            </div>
+                            <div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">
+                                @if($p['sesi_id'])
+                                    <a class="sa-btn sa-btn-primary" style="height:30px; padding:0 12px; font-size:12px;" href="{{ route('penilaian.sesi', $p['sesi_id']) }}">
+                                        {{ $p['kurang'] === 0 ? 'Periksa lembar' : 'Lanjutkan menilai' }}
+                                    </a>
+                                @else
+                                    <a class="sa-btn sa-btn-primary" style="height:30px; padding:0 12px; font-size:12px;" href="{{ route('penilaian.isi', $p['jenis']) }}">
+                                        Mulai menilai
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                    @if(collect($progresPenilaian)->sum('kurang') === 0)
+                        <div class="ds" style="color:#047857;">Semua santri divisi Anda sudah dinilai. Terima kasih! 🎉</div>
+                    @else
+                        <div class="ds" style="color:#b45309;">
+                            Rapor menampilkan rata-rata semua musyrif/musyrifah — karena itu penilaian harus lengkap.
+                        </div>
+                    @endif
+                @endif
+            </div>
+        </div>
     </div>
 </x-app-layout>

@@ -12,6 +12,7 @@ use App\Http\Controllers\KenaikanKelasController;
 use App\Http\Controllers\PenilaianIsiController;
 use App\Http\Controllers\PenilaianMasterController;
 use App\Http\Controllers\PenilaianRekapController;
+use App\Http\Controllers\PenilaianKelengkapanController;
 use App\Http\Controllers\PenilaianRaporController;
 use App\Http\Controllers\ProjectSrController;
 use Illuminate\Support\Facades\DB;        // <-- Ditambahkan untuk Route Sinkronisasi
@@ -131,6 +132,9 @@ Route::middleware(['auth', 'permission:buka-menu-penilaian'])->group(function ()
     Route::get('/penilaian/siswa/{id}', [PenilaianRekapController::class, 'siswa'])->where('id', '[0-9]+')->name('penilaian.siswa');
 
     // Rapot cetak Adab & Keasramaan (17 Sep 2026)
+    // Kelengkapan penilaian (siapa sudah/belum menilai) — 17 Sep 2026
+    Route::get('/penilaian/kelengkapan', [PenilaianKelengkapanController::class, 'index'])->name('penilaian.kelengkapan');
+
     Route::get('/penilaian/rapot', [PenilaianRaporController::class, 'index'])->name('penilaian.rapot');
     Route::get('/penilaian/rapot/cetak', [PenilaianRaporController::class, 'cetak'])->name('penilaian.rapot.cetak');
 
