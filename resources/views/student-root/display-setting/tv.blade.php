@@ -203,9 +203,26 @@
         $putriTerbersih = $putriAktif->take(3);
 
         // 2. DATA HIGHLIGHT SIDAK TERAKHIR (DENGAN FOTO)
+        //    ATURAN 17 Sep 2026: kamar terkotor hanya sah bila nilainya < 70% dari skor maksimal.
+        //    Bila semua kamar >= 70% → TV menampilkan panel "SEMUA KAMAR BERSIH" + kamar perlu diperhatikan
+        //    (tanpa sanksi poin), bukan "TIDAK ADA".
+        $skorSidak = function ($penilaian) {
+            if (! $penilaian) { return []; }
+            return \App\Models\AsramaPenilaianKamar::where('penilaian_id', $penilaian->id)
+                ->pluck('total_skor', 'kamar_id')->all();
+        };
+        $persenSidak = function ($total) {
+            $maks = \App\Http\Controllers\AsramaPenilaianController::SKOR_MAKS;
+            return ($total === null || $total === '') ? null : round(((float) $total) / $maks * 100, 1);
+        };
+        $batasPersen = \App\Http\Controllers\AsramaPenilaianController::BATAS_TERKOTOR_PERSEN;
+
         // Putra
-        $latestPutra = \App\Models\AsramaPenilaian::with(['kamarTerbersih.musyrif', 'kamarTerkotor.musyrif'])
+        $latestPutra = \App\Models\AsramaPenilaian::with(['kamarTerbersih.musyrif', 'kamarTerkotor.musyrif', 'kamarPerhatian.musyrif'])
             ->where('kategori', 'putra')->where('status', 'final')->orderBy('tanggal', 'desc')->first();
+        $skorPutra = $skorSidak($latestPutra);
+        $nilaiBersihPutra = ($latestPutra && $latestPutra->kamar_terbersih_id) ? ($skorPutra[$latestPutra->kamar_terbersih_id] ?? null) : null;
+        $barisBersihPutra = $nilaiBersihPutra !== null ? ' · Nilai ' . $nilaiBersihPutra . '/25 (' . $persenSidak($nilaiBersihPutra) . '%)' : '';
 
         $runnerUpPutra = null;
         if($latestPutra) {
@@ -216,8 +233,11 @@
         }
 
         // Putri
-        $latestPutri = \App\Models\AsramaPenilaian::with(['kamarTerbersih.musyrif', 'kamarTerkotor.musyrif'])
+        $latestPutri = \App\Models\AsramaPenilaian::with(['kamarTerbersih.musyrif', 'kamarTerkotor.musyrif', 'kamarPerhatian.musyrif'])
             ->where('kategori', 'putri')->where('status', 'final')->orderBy('tanggal', 'desc')->first();
+        $skorPutri = $skorSidak($latestPutri);
+        $nilaiBersihPutri = ($latestPutri && $latestPutri->kamar_terbersih_id) ? ($skorPutri[$latestPutri->kamar_terbersih_id] ?? null) : null;
+        $barisBersihPutri = $nilaiBersihPutri !== null ? ' · Nilai ' . $nilaiBersihPutri . '/25 (' . $persenSidak($nilaiBersihPutri) . '%)' : '';
 
         $runnerUpPutri = null;
         if($latestPutri) {
@@ -408,7 +428,7 @@
                         @endif
                         <div class="text-center flex-1 flex flex-col justify-center">
                             <h3 class="text-4xl font-black text-emerald-800 uppercase mb-1">{{ $latestPutra && $latestPutra->kamarTerbersih ? $latestPutra->kamarTerbersih->nama_kamar : 'TIDAK ADA' }}</h3>
-                            <p class="text-sm font-bold text-gray-500 mb-4">Musyrif: {{ $latestPutra && $latestPutra->kamarTerbersih ? ($latestPutra->kamarTerbersih->musyrif->name ?? '-') : '-' }}</p>
+                            <p class="text-sm font-bold text-gray-500 mb-4">Musyrif: {{ $latestPutra && $latestPutra->kamarTerbersih ? ($latestPutra->kamarTerbersih->musyrif->name ?? '-') : '-' }}{{ $barisBersihPutra }}</p>
                             <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-xs font-black mt-auto uppercase tracking-wide">
                                 ✨ REWARD: SELURUH ANGGOTA +1 POIN
                             </div>
@@ -443,25 +463,48 @@
                         </div>
                     </div>
 
-                    <!-- KOLOM 3: TERKOTOR -->
-                    <div class="bg-white rounded-[2rem] border-4 border-red-500 p-6 flex flex-col relative shadow-2xl animate-slide-right" style="animation-delay: 0.6s;">
-                        <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-8 py-2 rounded-full font-black text-sm tracking-widest shadow-lg whitespace-nowrap">
-                            ⚠️ PERHATIAN EKSTRA
+                    <!-- KOLOM 3: TERKOTOR / SEMUA KAMAR BERSIH -->
+                    @php
+                        $adaTerkotorPutra = (bool) ($latestPutra->kamar_terkotor_id ?? false);
+                        $kamarSorotPutra  = $adaTerkotorPutra ? ($latestPutra->kamarTerkotor ?? null) : ($latestPutra->kamarPerhatian ?? null);
+                        $nilaiSorotPutra  = $kamarSorotPutra ? ($skorPutra[$kamarSorotPutra->id] ?? null) : null;
+                        $persenSorotPutra = $persenSidak($nilaiSorotPutra);
+                        $barisNilaiPutra  = $nilaiSorotPutra !== null ? ' · Nilai ' . $nilaiSorotPutra . '/25 (' . $persenSorotPutra . '%)' : '';
+                        $kelasBingkaiPutra = $adaTerkotorPutra ? 'border-red-500' : 'border-emerald-400';
+                        $kelasLencanaPutra = $adaTerkotorPutra ? 'bg-red-600' : 'bg-emerald-600';
+                        $kelasKotakPutra   = $adaTerkotorPutra ? 'bg-red-50 text-red-400 border-red-200' : 'bg-emerald-50 text-emerald-500 border-emerald-200';
+                    @endphp
+                    <div class="bg-white rounded-[2rem] border-4 {{ $kelasBingkaiPutra }} p-6 flex flex-col relative shadow-2xl animate-slide-right" style="animation-delay: 0.6s;">
+                        <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 {{ $kelasLencanaPutra }} text-white px-8 py-2 rounded-full font-black text-sm tracking-widest shadow-lg whitespace-nowrap">
+                            {{ $adaTerkotorPutra ? '⚠️ PERHATIAN EKSTRA' : '✅ SEMUA KAMAR BERSIH' }}
                         </div>
                         @if($latestPutra && $latestPutra->foto_terkotor)
                             <!-- DIUBAH KE BERKAS -->
                             <img src="{{ url('berkas/'.$latestPutra->foto_terkotor) }}" class="w-full h-48 md:h-56 object-cover rounded-2xl mb-4 shadow-inner">
                         @else
-                            <div class="w-full h-48 md:h-56 bg-red-50 rounded-2xl mb-4 flex flex-col items-center justify-center text-red-400 font-bold border-2 border-dashed border-red-200">
-                                <span class="text-4xl mb-2">📸</span> Tanpa Foto Bukti
+                            <div class="w-full h-48 md:h-56 {{ $kelasKotakPutra }} rounded-2xl mb-4 flex flex-col items-center justify-center font-bold border-2 border-dashed">
+                                <span class="text-4xl mb-2">{{ $adaTerkotorPutra ? '📸' : '✨' }}</span>
+                                {{ $adaTerkotorPutra ? 'Tanpa Foto Bukti' : 'Tidak Ada Kamar Terkotor' }}
                             </div>
                         @endif
                         <div class="text-center flex-1 flex flex-col justify-center">
-                            <h3 class="text-4xl font-black text-red-800 uppercase mb-1">{{ $latestPutra && $latestPutra->kamarTerkotor ? $latestPutra->kamarTerkotor->nama_kamar : 'TIDAK ADA' }}</h3>
-                            <p class="text-sm font-bold text-gray-500 mb-4">Musyrif: {{ $latestPutra && $latestPutra->kamarTerkotor ? ($latestPutra->kamarTerkotor->musyrif->name ?? '-') : '-' }}</p>
-                            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs font-black mt-auto uppercase tracking-wide">
-                                🚨 SANKSI: SELURUH ANGGOTA -1 POIN
-                            </div>
+                            @if($adaTerkotorPutra)
+                                <h3 class="text-4xl font-black text-red-800 uppercase mb-1">{{ $kamarSorotPutra->nama_kamar ?? 'TIDAK ADA' }}</h3>
+                                <p class="text-sm font-bold text-gray-500 mb-4">Musyrif: {{ $kamarSorotPutra->musyrif->name ?? '-' }}{{ $barisNilaiPutra }}</p>
+                                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs font-black mt-auto uppercase tracking-wide">
+                                    🚨 SANKSI: SELURUH ANGGOTA -1 POIN
+                                </div>
+                            @else
+                                <p class="text-[11px] font-black text-amber-500 uppercase tracking-widest mb-1">⚠️ Perlu Diperhatikan</p>
+                                <h3 class="text-4xl font-black text-emerald-800 uppercase mb-1">{{ $kamarSorotPutra->nama_kamar ?? '—' }}</h3>
+                                <p class="text-sm font-bold text-gray-500 mb-3">Musyrif: {{ $kamarSorotPutra->musyrif->name ?? '-' }}{{ $barisNilaiPutra }}</p>
+                                @if($latestPutra && $latestPutra->catatan_inspektor)
+                                    <p class="text-[12px] font-semibold text-slate-500 italic mb-3 leading-snug">“{{ \Illuminate\Support\Str::limit($latestPutra->catatan_inspektor, 110) }}”</p>
+                                @endif
+                                <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-xs font-black mt-auto uppercase tracking-wide">
+                                    ✅ SEMUA KAMAR ≥{{ $batasPersen }}% — TIDAK ADA SANKSI POIN
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -501,7 +544,7 @@
                         @endif
                         <div class="text-center flex-1 flex flex-col justify-center">
                             <h3 class="text-4xl font-black text-emerald-800 uppercase mb-1">{{ $latestPutri && $latestPutri->kamarTerbersih ? $latestPutri->kamarTerbersih->nama_kamar : 'TIDAK ADA' }}</h3>
-                            <p class="text-sm font-bold text-gray-500 mb-4">Musyrifah: {{ $latestPutri && $latestPutri->kamarTerbersih ? ($latestPutri->kamarTerbersih->musyrif->name ?? '-') : '-' }}</p>
+                            <p class="text-sm font-bold text-gray-500 mb-4">Musyrifah: {{ $latestPutri && $latestPutri->kamarTerbersih ? ($latestPutri->kamarTerbersih->musyrif->name ?? '-') : '-' }}{{ $barisBersihPutri }}</p>
                             <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-xs font-black mt-auto uppercase tracking-wide">
                                 ✨ REWARD: SELURUH ANGGOTA +1 POIN
                             </div>
@@ -536,25 +579,48 @@
                         </div>
                     </div>
 
-                    <!-- KOLOM 3: TERKOTOR -->
-                    <div class="bg-white rounded-[2rem] border-4 border-red-500 p-6 flex flex-col relative shadow-2xl animate-slide-right" style="animation-delay: 0.6s;">
-                        <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-8 py-2 rounded-full font-black text-sm tracking-widest shadow-lg whitespace-nowrap">
-                            ⚠️ PERHATIAN EKSTRA
+                    <!-- KOLOM 3: TERKOTOR / SEMUA KAMAR BERSIH -->
+                    @php
+                        $adaTerkotorPutri = (bool) ($latestPutri->kamar_terkotor_id ?? false);
+                        $kamarSorotPutri  = $adaTerkotorPutri ? ($latestPutri->kamarTerkotor ?? null) : ($latestPutri->kamarPerhatian ?? null);
+                        $nilaiSorotPutri  = $kamarSorotPutri ? ($skorPutri[$kamarSorotPutri->id] ?? null) : null;
+                        $persenSorotPutri = $persenSidak($nilaiSorotPutri);
+                        $barisNilaiPutri  = $nilaiSorotPutri !== null ? ' · Nilai ' . $nilaiSorotPutri . '/25 (' . $persenSorotPutri . '%)' : '';
+                        $kelasBingkaiPutri = $adaTerkotorPutri ? 'border-red-500' : 'border-emerald-400';
+                        $kelasLencanaPutri = $adaTerkotorPutri ? 'bg-red-600' : 'bg-emerald-600';
+                        $kelasKotakPutri   = $adaTerkotorPutri ? 'bg-red-50 text-red-400 border-red-200' : 'bg-emerald-50 text-emerald-500 border-emerald-200';
+                    @endphp
+                    <div class="bg-white rounded-[2rem] border-4 {{ $kelasBingkaiPutri }} p-6 flex flex-col relative shadow-2xl animate-slide-right" style="animation-delay: 0.6s;">
+                        <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 {{ $kelasLencanaPutri }} text-white px-8 py-2 rounded-full font-black text-sm tracking-widest shadow-lg whitespace-nowrap">
+                            {{ $adaTerkotorPutri ? '⚠️ PERHATIAN EKSTRA' : '✅ SEMUA KAMAR BERSIH' }}
                         </div>
                         @if($latestPutri && $latestPutri->foto_terkotor)
                             <!-- DIUBAH KE BERKAS -->
                             <img src="{{ url('berkas/'.$latestPutri->foto_terkotor) }}" class="w-full h-48 md:h-56 object-cover rounded-2xl mb-4 shadow-inner">
                         @else
-                            <div class="w-full h-48 md:h-56 bg-red-50 rounded-2xl mb-4 flex flex-col items-center justify-center text-red-400 font-bold border-2 border-dashed border-red-200">
-                                <span class="text-4xl mb-2">📸</span> Tanpa Foto Bukti
+                            <div class="w-full h-48 md:h-56 {{ $kelasKotakPutri }} rounded-2xl mb-4 flex flex-col items-center justify-center font-bold border-2 border-dashed">
+                                <span class="text-4xl mb-2">{{ $adaTerkotorPutri ? '📸' : '✨' }}</span>
+                                {{ $adaTerkotorPutri ? 'Tanpa Foto Bukti' : 'Tidak Ada Kamar Terkotor' }}
                             </div>
                         @endif
                         <div class="text-center flex-1 flex flex-col justify-center">
-                            <h3 class="text-4xl font-black text-red-800 uppercase mb-1">{{ $latestPutri && $latestPutri->kamarTerkotor ? $latestPutri->kamarTerkotor->nama_kamar : 'TIDAK ADA' }}</h3>
-                            <p class="text-sm font-bold text-gray-500 mb-4">Musyrifah: {{ $latestPutri && $latestPutri->kamarTerkotor ? ($latestPutri->kamarTerkotor->musyrif->name ?? '-') : '-' }}</p>
-                            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs font-black mt-auto uppercase tracking-wide">
-                                🚨 SANKSI: SELURUH ANGGOTA -1 POIN
-                            </div>
+                            @if($adaTerkotorPutri)
+                                <h3 class="text-4xl font-black text-red-800 uppercase mb-1">{{ $kamarSorotPutri->nama_kamar ?? 'TIDAK ADA' }}</h3>
+                                <p class="text-sm font-bold text-gray-500 mb-4">Musyrifah: {{ $kamarSorotPutri->musyrif->name ?? '-' }}{{ $barisNilaiPutri }}</p>
+                                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs font-black mt-auto uppercase tracking-wide">
+                                    🚨 SANKSI: SELURUH ANGGOTA -1 POIN
+                                </div>
+                            @else
+                                <p class="text-[11px] font-black text-amber-500 uppercase tracking-widest mb-1">⚠️ Perlu Diperhatikan</p>
+                                <h3 class="text-4xl font-black text-emerald-800 uppercase mb-1">{{ $kamarSorotPutri->nama_kamar ?? '—' }}</h3>
+                                <p class="text-sm font-bold text-gray-500 mb-3">Musyrifah: {{ $kamarSorotPutri->musyrif->name ?? '-' }}{{ $barisNilaiPutri }}</p>
+                                @if($latestPutri && $latestPutri->catatan_inspektor)
+                                    <p class="text-[12px] font-semibold text-slate-500 italic mb-3 leading-snug">“{{ \Illuminate\Support\Str::limit($latestPutri->catatan_inspektor, 110) }}”</p>
+                                @endif
+                                <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-xs font-black mt-auto uppercase tracking-wide">
+                                    ✅ SEMUA KAMAR ≥{{ $batasPersen }}% — TIDAK ADA SANKSI POIN
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
