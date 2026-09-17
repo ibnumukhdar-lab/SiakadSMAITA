@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-5 sm:py-8">
+    <div class="py-5 sm:py-8" x-data="{ hapusBuka: false, hapusId: null, hapusNama: '', hapusInfo: '' }">
         <div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
 
             {{-- ===== KEPALA ===== --}}
@@ -18,6 +18,8 @@
                     @endif
                     <a href="{{ route('project-sr.rekap') }}"
                        class="inline-flex items-center justify-center h-10 px-3.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12.5px] font-semibold hover:bg-slate-50 transition">📈 Rekap Project</a>
+                    <a href="{{ route('project-sr.portofolio.index') }}"
+                       class="inline-flex items-center justify-center h-10 px-3.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12.5px] font-semibold hover:bg-slate-50 transition">🧾 Penyusunan Portofolio</a>
                     @if($bolehMaster)
                         <a href="{{ route('project-sr.master') }}"
                            class="inline-flex items-center justify-center h-10 px-3.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12.5px] font-semibold hover:bg-slate-50 transition">⚙️ Tahap &amp; Bobot</a>
@@ -179,8 +181,23 @@
                         @else
                             <span class="text-slate-400">Belum ada nilai</span>
                         @endif
+                        <span class="hidden sm:inline-flex items-center text-[11.5px] text-slate-400">
+                            @if($r['tuntas'] ?? false)
+                                🧾 {{ ($r['dokumen'] ?? 0) > 0 ? 'portofolio ' . $r['dokumen'] . ' berkas' : 'portofolio belum disusun' }}
+                            @endif
+                        </span>
                         <a href="{{ route('project-sr.show', $p->id) }}"
                            class="ms-auto inline-flex items-center justify-center h-8 px-3 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-[12px] font-semibold transition whitespace-nowrap">Buka</a>
+                        @if(($r['tuntas'] ?? false))
+                            <a href="{{ route('project-sr.portofolio', $p->id) }}"
+                               class="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[12px] font-semibold transition whitespace-nowrap">🧾 Portofolio</a>
+                        @endif
+                        @if($bolehTambah)
+                            <button type="button"
+                                    @click="hapusId = {{ $p->id }}; hapusNama = @js($p->nama); hapusInfo = '{{ $r['dinilai'] }} nilai · {{ $r['dokumen'] ?? 0 }} berkas · {{ $r['progres'] }} tahap selesai'; hapusBuka = true"
+                                    class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border border-red-200 bg-red-50 text-red-700 text-[12px] font-semibold hover:bg-red-100 transition whitespace-nowrap"
+                                    title="Hapus project">🗑️</button>
+                        @endif
                     </div>
                 </div>
             @empty
@@ -190,6 +207,46 @@
             @endforelse
 
             <div class="mt-3">{{ $projects->links() }}</div>
+
+            {{-- ===== POPUP KONFIRMASI HAPUS ===== --}}
+            @if($bolehTambah)
+                <div x-show="hapusBuka" x-cloak style="display:none"
+                     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4">
+                    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md" @click.away="hapusBuka = false">
+                        <div class="px-5 py-4 border-b border-slate-100 flex items-start gap-3">
+                            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 text-[18px]">🗑️</span>
+                            <div class="min-w-0">
+                                <h3 class="text-[15px] font-bold text-slate-900">Hapus project ini?</h3>
+                                <p class="text-[12.5px] text-slate-500 mt-0.5">Tindakan ini tidak bisa dibatalkan.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-5">
+                            <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                                <div class="text-[13px] font-bold text-slate-800" x-text="hapusNama"></div>
+                                <div class="text-[11.5px] text-slate-500" x-text="hapusInfo"></div>
+                            </div>
+                            <div class="mt-3 text-[12.5px] text-slate-600">
+                                Nilai siswa, foto/dokumentasi, dan portofolio project ini akan ikut terhapus permanen.
+                            </div>
+                        </div>
+
+                        <div class="px-5 pb-5 flex flex-col sm:flex-row gap-2">
+                            <form :action="'/project-sr/' + hapusId" method="POST" class="flex-1">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="w-full h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[12.5px] font-semibold transition">
+                                    Ya, hapus permanen
+                                </button>
+                            </form>
+                            <button type="button" @click="hapusBuka = false"
+                                    class="flex-1 h-10 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12.5px] font-semibold hover:bg-slate-50 transition">
+                                Batal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </x-app-layout>

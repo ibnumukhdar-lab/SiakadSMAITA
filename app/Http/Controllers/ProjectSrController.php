@@ -6,12 +6,15 @@ use App\Models\PenilaianPengaturan;
 use App\Models\Siswa;
 use App\Models\SrGroup;
 use App\Models\SrProject;
+use App\Models\SrProjectDokumen;
 use App\Models\SrProjectNilai;
+use App\Models\SrProjectPortofolio;
 use App\Models\SrProjectTahap;
 use App\Models\SrProjectTahapStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 /**
@@ -66,6 +69,9 @@ class ProjectSrController extends Controller
                 'anggota' => $p->anggota()->count(),
                 'rata' => $angka ? round(array_sum($angka) / count($angka), 2) : null,
                 'progres' => $p->progresTahap(),
+                'tuntas' => $p->tuntas(),
+                'dokumen' => $p->jumlahDokumen(),
+                'portofolio' => (bool) $p->portofolio,
             ];
         }
 
@@ -144,19 +150,220 @@ class ProjectSrController extends Controller
                 ->with('error', 'Project ini milik grup lain — hanya mentornya yang boleh menghapus.');
         }
 
+        $nama = $project->nama;
         $jumlahNilai = $project->nilai()->whereNotNull('skor')->count();
-        if ($jumlahNilai > 0) {
-            return redirect()->route('project-sr.show', $project->id)
-                ->with('error', 'Project ini sudah punya ' . $jumlahNilai . ' nilai. Ubah statusnya menjadi "Selesai" saja (tidak dihapus) supaya nilai historisnya tetap tersimpan.');
-        }
 
         DB::transaction(function () use ($project) {
+            // Hapus berkas foto/dokumentasi dari storage
+            foreach ($project->dokumen()->get() as $dokumen) {
+                if ($dokumen->path && Storage::disk('public')->exists($dokumen->path)) {
+                    Storage::disk('public')->delete($dokumen->path);
+                }
+                $dokumen->delete();
+            }
+
+            $project->portofolio()->delete();
             $project->statusTahap()->delete();
             $project->nilai()->delete();
             $project->delete();
         });
 
-        return redirect()->route('project-sr.index')->with('success', 'Project berhasil dihapus.');
+        return redirect()->route('project-sr.index')
+            ->with('success', 'Project "' . $nama . '" dihapus' . ($jumlahNilai > 0 ? ' beserta ' . $jumlahNilai . ' nilainya' : '') . '.');
+    }
+
+    // ---------------- Portofolio (setelah 5 tahap tuntas) ----------------
+
+    /** Halaman penyusunan portofolio: daftar project yang sudah tuntas tahapannya. */
+    public function portofolioIndex()
+    {
+        $bolehSemua = $this->bolehLihatSemua();
+
+        $query = SrProject::with(['grup', 'mentor', 'portofolio'])->aktif();
+        if (! $bolehSemua) {
+            $query->milikMentor(Auth::id());
+        }
+
+        $siap = $query->orderByDesc('id')->get()
+            ->filter(fn ($p) => $p->tuntas())
+            ->map(function ($p) {
+                return [
+                    'project' => $p,
+                    'dokumen' => $p->jumlahDokumen(),
+                    'narasi' => $p->portofolio?->bagianTerisi() ?? 0,
+                    'rata' => $p->rataProject(),
+                ];
+            });
+
+        return view('project-sr.portofolio-index', [
+            'daftar' => $siap,
+            'bolehSemua' => $bolehSemua,
+            'bolehSusun' => Auth::user()->can('kelola-project-sr') || Auth::user()->hasRole('Super Admin'),
+        ]);
+    }
+
+    /** Halaman penyusunan portofolio satu project. */
+    public function portofolio($id)
+    {
+        $project = SrProject::with(['grup', 'mentor'])->findOrFail($id);
+        abort_unless($this->bolehLihatProject($project), 403);
+
+        $tuntas = $project->tuntas();
+        abort_unless($tuntas || Auth::user()->hasRole('Super Admin'), 403, 'Portofolio disusun setelah seluruh tahap project selesai.');
+
+        return view('project-sr.portofolio', [
+            'project' => $project,
+            'tahap' => SrProjectTahap::daftarAktif(),
+            'status' => $project->statusTahap()->get()->keyBy('tahap_id'),
+            'anggota' => $project->anggota(),
+            'nilaiSiswa' => $project->nilaiPerSiswa(),
+            'tahapRata' => $this->rataPerTahap($project),
+            'portofolio' => $project->portofolio ?? new SrProjectPortofolio(['project_id' => $project->id]),
+            'dokumen' => $project->dokumen()->get(),
+            'rataProject' => $project->rataProject(),
+            'bolehSusun' => $this->bolehSusunPortofolio($project),
+            'ambang' => PenilaianPengaturan::ambang(),
+        ]);
+    }
+
+    /** Simpan narasi + unggahan foto portofolio. */
+    public function portofolioSimpan(Request $request, $id)
+    {
+        $project = SrProject::findOrFail($id);
+        abort_unless($this->bolehSusunPortofolio($project), 403, 'Hanya mentor grup ini yang boleh menyusun portofolio.');
+
+        $data = $request->validate([
+            'ringkasan' => ['nullable', 'string', 'max:3000'],
+            'latar_belakang' => ['nullable', 'string', 'max:3000'],
+            'tujuan' => ['nullable', 'string', 'max:3000'],
+            'pelaksanaan' => ['nullable', 'string', 'max:3000'],
+            'hasil' => ['nullable', 'string', 'max:3000'],
+            'refleksi' => ['nullable', 'string', 'max:3000'],
+            'tempat' => ['nullable', 'string', 'max:100'],
+            'tanggal_presentasi' => ['nullable', 'date'],
+            'foto' => ['nullable', 'array'],
+            'foto.*' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif,heic,heif,pdf', 'max:5120'],
+            'keterangan_foto' => ['nullable', 'array'],
+            'keterangan_foto.*' => ['nullable', 'string', 'max:255'],
+        ], [
+            'foto.*.mimes' => 'Berkas harus berupa gambar (jpg, png, webp, gif) atau PDF.',
+            'foto.*.max' => 'Ukuran tiap berkas maksimal 5 MB.',
+        ]);
+
+        $portofolio = SrProjectPortofolio::firstOrNew(['project_id' => $project->id]);
+
+        $portofolio->fill([
+            'ringkasan' => $data['ringkasan'] ?? null,
+            'latar_belakang' => $data['latar_belakang'] ?? null,
+            'tujuan' => $data['tujuan'] ?? null,
+            'pelaksanaan' => $data['pelaksanaan'] ?? null,
+            'hasil' => $data['hasil'] ?? null,
+            'refleksi' => $data['refleksi'] ?? null,
+            'tempat' => $data['tempat'] ?? null,
+            'tanggal_presentasi' => $data['tanggal_presentasi'] ?? null,
+            'disusun_oleh' => Auth::id(),
+        ]);
+        $portofolio->save();
+
+        $jumlahFoto = 0;
+        $berkas = $request->file('foto') ?? [];
+        $keterangan = $request->input('keterangan_foto') ?? [];
+        $urutan = (int) $project->dokumen()->max('urutan');
+
+        foreach ($berkas as $i => $file) {
+            if (! $file || ! $file->isValid()) {
+                continue;
+            }
+
+            $path = $file->store('project_sr/' . now()->format('Y/m'), 'public');
+
+            SrProjectDokumen::create([
+                'project_id' => $project->id,
+                'path' => $path,
+                'nama_asli' => $file->getClientOriginalName(),
+                'keterangan' => trim((string) ($keterangan[$i] ?? '')) ?: null,
+                'urutan' => ++$urutan,
+                'diunggah_oleh' => Auth::id(),
+            ]);
+            $jumlahFoto++;
+        }
+
+        // Tandai selesai bila narasi inti terisi dan sudah ada foto
+        $punyaFoto = $project->jumlahDokumen() > 0;
+        $portofolio->diselesaikan_pada = ($punyaFoto && $portofolio->bagianTerisi() >= 4)
+            ? ($portofolio->diselesaikan_pada ?? now())
+            : null;
+        $portofolio->save();
+
+        return redirect()->route('project-sr.portofolio', $project->id)
+            ->with('success', 'Portofolio tersimpan' . ($jumlahFoto > 0 ? ' + ' . $jumlahFoto . ' berkas diunggah' : '') . '.');
+    }
+
+    public function dokumenHapus($id, $dokumenId)
+    {
+        $project = SrProject::findOrFail($id);
+        abort_unless($this->bolehSusunPortofolio($project), 403);
+
+        $dokumen = SrProjectDokumen::where('project_id', $project->id)->findOrFail($dokumenId);
+
+        if ($dokumen->path && Storage::disk('public')->exists($dokumen->path)) {
+            Storage::disk('public')->delete($dokumen->path);
+        }
+        $dokumen->delete();
+
+        $portofolio = $project->portofolio;
+        if ($portofolio && $project->jumlahDokumen() === 0) {
+            $portofolio->update(['diselesaikan_pada' => null]);
+        }
+
+        return redirect()->route('project-sr.portofolio', $project->id)->with('success', 'Foto/dokumentasi dihapus.');
+    }
+
+    /** Halaman cetak portofolio (siap Ctrl+P / PDF). */
+    public function portofolioCetak($id)
+    {
+        $project = SrProject::with(['grup', 'mentor'])->findOrFail($id);
+        abort_unless($this->bolehLihatProject($project), 403);
+        abort_unless($project->jumlahDokumen() > 0, 403, 'Unggah foto/dokumentasi terlebih dahulu sebelum mencetak portofolio.');
+
+        return view('project-sr.portofolio-cetak', [
+            'project' => $project,
+            'tahap' => SrProjectTahap::daftarAktif(),
+            'status' => $project->statusTahap()->get()->keyBy('tahap_id'),
+            'anggota' => $project->anggota(),
+            'nilaiSiswa' => $project->nilaiPerSiswa(),
+            'tahapRata' => $this->rataPerTahap($project),
+            'portofolio' => $project->portofolio,
+            'dokumen' => $project->dokumen()->get(),
+            'rataProject' => $project->rataProject(),
+            'jumlahTuntas' => $project->nilaiPerSiswa() ? count(array_filter($project->nilaiPerSiswa(), fn ($n) => ($n['lengkap'] ?? false))) : 0,
+            'pengaturan' => \App\Models\Pengaturan::first(),
+        ]);
+    }
+
+    /** Rata-rata tiap tahap untuk satu project: [tahap_id => rata]. */
+    private function rataPerTahap(SrProject $project): array
+    {
+        $hasil = [];
+        $nilai = $project->nilaiPerSiswa();
+
+        foreach (SrProjectTahap::daftarAktif() as $t) {
+            $kumpulan = [];
+            foreach ($nilai as $perSiswa) {
+                $skor = $perSiswa['per_tahap'][$t->id] ?? null;
+                if ($skor !== null) {
+                    $kumpulan[] = $skor;
+                }
+            }
+            $hasil[$t->id] = $kumpulan ? round(array_sum($kumpulan) / count($kumpulan), 2) : null;
+        }
+
+        return $hasil;
+    }
+
+    private function bolehSusunPortofolio(SrProject $project): bool
+    {
+        return (Auth::user()->can('kelola-project-sr') || Auth::user()->hasRole('Super Admin')) && $this->mentorGrup($project);
     }
 
     // ---------------- Detail project + penilaian ----------------
@@ -192,6 +399,9 @@ class ProjectSrController extends Controller
             'rataProject' => $angka ? round(array_sum($angka) / count($angka), 2) : null,
             'jumlahDinilai' => count($angka),
             'bobotTerpakai' => $project->bobotTerpakai(),
+            'tuntas' => $project->tuntas(),
+            'jumlahDokumen' => $project->jumlahDokumen(),
+            'jumlahNilai' => $project->nilai()->whereNotNull('skor')->count(),
             'ambang' => PenilaianPengaturan::ambang(),
         ]);
     }

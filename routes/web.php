@@ -166,6 +166,13 @@ Route::middleware(['auth', 'permission:buka-menu-project-sr'])->prefix('project-
     Route::post('/tahap/bobot', [ProjectSrController::class, 'masterSimpanSemua'])->name('project-sr.master.bobot');
     Route::put('/tahap/master/{id}', [ProjectSrController::class, 'masterUpdate'])->where('id', '[0-9]+')->name('project-sr.master.update');
 
+    // Portofolio: disusun setelah seluruh tahap project tuntas
+    Route::get('/portofolio', [ProjectSrController::class, 'portofolioIndex'])->name('project-sr.portofolio.index');
+    Route::get('/{id}/portofolio', [ProjectSrController::class, 'portofolio'])->where('id', '[0-9]+')->name('project-sr.portofolio');
+    Route::post('/{id}/portofolio', [ProjectSrController::class, 'portofolioSimpan'])->where('id', '[0-9]+')->name('project-sr.portofolio.simpan');
+    Route::delete('/{id}/portofolio/foto/{dokumenId}', [ProjectSrController::class, 'dokumenHapus'])->where(['id' => '[0-9]+', 'dokumenId' => '[0-9]+'])->name('project-sr.portofolio.dokumenHapus');
+    Route::get('/{id}/portofolio/cetak', [ProjectSrController::class, 'portofolioCetak'])->where('id', '[0-9]+')->name('project-sr.portofolio.cetak');
+
     Route::get('/{id}', [ProjectSrController::class, 'show'])->where('id', '[0-9]+')->name('project-sr.show');
     Route::put('/{id}', [ProjectSrController::class, 'update'])->where('id', '[0-9]+')->name('project-sr.update');
     Route::delete('/{id}', [ProjectSrController::class, 'destroy'])->where('id', '[0-9]+')->name('project-sr.destroy');

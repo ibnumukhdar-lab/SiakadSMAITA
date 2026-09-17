@@ -55,6 +55,42 @@ class SrProject extends Model
         return $this->hasMany(SrProjectNilai::class, 'project_id');
     }
 
+    public function dokumen()
+    {
+        return $this->hasMany(SrProjectDokumen::class, 'project_id')->orderBy('urutan')->orderBy('id');
+    }
+
+    public function portofolio()
+    {
+        return $this->hasOne(SrProjectPortofolio::class, 'project_id');
+    }
+
+    /** Semua tahap yang dipakai sudah selesai → project dianggap tuntas. */
+    public function tuntas(): bool
+    {
+        $status = $this->petaStatusTahap();
+        $dipakai = 0;
+        $selesai = 0;
+
+        foreach (SrProjectTahap::daftarAktif() as $tahap) {
+            if (($status[$tahap->id]['status'] ?? 'belum') === 'tidak_dipakai') {
+                continue;
+            }
+            $dipakai++;
+            if (($status[$tahap->id]['status'] ?? 'belum') === 'selesai') {
+                $selesai++;
+            }
+        }
+
+        return $dipakai > 0 && $selesai >= $dipakai;
+    }
+
+    /** Jumlah foto/dokumentasi portofolio. */
+    public function jumlahDokumen(): int
+    {
+        return $this->dokumen()->count();
+    }
+
     /** Anggota grup yang masih aktif (urutan tetap, tanpa siswa terhapus). */
     public function anggota()
     {

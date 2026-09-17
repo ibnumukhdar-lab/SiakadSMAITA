@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-5 sm:py-8">
+    <div class="py-5 sm:py-8" x-data="{ hapusBuka: false }">
         <div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
 
             {{-- ===== KEPALA ===== --}}
@@ -12,6 +12,26 @@
                         · {{ $project->tanggal_mulai?->format('d/m/Y') ?? '—' }} s.d. {{ $project->tanggal_selesai?->format('d/m/Y') ?? '—' }}
                     @endif
                 </p>
+
+                <div class="flex flex-wrap items-center gap-2 mt-3">
+                    @if($tuntas)
+                        <a href="{{ route('project-sr.portofolio', $project->id) }}"
+                           class="inline-flex items-center justify-center h-10 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[12.5px] font-semibold transition">
+                            🧾 {{ $jumlahDokumen > 0 ? 'Buka portofolio' : 'Susun portofolio' }}
+                        </a>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg bg-slate-100 text-slate-500 text-[12px] font-semibold">
+                            🧾 Portofolio aktif setelah {{ $project->progresTahap() }} tahap selesai
+                        </span>
+                    @endif
+
+                    @if($bolehUbah)
+                        <button type="button" @click="hapusBuka = true"
+                                class="inline-flex items-center justify-center h-10 px-3.5 rounded-lg border border-red-200 bg-red-50 text-red-700 text-[12.5px] font-semibold hover:bg-red-100 transition">
+                            🗑️ Hapus project
+                        </button>
+                    @endif
+                </div>
             </div>
 
             @if(session('success'))
@@ -236,12 +256,12 @@
                 @endif
             </div>
 
-            {{-- ===== UBAH / HAPUS PROJECT ===== --}}
+            {{-- ===== UBAH PROJECT ===== --}}
             @if($bolehUbah)
                 <details class="rounded-2xl border border-slate-200 bg-white shadow-sm">
-                    <summary class="cursor-pointer px-4 py-3 text-[13px] font-bold text-slate-700 select-none">✏️ Ubah / hapus project</summary>
+                    <summary class="cursor-pointer px-4 py-3 text-[13px] font-bold text-slate-700 select-none">✏️ Ubah data project</summary>
                     <div class="p-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-12 gap-2.5">
-                        <form action="{{ route('project-sr.update', $project->id) }}" method="POST" class="col-span-2 sm:col-span-10 grid grid-cols-2 sm:grid-cols-12 gap-2.5">
+                        <form action="{{ route('project-sr.update', $project->id) }}" method="POST" class="col-span-2 sm:col-span-12 grid grid-cols-2 sm:grid-cols-12 gap-2.5">
                             @csrf
                             @method('PUT')
                             <div class="col-span-2 sm:col-span-12">
@@ -284,15 +304,60 @@
                                 <button type="submit" class="w-full h-10 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[12.5px] font-semibold transition">Simpan</button>
                             </div>
                         </form>
-
-                        <form action="{{ route('project-sr.destroy', $project->id) }}" method="POST" class="col-span-2 sm:col-span-2 flex items-end"
-                              onsubmit="return confirm('Hapus project {{ $project->nama }}? Project yang sudah punya nilai tidak bisa dihapus.');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="w-full h-10 rounded-lg border border-red-200 bg-red-50 text-red-700 text-[12.5px] font-semibold hover:bg-red-100 transition">Hapus</button>
-                        </form>
                     </div>
                 </details>
+            @endif
+
+            {{-- ===== POPUP KONFIRMASI HAPUS ===== --}}
+            @if($bolehUbah)
+                <div x-show="hapusBuka" x-cloak style="display:none"
+                     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4">
+                    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md" @click.away="hapusBuka = false">
+                        <div class="px-5 py-4 border-b border-slate-100 flex items-start gap-3">
+                            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 text-[18px]">🗑️</span>
+                            <div class="min-w-0">
+                                <h3 class="text-[15px] font-bold text-slate-900">Hapus project ini?</h3>
+                                <p class="text-[12.5px] text-slate-500 mt-0.5">Tindakan ini tidak bisa dibatalkan.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-5">
+                            <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                                <div class="text-[13px] font-bold text-slate-800">{{ $project->nama }}</div>
+                                <div class="text-[11.5px] text-slate-500">
+                                    {{ $project->grup->nama_grup ?? '-' }} · {{ $project->progresTahap() }} tahap selesai
+                                </div>
+                            </div>
+
+                            <ul class="mt-3 space-y-1 text-[12.5px] text-slate-600">
+                                <li>• <strong>{{ $jumlahNilai }}</strong> nilai siswa akan ikut terhapus.</li>
+                                <li>• <strong>{{ $jumlahDokumen }}</strong> foto/dokumentasi akan dihapus dari penyimpanan.</li>
+                                <li>• Portofolio (bila sudah disusun) ikut terhapus.</li>
+                            </ul>
+
+                            @if($jumlahNilai > 0)
+                                <div class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-800">
+                                    Project ini <strong>sudah dinilai</strong>. Kalau hanya ingin menghentikan project,
+                                    lebih aman ubah statusnya menjadi <strong>Selesai</strong> saja tanpa menghapus.
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="px-5 pb-5 flex flex-col sm:flex-row gap-2">
+                            <form action="{{ route('project-sr.destroy', $project->id) }}" method="POST" class="flex-1" id="formHapusProject">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="w-full h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[12.5px] font-semibold transition">
+                                    Ya, hapus permanen
+                                </button>
+                            </form>
+                            <button type="button" @click="hapusBuka = false"
+                                    class="flex-1 h-10 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12.5px] font-semibold hover:bg-slate-50 transition">
+                                Batal
+                            </button>
+                        </div>
+                    </div>
+                </div>
             @endif
         </div>
     </div>
