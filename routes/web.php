@@ -139,6 +139,7 @@ Route::middleware(['auth', 'permission:buka-menu-penilaian'])->group(function ()
     // (Aksi "isi cepat per kamar" DIHAPUS 17 Sep 2026 — penilaian wajib per anak.)
     Route::post('/penilaian/sesi/{id}/finalkan', [PenilaianIsiController::class, 'finalkan'])->where('id', '[0-9]+')->name('penilaian.sesi.finalkan');
     Route::post('/penilaian/sesi/{id}/buka', [PenilaianIsiController::class, 'buka'])->where('id', '[0-9]+')->name('penilaian.sesi.buka');
+    Route::delete('/penilaian/sesi/{id}', [PenilaianIsiController::class, 'hapusSesi'])->where('id', '[0-9]+')->name('penilaian.sesi.hapus');
 });
 
 // Master penilaian: pertanyaan, periode, ambang predikat (Tata Usaha / Super Admin).

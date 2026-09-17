@@ -283,6 +283,39 @@ class PenilaianIsiController extends Controller
             ->with('success', 'Penilaian ' . $sesi->label_jenis . ' periode ' . ($sesi->periode->nama ?? '-') . ' difinalkan (' . $terisi . ' siswa terisi).');
     }
 
+    /**
+     * Hapus satu lembar penilaian beserta jawabannya.
+     * Boleh: pemilik lembar sendiri atau Super Admin (jalan perbaikan/uji coba).
+     * Lembar yang sudah FINAL hanya bisa dihapus Super Admin.
+     */
+    public function hapusSesi($id)
+    {
+        $sesi = PenilaianSesi::with('periode')->findOrFail($id);
+        $user = Auth::user();
+
+        $milikSaya = (int) $sesi->penilai_id === (int) $user->id;
+
+        abort_unless($milikSaya || $user->hasRole('Super Admin'), 403, 'Anda tidak berhak menghapus lembar penilaian ini.');
+
+        if ($sesi->status === 'final' && ! $user->hasRole('Super Admin')) {
+            return redirect()->route('penilaian.sesi', $sesi->id)
+                ->with('error', 'Lembar ini sudah final. Minta Super Admin membuka kembali atau menghapusnya.');
+        }
+
+        $jumlah = PenilaianJawaban::where('sesi_id', $sesi->id)->count();
+        $jenis = $sesi->label_jenis;
+        $periode = $sesi->periode->nama ?? '-';
+        $jenisKunci = $sesi->jenis;
+
+        DB::transaction(function () use ($sesi) {
+            PenilaianJawaban::where('sesi_id', $sesi->id)->delete();
+            $sesi->delete();
+        });
+
+        return redirect()->route('penilaian.isi', $jenisKunci)
+            ->with('success', '🗑️ Lembar penilaian ' . $jenis . ' periode ' . $periode . ' dihapus (' . $jumlah . ' jawaban ikut terhapus).');
+    }
+
     public function buka($id)
     {
         $sesi = PenilaianSesi::findOrFail($id);

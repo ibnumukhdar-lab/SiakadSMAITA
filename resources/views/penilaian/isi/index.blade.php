@@ -98,6 +98,22 @@
                            class="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-[12px] font-semibold transition whitespace-nowrap">
                             {{ $s->status === 'final' ? 'Lihat' : 'Lanjut isi' }}
                         </a>
+
+                        @php
+                            $jt = \App\Models\PenilaianJawaban::where('sesi_id', $s->id)->count();
+                            $bolehHapusBaris = (int) $s->penilai_id === (int) auth()->id() || auth()->user()->hasRole('Super Admin');
+                            $blokirHapusBaris = $s->status === 'final' && ! auth()->user()->hasRole('Super Admin');
+                        @endphp
+                        @if($bolehHapusBaris)
+                            <form action="{{ route('penilaian.sesi.hapus', $s->id) }}" method="POST" class="m-0"
+                                  onsubmit="return confirm('Hapus lembar penilaian {{ $s->periode->nama ?? '' }}?{{ $jt > 0 ? ' ' . $jt . ' jawaban ikut terhapus.' : '' }}');">
+                                @csrf @method('DELETE')
+                                <button type="submit" title="Hapus lembar"
+                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg border {{ $blokirHapusBaris ? 'border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed' : 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100' }} transition">
+                                    🗑️
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 @empty
                     <div class="px-4 py-8 text-center text-[13px] text-slate-400">Belum ada lembar penilaian. Pilih periode di atas untuk mulai.</div>

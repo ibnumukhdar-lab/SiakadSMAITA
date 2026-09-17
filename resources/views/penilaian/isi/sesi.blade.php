@@ -20,6 +20,23 @@
                     </span>
                     <a href="{{ route('penilaian.rekap', ['periode' => $sesi->periode_id]) }}"
                        class="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12.5px] font-semibold hover:bg-slate-50 transition">📊 Rekap</a>
+
+                    @php
+                        $jawabanSesi = \App\Models\PenilaianJawaban::where('sesi_id', $sesi->id)->count();
+                        $bolehHapus = (int) $sesi->penilai_id === (int) auth()->id() || auth()->user()->hasRole('Super Admin');
+                        $blokirHapus = $sesi->status === 'final' && ! auth()->user()->hasRole('Super Admin');
+                    @endphp
+                    @if($bolehHapus)
+                        <form action="{{ route('penilaian.sesi.hapus', $sesi->id) }}" method="POST" class="m-0"
+                              onsubmit="return confirm('Hapus lembar penilaian ini?{{ $jawabanSesi > 0 ? ' ' . $jawabanSesi . ' jawaban yang sudah tersimpan ikut terhapus.' : '' }}');">
+                            @csrf @method('DELETE')
+                            <button type="submit"
+                                    class="inline-flex items-center justify-center h-9 px-3 rounded-lg border text-[12.5px] font-semibold transition {{ $blokirHapus ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed' : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100' }}"
+                                    title="Hapus lembar penilaian">
+                                🗑️ Hapus lembar
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
 
