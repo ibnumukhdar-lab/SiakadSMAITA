@@ -136,7 +136,7 @@ Route::middleware(['auth', 'permission:buka-menu-penilaian'])->group(function ()
     Route::get('/penilaian/sesi/{id}/siswa/{siswaId}', [PenilaianIsiController::class, 'form'])->where(['id' => '[0-9]+', 'siswaId' => '[0-9]+'])->name('penilaian.sesi.form');
     Route::post('/penilaian/sesi/{id}/siswa/{siswaId}', [PenilaianIsiController::class, 'simpan'])->where(['id' => '[0-9]+', 'siswaId' => '[0-9]+'])->name('penilaian.sesi.simpan');
     Route::get('/penilaian/sesi/{id}/kamar/{kamarId}', [PenilaianIsiController::class, 'kamar'])->where(['id' => '[0-9]+', 'kamarId' => '[0-9]+'])->name('penilaian.sesi.kamar');
-    Route::post('/penilaian/sesi/{id}/kamar/{kamarId}', [PenilaianIsiController::class, 'kamarSimpan'])->where(['id' => '[0-9]+', 'kamarId' => '[0-9]+'])->name('penilaian.sesi.kamarSimpan');
+    // (Aksi "isi cepat per kamar" DIHAPUS 17 Sep 2026 — penilaian wajib per anak.)
     Route::post('/penilaian/sesi/{id}/finalkan', [PenilaianIsiController::class, 'finalkan'])->where('id', '[0-9]+')->name('penilaian.sesi.finalkan');
     Route::post('/penilaian/sesi/{id}/buka', [PenilaianIsiController::class, 'buka'])->where('id', '[0-9]+')->name('penilaian.sesi.buka');
 });

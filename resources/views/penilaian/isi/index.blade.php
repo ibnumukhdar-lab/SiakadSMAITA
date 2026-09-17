@@ -35,14 +35,20 @@
                 </div>
             @endif
 
+            @if($jumlahKamarBinaan === 0 && ! auth()->user()->hasRole('Super Admin'))
+                <div class="bg-amber-50 border-l-4 border-amber-400 text-amber-900 p-3.5 mb-3 rounded shadow-sm text-[13px] leading-relaxed">
+                    ⚠️ Anda belum dipetakan sebagai musyrif kamar mana pun, jadi belum ada santri binaan yang bisa dinilai.
+                    Hubungi <strong>Kepala Diniyah</strong> untuk memetakan kamar Anda (menu Manajemen Kamar).
+                </div>
+            @endif
+
             {{-- ===== MULAI PENILAIAN ===== --}}
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 mb-3">
                 <h4 class="text-[14px] font-bold text-slate-800 mb-1">Mulai / lanjutkan penilaian saya</h4>
                 <p class="text-[12.5px] text-slate-500 mb-3">
-                    Satu lembar penilaian per periode. Penilaian {{ $labelJenis }} diisi oleh
-                    <strong>musyrif/musyrifah</strong> — tiap musyrif punya lembarnya sendiri, dan bila satu siswa
-                    dinilai lebih dari satu musyrif, nilainya dirata-ratakan di rekap.
-                    @if($jenis === 'keasramaan') Lembar keasramaan bisa diisi cepat per kamar. @endif
+                    Satu lembar penilaian per periode, diisi <strong>musyrif/musyrifah</strong> — tiap musyrif punya
+                    lembarnya sendiri; bila satu siswa dinilai lebih dari satu musyrif, nilainya dirata-ratakan di rekap.
+                    <br>Penilaian diisi <strong>per anak</strong>: buka kamar binaan Anda, lalu nilai penghuninya satu per satu.
                 </p>
 
                 @if($periodeList->isEmpty())
@@ -75,13 +81,13 @@
                 @forelse($sesiSaya as $s)
                     @php
                         $terisi = count($s->hasilPerSiswa());
-                        $total = \App\Models\Siswa::where('status', 'Aktif')->count();
+                        $total = $totalBinaan;
                     @endphp
                     <div class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0">
                         <div class="min-w-0 flex-1">
                             <div class="text-[13.5px] font-semibold text-slate-800 truncate">{{ $s->periode->nama ?? '-' }}</div>
                             <div class="text-[11.5px] text-slate-400">
-                                {{ \App\Models\PenilaianSesi::PERAN[$s->penilai_peran] ?? '-' }} · {{ $terisi }}/{{ $total }} siswa terisi
+                                {{ \App\Models\PenilaianSesi::PERAN[$s->penilai_peran] ?? '-' }} · {{ $terisi }}/{{ $total }} anak binaan terisi
                                 @if($s->difinalkan_pada) · difinalkan {{ $s->difinalkan_pada->format('d/m/Y H:i') }}@endif
                             </div>
                         </div>

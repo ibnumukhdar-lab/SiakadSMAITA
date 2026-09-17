@@ -3,7 +3,7 @@
         <div class="max-w-3xl mx-auto px-3 sm:px-6 lg:px-8">
 
             <div class="mb-4">
-                <a href="{{ route('penilaian.sesi', $sesi->id) }}" class="inline-flex items-center gap-1 text-[12.5px] font-semibold text-slate-500 hover:text-slate-800 transition">← Kembali ke daftar siswa</a>
+                <a href="{{ $kamarId ? route('penilaian.sesi.kamar', [$sesi->id, $kamarId]) : route('penilaian.sesi', $sesi->id) }}" class="inline-flex items-center gap-1 text-[12.5px] font-semibold text-slate-500 hover:text-slate-800 transition">← Kembali ke daftar penghuni{{ $kamar ? ' kamar ' . $kamar : '' }}</a>
                 <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight mt-1.5">
                     Penilaian {{ $sesi->label_jenis }}
                 </h3>
@@ -57,10 +57,10 @@
                         @if($berikutnya)
                             <button type="submit" name="lanjut" value="1"
                                     class="inline-flex items-center justify-center h-10 px-4 rounded-lg border border-blue-900 text-blue-900 bg-white hover:bg-blue-50 text-[13px] font-semibold transition">
-                                ➡️ Simpan &amp; lanjut siswa berikutnya
+                                ➡️ Simpan &amp; lanjut anak berikutnya (kamar ini)
                             </button>
                         @else
-                            <span class="inline-flex items-center h-10 px-1 text-[12.5px] text-slate-400">Semua siswa sudah terisi 🎉</span>
+                            <span class="inline-flex items-center h-10 px-1 text-[12.5px] text-slate-400">Semua anak di kamar ini sudah terisi 🎉</span>
                         @endif
                     </div>
                 </form>

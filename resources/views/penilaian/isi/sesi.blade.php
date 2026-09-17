@@ -1,6 +1,6 @@
 <x-app-layout>
     <div class="py-5 sm:py-8">
-        <div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8">
 
             {{-- ===== KEPALA ===== --}}
             <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-4">
@@ -30,174 +30,103 @@
                 <div class="bg-red-100 border-l-4 border-red-500 text-red-800 p-3.5 mb-3 rounded shadow-sm text-sm">{{ session('error') }}</div>
             @endif
 
-            {{-- ===== PROGRES + AKSI ===== --}}
-            @php
-                $persenProgres = $totalSiswa > 0 ? round($terisi / $totalSiswa * 100) : 0;
-            @endphp
-            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-3.5 sm:p-4 mb-3">
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                    <div class="text-[13px] font-semibold text-slate-700">
-                        Terisi <strong class="text-blue-900">{{ $terisi }}</strong> dari {{ $totalSiswa }} siswa aktif
-                    </div>
-                    <div class="text-[12px] text-slate-400">{{ $kriteria->count() }} pertanyaan × skala 1–5</div>
+            @if($tanpaKamar)
+                <div class="bg-amber-50 border-l-4 border-amber-400 text-amber-900 p-3.5 rounded shadow-sm text-[13px] leading-relaxed">
+                    ⚠️ Anda belum dipetakan sebagai musyrif kamar mana pun, jadi belum ada santri binaan yang bisa dinilai.
+                    Hubungi <strong>Kepala Diniyah</strong> untuk memetakan kamar Anda.
                 </div>
-                <div class="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                    <div class="h-2 rounded-full bg-blue-900 transition-all" style="width: {{ $persenProgres }}%"></div>
+            @else
+                {{-- ===== ATURAN + PROGRES ===== --}}
+                <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-900 p-3.5 mb-3 rounded shadow-sm text-[12.5px] leading-relaxed">
+                    Penilaian diisi <strong>per anak</strong>: pilih kamar binaan Anda di bawah, lalu nilai penghuninya <strong>satu per satu</strong>
+                    ({{ $jumlahKriteria }} pertanyaan, skala 1–5). Bukan penilaian serentak seluruh kamar.
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2 mt-3">
-                    @if($sesi->status === 'draft')
-                        <form action="{{ route('penilaian.sesi.finalkan', $sesi->id) }}" method="POST"
-                              onsubmit="return confirm('Finalkan penilaian ini? Setelah final, nilainya terkunci dan tidak bisa diubah lagi kecuali dibuka kembali oleh Super Admin.');">
-                            @csrf
-                            <button type="submit" class="inline-flex items-center justify-center h-9 px-3.5 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-[12.5px] font-semibold transition">
-                                ✅ Finalkan penilaian
-                            </button>
-                        </form>
-                    @elseif(auth()->user()->hasRole('Super Admin'))
-                        <form action="{{ route('penilaian.sesi.buka', $sesi->id) }}" method="POST"
-                              onsubmit="return confirm('Buka kembali penilaian yang sudah final?');">
-                            @csrf
-                            <button type="submit" class="inline-flex items-center justify-center h-9 px-3.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 text-[12.5px] font-semibold hover:bg-amber-100 transition">
-                                🔓 Buka kembali (Super Admin)
-                            </button>
-                        </form>
-                    @else
-                        <span class="text-[12px] text-slate-400">Penilaian sudah final. Hubungi Super Admin bila perlu diperbaiki.</span>
-                    @endif
-                </div>
-            </div>
-
-            {{-- ===== ISI CEPAT PER KAMAR ===== --}}
-            @if($daftarKamar->isNotEmpty())
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-3.5 sm:p-4 mb-3">
-                    <div class="flex items-center justify-between gap-2 mb-2.5">
-                        <h4 class="text-[13.5px] font-bold text-slate-800">⚡ Isi cepat per kamar</h4>
-                        <span class="text-[11.5px] text-slate-400">skor sama untuk semua penghuni</span>
+                    @php
+                        $persenProgres = $totalSiswa > 0 ? round($terisi / $totalSiswa * 100) : 0;
+                    @endphp
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <div class="text-[13px] font-semibold text-slate-700">
+                            Terisi <strong class="text-blue-900">{{ $terisi }}</strong> dari {{ $totalSiswa }} anak binaan
+                        </div>
+                        <div class="text-[12px] text-slate-400">{{ $kamarSelesai }}/{{ $kamarList->count() }} kamar lengkap</div>
                     </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                        @foreach($daftarKamar as $kamar)
-                            @php
-                                $p = $progresKamar[$kamar->id] ?? ['total' => 0, 'sudah' => 0];
-                                $binaanSaya = $kamarBinaan->contains('id', $kamar->id);
-                            @endphp
-                            <a href="{{ route('penilaian.sesi.kamar', [$sesi->id, $kamar->id]) }}"
-                               class="group flex items-center justify-between gap-2 rounded-xl border px-3 py-2 transition {{ $binaanSaya ? 'border-blue-200 bg-blue-50/50 hover:border-blue-300' : 'border-slate-200 bg-slate-50/60 hover:border-blue-300 hover:bg-blue-50/60' }}">
-                                <span class="min-w-0">
-                                    <span class="block text-[12.5px] font-semibold text-slate-700 truncate">
-                                        {{ $kamar->nama_kamar }}@if($binaanSaya) <span class="text-[9.5px] font-black uppercase tracking-wide text-blue-700">· binaan saya</span>@endif
-                                    </span>
-                                    <span class="block text-[10.5px] text-slate-400">{{ $p['sudah'] }}/{{ $p['total'] }} terisi</span>
-                                </span>
-                                <span class="text-[13px] {{ ($p['total'] > 0 && $p['sudah'] >= $p['total']) ? 'text-green-600' : 'text-slate-300 group-hover:text-blue-600' }}">
-                                    {{ ($p['total'] > 0 && $p['sudah'] >= $p['total']) ? '✓' : '→' }}
-                                </span>
-                            </a>
-                        @endforeach
+                    <div class="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                        <div class="h-2 rounded-full bg-blue-900 transition-all" style="width: {{ $persenProgres }}%"></div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 mt-3">
+                        @if($sesi->status === 'draft')
+                            <form action="{{ route('penilaian.sesi.finalkan', $sesi->id) }}" method="POST"
+                                  onsubmit="return confirm('Finalkan penilaian ini? Setelah final, nilainya terkunci dan tidak bisa diubah lagi kecuali dibuka kembali oleh Super Admin.');">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center justify-center h-9 px-3.5 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-[12.5px] font-semibold transition">
+                                    ✅ Finalkan penilaian
+                                </button>
+                            </form>
+                        @elseif(auth()->user()->hasRole('Super Admin'))
+                            <form action="{{ route('penilaian.sesi.buka', $sesi->id) }}" method="POST"
+                                  onsubmit="return confirm('Buka kembali penilaian yang sudah final?');">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center justify-center h-9 px-3.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 text-[12.5px] font-semibold hover:bg-amber-100 transition">
+                                    🔓 Buka kembali (Super Admin)
+                                </button>
+                            </form>
+                        @else
+                            <span class="text-[12px] text-slate-400">Penilaian sudah final. Hubungi Super Admin bila perlu diperbaiki.</span>
+                        @endif
                     </div>
                 </div>
-            @endif
 
-            {{-- ===== KAMAR BINAAN SAYA ===== --}}
-            @if($kamarBinaan->isNotEmpty())
-                <div class="flex flex-wrap items-center gap-1.5 mb-3">
-                    <span class="text-[11.5px] font-semibold text-slate-400">Kamar binaan saya:</span>
-                    @foreach($kamarBinaan as $kb)
-                        <a href="{{ route('penilaian.sesi', [$sesi->id, 'kamar' => $kb->id]) }}"
-                           class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11.5px] font-semibold transition {{ $filter['kamar'] === $kb->id ? 'border-blue-300 bg-blue-50 text-blue-900' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50' }}">
-                            🏠 {{ $kb->nama_kamar }}
-                        </a>
-                    @endforeach
-                    @if($filter['kamar'] > 0)
-                        <a href="{{ route('penilaian.sesi', $sesi->id) }}"
-                           class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11.5px] font-semibold text-slate-500 hover:bg-slate-100 transition">Semua siswa</a>
+                {{-- ===== DAFTAR KAMAR BINAAN ===== --}}
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between gap-2">
+                        <h4 class="text-[13.5px] font-bold text-slate-800">🏠 Kamar binaan saya</h4>
+                        <span class="text-[11.5px] text-slate-400">{{ $kamarList->count() }} kamar</span>
+                    </div>
+
+                    @if($kamarList->isEmpty())
+                        <div class="px-4 py-8 text-center text-[13px] text-slate-400">Tidak ada kamar aktif yang bisa dinilai.</div>
+                    @else
+                        <div class="divide-y divide-slate-100">
+                            @foreach($kamarList as $k)
+                                @php
+                                    $persenKamar = $k->total > 0 ? (int) round($k->lengkap / $k->total * 100) : 0;
+                                    $lengkapSemua = $k->total > 0 && $k->lengkap >= $k->total;
+                                @endphp
+                                <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <div class="text-[13.5px] font-bold text-slate-800 truncate">
+                                            {{ $k->nama }}
+                                            <span class="text-[10.5px] font-black uppercase tracking-wide {{ $k->kategori === 'putri' ? 'text-rose-500' : 'text-blue-600' }}">{{ $k->kategori }}</span>
+                                        </div>
+                                        <div class="text-[11.5px] text-slate-400">
+                                            {{ $k->total }} penghuni · sudah dinilai {{ $k->sudah }} · lengkap {{ $k->lengkap }}
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-24 hidden sm:block">
+                                            <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                                                <div class="h-1.5 rounded-full {{ $lengkapSemua ? 'bg-green-500' : 'bg-blue-700' }}" style="width: {{ $persenKamar }}%"></div>
+                                            </div>
+                                        </div>
+                                        @if($sesi->status === 'draft')
+                                            <a href="{{ route('penilaian.sesi.kamar', [$sesi->id, $k->id]) }}"
+                                               class="inline-flex items-center justify-center h-9 px-3.5 rounded-lg {{ $lengkapSemua ? 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50' : 'bg-blue-900 hover:bg-blue-800 text-white' }} text-[12.5px] font-semibold transition whitespace-nowrap">
+                                                {{ $lengkapSemua ? '✅ Lihat / perbaiki' : ($k->sudah > 0 ? '➡️ Lanjutkan' : '➡️ Buka kamar') }}
+                                            </a>
+                                        @else
+                                            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200">terkunci</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     @endif
                 </div>
             @endif
-
-            {{-- ===== FILTER ===== --}}
-            <form action="{{ route('penilaian.sesi', $sesi->id) }}" method="GET"
-                  class="bg-white border border-slate-200 rounded-2xl shadow-sm p-3 mb-3 grid grid-cols-2 sm:grid-cols-12 gap-2">
-                <div class="col-span-2 sm:col-span-4">
-                    <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Cari</label>
-                    <input type="text" name="q" value="{{ $filter['q'] }}" placeholder="Nama atau NISN"
-                           class="w-full h-9 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 placeholder:text-slate-400 focus:border-blue-500 outline-none">
-                </div>
-                <div class="sm:col-span-3">
-                    <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Kelas</label>
-                    <select name="kelas" class="w-full h-9 rounded-lg border border-slate-300 bg-white px-2 text-[13px] text-slate-700 focus:border-blue-500 outline-none">
-                        <option value="">Semua</option>
-                        @foreach($daftarKelas as $namaKelas)
-                            <option value="{{ $namaKelas }}" @selected($filter['kelas'] === $namaKelas)>{{ $namaKelas }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="sm:col-span-2">
-                    <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Status</label>
-                    <select name="status" class="w-full h-9 rounded-lg border border-slate-300 bg-white px-2 text-[13px] text-slate-700 focus:border-blue-500 outline-none">
-                        <option value="">Semua</option>
-                        <option value="belum" @selected($filter['status'] === 'belum')>Belum dinilai</option>
-                        <option value="sudah" @selected($filter['status'] === 'sudah')>Sudah dinilai</option>
-                    </select>
-                </div>
-                @if($daftarKamar->isNotEmpty())
-                    <div class="sm:col-span-2">
-                        <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Kamar</label>
-                        <select name="kamar" class="w-full h-9 rounded-lg border border-slate-300 bg-white px-2 text-[13px] text-slate-700 focus:border-blue-500 outline-none">
-                            <option value="0">Semua</option>
-                            @foreach($daftarKamar as $kamar)
-                                <option value="{{ $kamar->id }}" @selected($filter['kamar'] === $kamar->id)>{{ $kamar->nama_kamar }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                @endif
-                <div class="col-span-2 sm:col-span-1 flex items-end">
-                    <button type="submit" class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[12.5px] font-semibold transition">Filter</button>
-                </div>
-            </form>
-
-            {{-- ===== DAFTAR SISWA ===== --}}
-            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                @forelse($siswa as $s)
-                    @php $h = $hasil[$s->id] ?? null; @endphp
-                    <div class="flex items-center gap-3 px-3 sm:px-4 py-2.5 border-b border-slate-100 last:border-0">
-                        <x-avatar-siswa :siswa="$s" />
-                        <div class="min-w-0 flex-1">
-                            <div class="text-[13.5px] font-semibold text-slate-800 truncate">{{ $s->nama_lengkap }}</div>
-                            <div class="text-[11.5px] text-slate-400 truncate">
-                                {{ $s->kelas ?: 'Kelas -' }}@if(isset($petaKamar[$s->id])) · {{ $petaKamar[$s->id] }}@endif
-                                @if($h) · {{ $h['total'] }}/{{ $h['jumlah'] * 5 }} skor @endif
-                            </div>
-                        </div>
-
-                        @if($h)
-                            <span class="hidden sm:inline-flex items-center gap-1 text-[12px] font-bold text-slate-700">{{ $h['persentase'] }}%</span>
-                            <span class="inline-flex items-center justify-center h-6 w-6 rounded-lg border text-[11.5px] font-black {{ \App\Models\PenilaianPengaturan::warnaPredikat($h['predikat']) }}">
-                                {{ $h['predikat'] }}
-                            </span>
-                            @unless($h['lengkap'])
-                                <span class="hidden sm:inline text-[10.5px] font-bold text-amber-600" title="Belum semua pertanyaan dijawab">belum lengkap</span>
-                            @endunless
-                        @else
-                            <span class="text-[11.5px] font-semibold text-slate-400">Belum dinilai</span>
-                        @endif
-
-                        @if($sesi->status === 'draft')
-                            <a href="{{ route('penilaian.sesi.form', [$sesi->id, $s->id]) }}"
-                               class="inline-flex items-center justify-center h-8 px-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12px] font-semibold hover:bg-blue-50 hover:border-blue-300 hover:text-blue-900 transition whitespace-nowrap">
-                                {{ $h ? 'Perbaiki' : 'Isi' }}
-                            </a>
-                        @else
-                            <a href="{{ route('penilaian.siswa', $s->id) }}"
-                               class="inline-flex items-center justify-center h-8 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 text-[12px] font-semibold hover:bg-slate-100 transition whitespace-nowrap">Lihat</a>
-                        @endif
-                    </div>
-                @empty
-                    <div class="px-4 py-8 text-center text-[13px] text-slate-400">Tidak ada siswa yang cocok dengan filter.</div>
-                @endforelse
-            </div>
-
-            <div class="mt-3">{{ $siswa->links() }}</div>
         </div>
     </div>
 </x-app-layout>
