@@ -19,6 +19,12 @@ use Illuminate\Support\Facades\DB;        // <-- Ditambahkan untuk Route Sinkron
 use Illuminate\Support\Facades\Schema;  // <-- Ditambahkan untuk Route Sinkronisasi
 
 Route::get('/', function () {
+    // Pengguna yang SUDAH login tidak perlu melihat halaman sampul: langsung ke dashboard.
+    // (Breeze: /login -> '/' bila sudah login, jadi tanpa ini pengguna merasa "balik ke halaman login".)
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
     return view('welcome');
 });
 
@@ -230,31 +236,13 @@ Route::middleware(['auth', 'permission:buka-menu-kelola-akun'])->group(function 
 // CATATAN 2026-09: framework Laravel 12 punya rute internal '/storage/{path}' (storage.local)
 // yang menimpa & mem-403 rute aplikasi => jangan pernah definisikan rute /storage sendiri;
 // semua tautan file memakai /berkas/ (lihat layouts/*, profile, view lama).
-// PENGAMAN: tolak path traversal ('..'); pastikan hasil realpath benar-benar
-// berada di dalam storage/app/public sebelum file disajikan.
-$serveStorageFile = function (string $path) {
-    if ($path === '' || str_contains($path, '..')) {
-        abort(404);
-    }
-
-    $base = realpath(storage_path('app/public'));
-    $full = realpath($base . DIRECTORY_SEPARATOR . $path);
-
-    if ($base === false || $full === false) {
-        abort(404);
-    }
-    if ($full !== $base && !str_starts_with($full, $base . DIRECTORY_SEPARATOR)) {
-        abort(404);
-    }
-    if (!is_file($full)) {
-        abort(404);
-    }
-
-    return response()->file($full);
-};
-
-Route::get('/berkas/{path}', $serveStorageFile)->where('path', '.*');
-
+//
+// PERBAIKAN 18 Sep 2026: rute /berkas/ DIPINDAH ke routes/berkas.php dan dimuat
+// di bootstrap/app.php TANPA grup middleware "web" (tanpa sesi/CSRF), karena
+// permintaan berkas yang datang tanpa cookie (perangkat TV, iframe lintas-situs,
+// crawler) sebelumnya membuat sesi baru + Set-Cookie sesi baru yang bisa menimpa
+// sesi pengguna yang sedang login ("login berhasil tapi balik ke halaman login",
+// "419 Page Expired"). Jangan kembalikan rute ini ke file ini.
 // =====================================================================
 
 

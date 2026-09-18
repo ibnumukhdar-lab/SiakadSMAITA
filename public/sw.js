@@ -1,30 +1,33 @@
-const CACHE_NAME = 'arafah-pwa-v1';
+// SIAKAD SMA IT Arafah — Service Worker (PWA)
+//
+// PERBAIKAN 18 Sep 2026 — penyebab "419 Page Expired" & "setelah login balik ke halaman login":
+// Versi sebelumnya memakai strategi "network first, fallback ke cache" (caches.match).
+// Halaman HTML yang tersimpan di cache (dari versi SW yang lebih lama) bisa MUNCUL KEMBALI
+// saat jaringan tidak stabil, membawa token CSRF lama => permintaan berikutnya ditolak
+// (419 Page Expired) dan pengguna seolah dilempar balik ke halaman login.
+// Mulai sekarang SW TIDAK pernah menyimpan/menyajikan halaman dari cache:
+// semua permintaan selalu diambil dari jaringan, dan SEMUA cache lama dibuang.
+const CACHE_NAME = 'arafah-pwa-v2';
 
-// Saat aplikasi di-install
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
     self.skipWaiting();
-    console.log('[ServiceWorker] Install Berhasil');
 });
 
-// Membersihkan cache lama
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((keyList) => {
-            return Promise.all(keyList.map((key) => {
-                if (key !== CACHE_NAME) {
-                    return caches.delete(key);
-                }
-            }));
-        })
+        (async () => {
+            // Buang seluruh cache lama (termasuk 'arafah-pwa-v1' yang mungkin
+            // masih memuat salinan halaman /login atau /dashboard).
+            const keys = await caches.keys();
+            await Promise.all(keys.map((key) => caches.delete(key)));
+            await self.clients.claim();
+        })()
     );
-    self.clients.claim();
 });
 
-// Strategi: Network First (Agar data sidak dan poin asrama selalu real-time)
-self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        fetch(event.request).catch(() => {
-            return caches.match(event.request);
-        })
-    );
+// Sengaja TIDAK memakai respondWith(): permintaan diteruskan apa adanya ke jaringan
+// (tanpa campur tangan cache), tetapi handler tetap terdaftar agar aplikasi tetap
+// bisa dipasang sebagai PWA.
+self.addEventListener('fetch', () => {
+    // tidak menangani apa pun — selalu ke jaringan
 });
