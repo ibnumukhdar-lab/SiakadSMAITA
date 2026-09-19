@@ -10,6 +10,8 @@ use App\Http\Controllers\KelasController;
 use App\Http\Controllers\TahunAjaranController;
 use App\Http\Controllers\KenaikanKelasController;
 use App\Http\Controllers\PenilaianIsiController;
+use App\Http\Controllers\PenilaianIsiRaporController;
+use App\Http\Controllers\PenilaianSesiRaporController;
 use App\Http\Controllers\PenilaianMasterController;
 use App\Http\Controllers\PenilaianRekapController;
 use App\Http\Controllers\PenilaianKelengkapanController;
@@ -130,28 +132,62 @@ Route::middleware(['auth', 'permission:buka-menu-siswa'])->group(function () {
 });
 
 // --- 4. PENILAIAN KARAKTER (Adab & Keasramaan) ---
-// Rekap & rincian: siapa pun yang boleh membuka menu penilaian (mis. Tata Usaha, Kepala Sekolah).
+// ALUR SEDERHANA (19 Sep 2026): pengelola membuka sesi -> musyrif mengisi SATU formulir per
+// santri (bagian A Adab + B Keasramaan) -> cetak rapor per kamar binaan.
 Route::middleware(['auth', 'permission:buka-menu-penilaian'])->group(function () {
-    Route::get('/penilaian', fn () => redirect()->route('penilaian.rekap'))->name('penilaian.index');
+    Route::get('/penilaian', function () {
+        $user = auth()->user();
+
+        if ($user->can('nilai-adab') || $user->can('nilai-keasramaan')) {
+            return redirect()->route('penilaian.isi.rapor');
+        }
+
+        if ($user->can('kelola-sesi-rapor')) {
+            return redirect()->route('penilaian.sesi-rapor');
+        }
+
+        return redirect()->route('penilaian.rekap');
+    })->name('penilaian.index');
+
+    // ---- Isi rapor (musyrif/musyrifah; hak diperiksa di controller) ----
+    Route::get('/penilaian/isi-rapor', [PenilaianIsiRaporController::class, 'index'])->name('penilaian.isi.rapor');
+    Route::get('/penilaian/isi-rapor/kamar/{kamarId}', [PenilaianIsiRaporController::class, 'kamar'])->where('kamarId', '[0-9]+')->name('penilaian.isi.kamar');
+    Route::get('/penilaian/isi-rapor/siswa/{siswaId}', [PenilaianIsiRaporController::class, 'form'])->where('siswaId', '[0-9]+')->name('penilaian.isi.form');
+    Route::post('/penilaian/isi-rapor/siswa/{siswaId}', [PenilaianIsiRaporController::class, 'simpan'])->where('siswaId', '[0-9]+')->name('penilaian.isi.simpan');
+
+    // ---- Sesi & progres (Super Admin, Tata Usaha, Kepala Sekolah, Kepala Diniyah) ----
+    Route::middleware('permission:kelola-sesi-rapor')->group(function () {
+        Route::get('/penilaian/sesi-rapor', [PenilaianSesiRaporController::class, 'index'])->name('penilaian.sesi-rapor');
+        Route::post('/penilaian/sesi-rapor/buka', [PenilaianSesiRaporController::class, 'buka'])->name('penilaian.sesi-rapor.buka');
+        Route::post('/penilaian/sesi-rapor/tutup', [PenilaianSesiRaporController::class, 'tutup'])->name('penilaian.sesi-rapor.tutup');
+    });
+
+    // ---- Cetak rapor (musyrif = kamar binaannya; pengelola = semua kamar) ----
+    Route::get('/penilaian/cetak', [PenilaianRaporController::class, 'cetakPilih'])->name('penilaian.cetak');
+
+    // Rekap & rincian: siapa pun yang boleh membuka menu penilaian (mis. Tata Usaha, Kepala Sekolah).
     Route::get('/penilaian/rekap', [PenilaianRekapController::class, 'index'])->name('penilaian.rekap');
     Route::get('/penilaian/rekap/ekspor', [PenilaianRekapController::class, 'ekspor'])->name('penilaian.rekap.ekspor');
     Route::get('/penilaian/siswa/{id}', [PenilaianRekapController::class, 'siswa'])->where('id', '[0-9]+')->name('penilaian.siswa');
-
-    // Rapot cetak Adab & Keasramaan (17 Sep 2026)
-    // Kelengkapan penilaian (siapa sudah/belum menilai) — 17 Sep 2026
     Route::get('/penilaian/kelengkapan', [PenilaianKelengkapanController::class, 'index'])->name('penilaian.kelengkapan');
 
     Route::get('/penilaian/rapot', [PenilaianRaporController::class, 'index'])->name('penilaian.rapot');
     Route::get('/penilaian/rapot/cetak', [PenilaianRaporController::class, 'cetak'])->name('penilaian.rapot.cetak');
 
-    // Pengisian lembar penilaian (Kepala Diniyah, Musyrif/Penanggungjawab Asrama)
-    Route::get('/penilaian/{jenis}', [PenilaianIsiController::class, 'index'])->where('jenis', 'adab|keasramaan')->name('penilaian.isi');
-    Route::post('/penilaian/{jenis}/sesi', [PenilaianIsiController::class, 'buatSesi'])->where('jenis', 'adab|keasramaan')->name('penilaian.sesi.buat');
-    Route::get('/penilaian/sesi/{id}', [PenilaianIsiController::class, 'sesi'])->where('id', '[0-9]+')->name('penilaian.sesi');
-    Route::get('/penilaian/sesi/{id}/siswa/{siswaId}', [PenilaianIsiController::class, 'form'])->where(['id' => '[0-9]+', 'siswaId' => '[0-9]+'])->name('penilaian.sesi.form');
-    Route::post('/penilaian/sesi/{id}/siswa/{siswaId}', [PenilaianIsiController::class, 'simpan'])->where(['id' => '[0-9]+', 'siswaId' => '[0-9]+'])->name('penilaian.sesi.simpan');
-    Route::get('/penilaian/sesi/{id}/kamar/{kamarId}', [PenilaianIsiController::class, 'kamar'])->where(['id' => '[0-9]+', 'kamarId' => '[0-9]+'])->name('penilaian.sesi.kamar');
-    // (Aksi "isi cepat per kamar" DIHAPUS 17 Sep 2026 — penilaian wajib per anak.)
+    // ---- Rute LAMA (17 Sep 2026) — tetap hidup supaya bookmark/tautan lama tidak 404,
+    //      semuanya dialihkan ke alur baru. ----
+    Route::get('/penilaian/{jenis}', fn () => redirect()->route('penilaian.isi.rapor'))
+        ->where('jenis', 'adab|keasramaan')->name('penilaian.isi');
+    Route::post('/penilaian/{jenis}/sesi', [PenilaianIsiController::class, 'buatSesi'])
+        ->where('jenis', 'adab|keasramaan')->name('penilaian.sesi.buat');
+    Route::get('/penilaian/sesi/{id}', fn () => redirect()->route('penilaian.isi.rapor'))
+        ->where('id', '[0-9]+')->name('penilaian.sesi');
+    Route::get('/penilaian/sesi/{id}/siswa/{siswaId}', fn ($id, $siswaId) => redirect()->route('penilaian.isi.form', $siswaId))
+        ->where(['id' => '[0-9]+', 'siswaId' => '[0-9]+'])->name('penilaian.sesi.form');
+    Route::post('/penilaian/sesi/{id}/siswa/{siswaId}', [PenilaianIsiController::class, 'simpan'])
+        ->where(['id' => '[0-9]+', 'siswaId' => '[0-9]+'])->name('penilaian.sesi.simpan');
+    Route::get('/penilaian/sesi/{id}/kamar/{kamarId}', fn ($id, $kamarId) => redirect()->route('penilaian.isi.kamar', $kamarId))
+        ->where(['id' => '[0-9]+', 'kamarId' => '[0-9]+'])->name('penilaian.sesi.kamar');
     Route::post('/penilaian/sesi/{id}/finalkan', [PenilaianIsiController::class, 'finalkan'])->where('id', '[0-9]+')->name('penilaian.sesi.finalkan');
     Route::post('/penilaian/sesi/{id}/buka', [PenilaianIsiController::class, 'buka'])->where('id', '[0-9]+')->name('penilaian.sesi.buka');
     Route::delete('/penilaian/sesi/{id}', [PenilaianIsiController::class, 'hapusSesi'])->where('id', '[0-9]+')->name('penilaian.sesi.hapus');

@@ -121,11 +121,15 @@
             </div>
         </div>
 
-        {{-- PENGINGAT: Penilaian Adab & Keasramaan (wajib seluruh santri divisi) --}}
+        {{-- PENGINGAT: Rapor Adab & Keasramaan (wajib seluruh santri divisi) --}}
         <div class="sa-card" style="margin-top:14px;">
             <div class="sa-card-h">
-                <h2>📋 Penilaian Adab &amp; Keasramaan</h2>
-                <a class="lnk" href="{{ route('penilaian.kelengkapan') }}">Kelengkapan penilaian →</a>
+                <h2>📋 Rapor Adab &amp; Keasramaan</h2>
+                @if($sesiPenilaianTerbuka)
+                    <a class="lnk" href="{{ route('penilaian.isi.rapor') }}">Isi rapor →</a>
+                @else
+                    <a class="lnk" href="{{ route('penilaian.cetak') }}">Cetak rapor →</a>
+                @endif
             </div>
             <div class="sa-card-b">
                 @if(! $divisiPenilaian)
@@ -133,7 +137,15 @@
                 @else
                     <div class="ds" style="margin-bottom:8px;">
                         Divisi <b>{{ ucfirst($divisiPenilaian) }}</b> · Anda wajib menilai <b>{{ $progresPenilaian['adab']['total'] }}</b> santri
+                        @if($periodePenilaian) · {{ $periodePenilaian->nama }}@endif
                     </div>
+
+                    @if(! $sesiPenilaianTerbuka)
+                        <div class="ds" style="color:#b45309; margin-bottom:8px;">
+                            Sesi isi rapor belum dibuka (atau sudah ditutup) oleh TU/Kepala Diniyah — pengisian belum bisa dilakukan.
+                        </div>
+                    @endif
+
                     @foreach($progresPenilaian as $p)
                         <div style="margin-bottom:10px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px; margin-bottom:4px;">
@@ -150,19 +162,17 @@
                             <div style="height:8px; border-radius:999px; background:#f1f5f9; overflow:hidden;">
                                 <div style="height:8px; border-radius:999px; background: {{ $p['kurang'] === 0 && $p['total'] > 0 ? '#10b981' : '#1e3a8a' }}; width: {{ $p['persen'] }}%;"></div>
                             </div>
-                            <div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">
-                                @if($p['sesi_id'])
-                                    <a class="sa-btn sa-btn-primary" style="height:30px; padding:0 12px; font-size:12px;" href="{{ route('penilaian.sesi', $p['sesi_id']) }}">
-                                        {{ $p['kurang'] === 0 ? 'Periksa lembar' : 'Lanjutkan menilai' }}
-                                    </a>
-                                @else
-                                    <a class="sa-btn sa-btn-primary" style="height:30px; padding:0 12px; font-size:12px;" href="{{ route('penilaian.isi', $p['jenis']) }}">
-                                        Mulai menilai
-                                    </a>
-                                @endif
-                            </div>
                         </div>
                     @endforeach
+
+                    @if($sesiPenilaianTerbuka)
+                        <div style="margin-top:6px;">
+                            <a class="sa-btn sa-btn-primary" style="height:30px; padding:0 12px; font-size:12px;" href="{{ route('penilaian.isi.rapor') }}">
+                                {{ collect($progresPenilaian)->sum('kurang') === 0 ? 'Periksa &amp; perbaiki' : 'Isi rapor sekarang' }}
+                            </a>
+                        </div>
+                    @endif
+
                     @if(collect($progresPenilaian)->sum('kurang') === 0)
                         <div class="ds" style="color:#047857;">Semua santri divisi Anda sudah dinilai. Terima kasih! 🎉</div>
                     @else

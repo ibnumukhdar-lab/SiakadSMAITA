@@ -202,7 +202,8 @@ class DashboardController extends Controller
                 ->count()
             : 0;
 
-        $periodeAktifPenilaian = PenilaianPeriode::aktifSekarang();
+        // 19 Sep 2026: pakai periode yang SESINYA TERBUKA (dibuka pengelola), bukan sekadar periode aktif.
+        $periodeAktifPenilaian = PenilaianPeriode::terbukaSekarang();
 
         $progresPenilaian = [];
         foreach (PenilaianSesi::JENIS as $jenis => $labelJenis) {
@@ -228,11 +229,13 @@ class DashboardController extends Controller
         }
 
         $divisiPenilaian = $divisiSaya;
+        $periodePenilaian = $periodeAktifPenilaian;
+        $sesiPenilaianTerbuka = (bool) ($periodeAktifPenilaian?->terbuka);
 
         return view('dashboard.musyrif', compact(
             'kamarBinaan', 'kamarIds', 'penghuni', 'totalPenghuni',
             'finalBulanIni', 'finalHariIni', 'draftHariIni', 'riwayat',
-            'progresPenilaian', 'divisiPenilaian'
+            'progresPenilaian', 'divisiPenilaian', 'periodePenilaian', 'sesiPenilaianTerbuka'
         ));
     }
 

@@ -19,9 +19,8 @@
             <span class="inline-flex items-center justify-center h-6 w-6 rounded-lg border text-[11.5px] font-black {{ \App\Models\PenilaianPengaturan::warnaPredikat($nilai['predikat']) }}">
                 {{ $nilai['predikat'] }}
             </span>
-            @if(! empty($nilai['ada_draft']))
-                <span class="text-[10px] font-bold text-amber-500" title="Masih ada lembar berstatus draft">draft</span>
-            @endif
+            {{-- Sejak 19 Sep 2026 status “draft/final” adalah status SESI (periode), bukan per lembar,
+                 jadi keterangan draft per baris dihapus: statusnya tampil di halaman Sesi & Progres. --}}
         </div>
         @unless($tanpaNama)
             <div class="text-[10px] text-slate-400 {{ $ringkas ? '' : 'text-center' }} mt-0.5">

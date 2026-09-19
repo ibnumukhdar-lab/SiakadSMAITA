@@ -107,32 +107,30 @@
         </details>
     </div>
 
-    {{-- ===== PENILAIAN ===== --}}
+    {{-- ===== PENILAIAN: RAPOR ADAB & KEASRAMaan (alur sederhana 19 Sep 2026) ===== --}}
     @can('buka-menu-penilaian')
         <div class="nav-grup">
             <div class="nav-grup-label">Penilaian</div>
             <details class="nav-sec" {{ $nilaiOn ? 'open' : '' }}>
                 <summary class="{{ $sum }} {{ $nilaiOn ? $sumAct : '' }}">
-                    <span class="{{ $ico }}">📋</span> Penilaian Karakter
+                    <span class="{{ $ico }}">📋</span> Rapor Adab &amp; Keasramaan
                     <svg class="chev ms-auto h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                     </svg>
                 </summary>
                 <div class="mt-0.5 space-y-0.5">
-                    <a href="{{ route('penilaian.kelengkapan') }}" class="{{ $sub }}">Kelengkapan Penilaian</a>
-                    <a href="{{ route('penilaian.rapot') }}" class="{{ $sub }}">Rapot Adab &amp; Keasramaan</a>
-                    <a href="{{ route('penilaian.rekap') }}" class="{{ $sub }}">Rekap Nilai</a>
+                    @if(auth()->user()->can('nilai-adab') || auth()->user()->can('nilai-keasramaan'))
+                        <a href="{{ route('penilaian.isi.rapor') }}" class="{{ $sub }}">Isi Rapor</a>
+                    @endif
 
-                    @can('nilai-adab')
-                        <a href="{{ route('penilaian.isi', 'adab') }}" class="{{ $sub }}">Penilaian Adab</a>
-                    @endcan
+                    <a href="{{ route('penilaian.cetak') }}" class="{{ $sub }}">Cetak Rapor</a>
 
-                    @can('nilai-keasramaan')
-                        <a href="{{ route('penilaian.isi', 'keasramaan') }}" class="{{ $sub }}">Penilaian Keasramaan</a>
+                    @can('kelola-sesi-rapor')
+                        <a href="{{ route('penilaian.sesi-rapor') }}" class="{{ $sub }}">Sesi &amp; Progres</a>
                     @endcan
 
                     @can('kelola-master-penilaian')
-                        <a href="{{ route('penilaian.master') }}" class="{{ $sub }}">Master Penilaian</a>
+                        <a href="{{ route('penilaian.master') }}" class="{{ $sub }}">Pertanyaan &amp; Ambang</a>
                     @endcan
                 </div>
             </details>

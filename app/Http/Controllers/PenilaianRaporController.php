@@ -10,6 +10,7 @@ use App\Models\PenilaianPeriode;
 use App\Models\PenilaianSesi;
 use App\Models\Siswa;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -118,6 +119,84 @@ class PenilaianRaporController extends Controller
         ]);
     }
 
+    /**
+     * Halaman "Cetak Rapor" (19 Sep 2026) — untuk musyrif/musyrifah: langsung kamar
+     * binaannya sendiri; untuk pengelola (TU/Kepsek/Kepala Diniyah/Super Admin): semua kamar.
+     * Tombolnya mengarah ke halaman cetak yang sudah ada (satu santri = satu halaman A4).
+     */
+    public function cetakPilih(Request $request)
+    {
+        $periodeList = PenilaianPeriode::orderByDesc('aktif')->orderByDesc('id')->get();
+        $periodeId = (int) $request->input('periode', 0);
+        if ($periodeId === 0) {
+            $periodeId = (int) ($periodeList->firstWhere('aktif', true)?->id ?? $periodeList->first()?->id ?? 0);
+        }
+
+        $semua = $this->bolehCetakSemua();
+
+        $kamarList = AsramaKamar::with('musyrif')
+            ->where('status', 'aktif')
+            ->when(! $semua, fn ($q) => $q->where('musyrif_id', Auth::id()))
+            ->orderBy('kategori')
+            ->orderBy('nama_kamar')
+            ->get();
+
+        $hasilAdab = $periodeId ? $this->tanpaAdmin(PenilaianSesi::hasilPeriode($periodeId, 'adab')) : [];
+        $hasilAsrama = $periodeId ? $this->tanpaAdmin(PenilaianSesi::hasilPeriode($periodeId, 'keasramaan')) : [];
+
+        $anggota = DB::table('asrama_members as m')
+            ->join('siswas as s', 's.id', '=', 'm.student_id')
+            ->whereIn('m.kamar_id', $kamarList->pluck('id')->all() ?: [0])
+            ->whereNull('m.tanggal_keluar')
+            ->where('s.status', 'Aktif')
+            ->whereNull('s.deleted_at')
+            ->orderBy('s.nama_lengkap')
+            ->select('m.kamar_id', 's.id', 's.nama_lengkap', 's.kelas', 's.nisn')
+            ->get();
+
+        $siswaIds = $anggota->pluck('id')->all();
+        $catatan = \App\Models\CatatanRaport::untukAdab($siswaIds, $periodeId);
+
+        $perKamar = $kamarList->map(function ($k) use ($anggota, $hasilAdab, $hasilAsrama, $catatan) {
+            $penghuni = $anggota->where('kamar_id', $k->id)->map(function ($s) use ($hasilAdab, $hasilAsrama, $catatan) {
+                $adab = $this->ringkas($hasilAdab[$s->id] ?? []);
+                $asrama = $this->ringkas($hasilAsrama[$s->id] ?? []);
+
+                return (object) [
+                    'id' => $s->id,
+                    'nama' => $s->nama_lengkap,
+                    'kelas' => $s->kelas,
+                    'nisn' => $s->nisn,
+                    'adab' => $adab['rata'],
+                    'adab_predikat' => $adab['predikat'],
+                    'asrama' => $asrama['rata'],
+                    'asrama_predikat' => $asrama['predikat'],
+                    'dinilai' => $adab['rata'] !== null && $asrama['rata'] !== null,
+                    'ada_catatan' => isset($catatan[$s->id]),
+                ];
+            })->values();
+
+            return (object) [
+                'id' => $k->id,
+                'nama' => $k->nama_kamar,
+                'kategori' => $k->kategori,
+                'musyrif' => optional($k->musyrif)->name,
+                'penghuni' => $penghuni,
+                'total' => $penghuni->count(),
+                'dinilai' => $penghuni->where('dinilai', true)->count(),
+            ];
+        });
+
+        return view('penilaian.cetak-pilih', [
+            'periodeList' => $periodeList,
+            'periodeId' => $periodeId,
+            'periode' => $periodeList->firstWhere('id', $periodeId),
+            'semuaKamar' => $semua,
+            'perKamar' => $perKamar,
+            'totalSantri' => $perKamar->sum('total'),
+        ]);
+    }
+
     /** Halaman cetak: satu siswa, atau seluruh penghuni satu kamar (satu halaman per anak). */
     public function cetak(Request $request)
     {
@@ -143,6 +222,8 @@ class PenilaianRaporController extends Controller
             $anggota = DB::table('asrama_members')->where('kamar_id', $kamarId)->whereNull('tanggal_keluar')->pluck('student_id')->all();
             $daftarSiswa = Siswa::whereIn('id', $anggota ?: [0])->where('status', 'Aktif')->orderBy('nama_lengkap')->get();
         }
+
+        $this->pastikanBolehCetak($kamarId, $daftarSiswa);
 
         $hasilAdab = $periodeId ? $this->tanpaAdmin(PenilaianSesi::hasilPeriode($periodeId, 'adab')) : [];
         $hasilAsrama = $periodeId ? $this->tanpaAdmin(PenilaianSesi::hasilPeriode($periodeId, 'keasramaan')) : [];
@@ -320,6 +401,59 @@ class PenilaianRaporController extends Controller
             'predikat_aspek' => PenilaianPengaturan::predikat($nilaiAspekSemua),
             'rata_aspek' => $nilaiAspekSemua === null ? null : round($nilaiAspekSemua / 100 * 5, 2),
         ]);
+    }
+
+    /**
+     * Siapa yang boleh mencetak rapor SEMUA kamar: Super Admin, Tata Usaha, Kepala Sekolah,
+     * Kepala Diniyah, dan pemegang izin `kelola-sesi-rapor`/`buka-menu-manajemen-kamar`.
+     */
+    private function bolehCetakSemua(): bool
+    {
+        $user = Auth::user();
+
+        if ($user->hasRole('Super Admin') || $user->hasRole('Tata Usaha')
+            || $user->hasRole('Kepala Sekolah') || $user->hasRole('Kepala Diniyah')) {
+            return true;
+        }
+
+        return $user->can('kelola-sesi-rapor') || $user->can('buka-menu-manajemen-kamar');
+    }
+
+    /**
+     * Penjagaan cetak (19 Sep 2026): musyrif/musyrifah HANYA boleh mencetak rapor santri
+     * pada kamar binaannya (kamar dengan musyrif_id = dia). Pengelola bebas.
+     */
+    private function pastikanBolehCetak(int $kamarId, $daftarSiswa): void
+    {
+        if ($this->bolehCetakSemua()) {
+            return;
+        }
+
+        $user = Auth::user();
+
+        abort_unless(
+            $user->can('nilai-adab') || $user->can('nilai-keasramaan'),
+            403,
+            'Anda tidak berhak mencetak rapor ini.'
+        );
+
+        $kamarBinaan = AsramaKamar::where('musyrif_id', $user->id)->where('status', 'aktif')->pluck('id')->all();
+
+        if ($kamarId > 0) {
+            abort_unless(in_array($kamarId, $kamarBinaan, true), 403, 'Kamar ini bukan kamar binaan Anda. Minta TU/Kepala Diniyah mencetaknya.');
+        }
+
+        if ($kamarId === 0 && $daftarSiswa->isNotEmpty()) {
+            $diLuar = DB::table('asrama_members')
+                ->whereIn('student_id', $daftarSiswa->pluck('id')->all())
+                ->whereNull('tanggal_keluar')
+                ->whereNotIn('kamar_id', $kamarBinaan ?: [0])
+                ->distinct()
+                ->pluck('student_id')
+                ->all();
+
+            abort_if($diLuar !== [], 403, 'Santri ini tidak berada di kamar binaan Anda. Minta TU/Kepala Diniyah mencetak rapornya.');
+        }
     }
 
     private function namaKepalaDiniyah(): ?string

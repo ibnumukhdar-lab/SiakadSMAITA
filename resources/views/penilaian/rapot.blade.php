@@ -248,7 +248,7 @@
                                 <br><b>⚠️ baru {{ count($adab['penilai']) }} dari {{ (int) ($d['wajib'] ?? 0) }} penilai wajib divisi — nilai belum lengkap</b>
                             @endif
                             @if($adab['ada_draft'] ?? false)
-                                <br>⚠️ masih ada lembar yang belum difinalisasi
+                                <br>⚠️ sesi isi rapor belum ditutup — nilai masih dapat berubah
                             @endif
                         </div>
                     @else
@@ -271,7 +271,7 @@
                                 <br><b>⚠️ baru {{ count($asrama['penilai']) }} dari {{ (int) ($d['wajib'] ?? 0) }} penilai wajib divisi — nilai belum lengkap</b>
                             @endif
                             @if($asrama['ada_draft'] ?? false)
-                                <br>⚠️ masih ada lembar yang belum difinalisasi
+                                <br>⚠️ sesi isi rapor belum ditutup — nilai masih dapat berubah
                             @endif
                         </div>
                     @else
