@@ -53,10 +53,19 @@ class PenilaianPeriode extends Model
         return ($aktif && $aktif->dibuka_pada === null && $aktif->ditutup_pada === null) ? $aktif : null;
     }
 
-    /** Buka sesi isi rapor + kembalikan seluruh lembar periode ini ke status draft. */
+    /**
+     * Buka sesi isi rapor + kembalikan seluruh lembar periode ini ke status draft.
+     * Hanya SATU sesi yang boleh terbuka: periode lain yang masih terbuka ditutup dulu
+     * (mis. Semester 1 ditutup otomatis saat Semester 2 dibuka). Periode yang dibuka
+     * sekaligus dijadikan periode berjalan (`aktif`) supaya default rapor/rekap ikut pindah.
+     */
     public function buka(int $olehUserId): void
     {
         DB::transaction(function () use ($olehUserId) {
+            foreach (static::query()->where('terbuka', true)->where('id', '!=', $this->id)->get() as $lain) {
+                $lain->tutup($olehUserId);
+            }
+
             $this->update([
                 'terbuka' => true,
                 'dibuka_oleh' => $olehUserId,
@@ -66,6 +75,8 @@ class PenilaianPeriode extends Model
             PenilaianSesi::where('periode_id', $this->id)
                 ->update(['status' => 'draft', 'difinalkan_pada' => null]);
         });
+
+        $this->jadikanAktif();
     }
 
     /** Tutup sesi isi rapor + kunci seluruh lembar periode ini (status final). */

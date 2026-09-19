@@ -25,21 +25,35 @@
                 <div class="bg-red-100 border-l-4 border-red-500 text-red-800 p-3.5 mb-3 rounded shadow-sm text-sm">{{ session('error') }}</div>
             @endif
 
-            {{-- ===== PILIH PERIODE ===== --}}
+            {{-- ===== PILIH PERIODE (semester) ===== --}}
             <form action="{{ route('penilaian.sesi-rapor') }}" method="GET"
-                  class="bg-white border border-slate-200 rounded-2xl shadow-sm p-3.5 mb-3 flex flex-col sm:flex-row sm:items-end gap-2.5">
-                <div class="flex-1">
-                    <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Periode / sesi</label>
-                    <select name="periode" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 focus:border-blue-500 outline-none">
-                        @foreach($periodeList as $p)
-                            @php
-                                $tandaPeriode = ($p->aktif ? ' — periode aktif' : '') . ($p->terbuka ? ' — sesi terbuka' : '');
-                            @endphp
-                            <option value="{{ $p->id }}" @selected(($periode->id ?? 0) === $p->id)>{{ $p->nama }}{{ $tandaPeriode }}</option>
-                        @endforeach
-                    </select>
+                  class="bg-white border border-slate-200 rounded-2xl shadow-sm p-3.5 mb-3">
+                <div class="flex flex-col sm:flex-row sm:items-end gap-2.5">
+                    <div class="flex-1">
+                        <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-1">Periode / semester</label>
+                        <select name="periode" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[13px] text-slate-700 focus:border-blue-500 outline-none">
+                            @foreach($periodeList as $p)
+                                @php
+                                    $tandaPeriode = ($p->aktif ? ' — periode berjalan' : '') . ($p->terbuka ? ' — sesi terbuka' : '');
+                                @endphp
+                                <option value="{{ $p->id }}" @selected(($periode->id ?? 0) === $p->id)>{{ $p->nama }}{{ $tandaPeriode }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="h-10 px-4 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[12.5px] font-semibold transition">Tampilkan</button>
+
+                    @can('kelola-master-penilaian')
+                        <a href="{{ route('penilaian.master', ['tab' => 'periode']) }}"
+                           class="h-10 px-3.5 inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 text-[12.5px] font-semibold transition whitespace-nowrap">
+                            ➕ Tambah periode (semester baru)
+                        </a>
+                    @endcan
                 </div>
-                <button type="submit" class="h-10 px-4 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[12.5px] font-semibold transition">Tampilkan</button>
+                <p class="text-[11.5px] text-slate-400 mt-2">
+                    “Semester 1 / Semester 2” adalah <strong>periode</strong> yang dibuat di menu
+                    <span class="font-semibold">Pertanyaan &amp; Ambang → tab 📅 Periode</span> (nama bebas, mis. “Semester 2 2026/2027”).
+                    Satu periode = satu sesi rapor; hanya satu sesi yang bisa terbuka, dan membuka periode baru otomatis menutup yang lama.
+                </p>
             </form>
 
             @if(! $periode)

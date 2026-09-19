@@ -1,11 +1,20 @@
+@php
+    // Bisa dibuka langsung ke tab tertentu: ?tab=periode (dipakai tautan dari halaman Sesi & Progres)
+    $tabAwal = in_array(request()->input('tab'), ['pertanyaan', 'periode', 'ambang'], true)
+        ? request()->input('tab')
+        : 'pertanyaan';
+@endphp
+
 <x-app-layout>
-    <div class="py-5 sm:py-8" x-data="{ tab: 'pertanyaan' }">
+    <div class="py-5 sm:py-8" x-data="{ tab: '{{ $tabAwal }}' }">
         <div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-4">
                 <div>
-                    <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">⚙️ Master Penilaian Karakter</h3>
-                    <p class="text-[13px] text-slate-500 mt-0.5">Pertanyaan kuesioner, periode penilaian, dan ambang predikat</p>
+                    <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">⚙️ Pertanyaan &amp; Ambang</h3>
+                    <p class="text-[13px] text-slate-500 mt-0.5">
+                        Pertanyaan kuesioner, <strong>periode/semester penilaian</strong> (tab 📅 Periode), dan ambang predikat.
+                    </p>
                 </div>
                 <a href="{{ route('penilaian.rekap') }}"
                    class="self-start inline-flex items-center justify-center h-10 px-3.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-[12.5px] font-semibold hover:bg-slate-50 transition">📊 Rekap Nilai</a>
@@ -151,7 +160,11 @@
             {{-- ===================== PERIODE ===================== --}}
             <div x-show="tab === 'periode'" x-cloak>
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 mb-3">
-                    <h4 class="text-[14px] font-bold text-slate-800 mb-3">📅 Tambah periode penilaian</h4>
+                    <h4 class="text-[14px] font-bold text-slate-800 mb-1">📅 Tambah periode penilaian</h4>
+                    <p class="text-[12px] text-slate-500 mb-3">
+                        Di sinilah <strong>semester</strong> dibuat: satu periode = satu semester (mis. “Semester 1 2026/2027”, “Semester 2 2026/2027”).
+                        Periode yang dibuat akan muncul di halaman <strong>Sesi &amp; Progres</strong>, Isi Rapor, Cetak Rapor, dan Rekap Nilai.
+                    </p>
                     <form action="{{ route('penilaian.master.periodeStore') }}" method="POST" class="grid grid-cols-2 sm:grid-cols-12 gap-2.5">
                         @csrf
                         <div class="col-span-2 sm:col-span-4">
