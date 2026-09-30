@@ -39,14 +39,17 @@ ssh -n -o ConnectTimeout=20 -o BatchMode=yes nizhom '
   find app resources routes database config public -type f \
     -not -path "public/build/*" -not -name ".manifest-deploy.md5" \
     -exec md5sum {} + | sort -k2 > /tmp/manifest-sekarang.md5
+  awk "{print \$2}" .manifest-deploy.md5 | sort > /tmp/nama-lama.txt
+  awk "{print \$2}" /tmp/manifest-sekarang.md5 | sort > /tmp/nama-baru.txt
   echo "   ── berkas BARU di server (tidak ada di catatan deploy terakhir) ──"
-  comm -13 <(awk "{print \$2}" .manifest-deploy.md5) <(awk "{print \$2}" /tmp/manifest-sekarang.md5)
+  comm -13 /tmp/nama-lama.txt /tmp/nama-baru.txt
   echo "   ── berkas BERUBAH di server sejak deploy terakhir ──"
-  join -1 2 -2 2 -o 1.2,1.1,2.1 <(sort -k2 .manifest-deploy.md5) <(sort -k2 /tmp/manifest-sekarang.md5) \
-    | awk "\$2 != \$3 {print \$1}"
+  sort -k2 .manifest-deploy.md5 > /tmp/md5-lama.txt
+  sort -k2 /tmp/manifest-sekarang.md5 > /tmp/md5-baru.txt
+  join -1 2 -2 2 -o 1.2,1.1,2.1 /tmp/md5-lama.txt /tmp/md5-baru.txt | awk "\$2 != \$3 {print \$1}"
 ' | tee /tmp/siakad-selisih.txt
 
-if grep -qE "^ +(app|resources|routes|database|config|public)/" /tmp/siakad-selisih.txt; then
+if grep -qE "^(app|resources|routes|database|config|public)/" /tmp/siakad-selisih.txt; then
   if [ "${IZINKAN_TIMPA:-0}" = "1" ]; then
     echo "   !! ADA PERUBAHAN DI SERVER — IZINKAN_TIMPA=1 → tetap dilanjutkan (berkas itu akan ditimpa; salinan lama tetap ada di _old_<ts>)."
     cp /tmp/siakad-selisih.txt "/tmp/siakad-selisih-$(date +%Y%m%d_%H%M%S).txt"
