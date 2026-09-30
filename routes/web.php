@@ -59,6 +59,7 @@ Route::get('/ortu/rapor', [App\Http\Controllers\PortalOrtuController::class, 'ra
 // Rapor resmi yang sudah ada dipanggil kembali untuk anak sendiri (lihat PortalOrtuController).
 Route::get('/ortu/rapor/student-root', [App\Http\Controllers\PortalOrtuController::class, 'raporStudentRoot'])->name('ortu.rapor.sr');
 Route::get('/ortu/rapor/adab', [App\Http\Controllers\PortalOrtuController::class, 'raporAdab'])->name('ortu.rapor.adab');
+Route::get('/ortu/rapor/diniyah', [App\Http\Controllers\PortalOrtuController::class, 'raporDiniyah'])->name('ortu.rapor.diniyah');
 Route::post('/ortu/keluar', [App\Http\Controllers\PortalOrtuController::class, 'keluar'])->name('ortu.keluar');
 
 // --- RUTE VERIFIKASI ARSIP PUBLIK ---
@@ -402,6 +403,49 @@ Route::middleware(['auth'])->group(function () {
     // Pengawas (Super Admin / Kepala Diniyah / Kepala Sekolah / Tata Usaha) boleh mencetak semua santri.
     Route::get('student-root/rapot', [App\Http\Controllers\SrRaporController::class, 'index'])->name('sr.rapot');
     Route::get('student-root/rapot/cetak', [App\Http\Controllers\SrRaporController::class, 'cetak'])->name('sr.rapot.cetak');
+
+    // =================================================================
+    //  MODUL DINIYAH (1 Okt 2026) — mata pelajaran, nilai, absensi, rapor Arab
+    //  Kepala Diniyah: menetapkan mapel & periode.
+    //  Musyrif/musyrifah: mengisi nilai & absensi (hanya kamar binaannya).
+    //  Guru pengampu: boleh mengoreksi nilai mapel yang diampu.
+    // =================================================================
+    Route::middleware('permission:buka-menu-diniyah')->group(function () {
+        // Mata pelajaran — hanya Kepala Diniyah (izin kelola-mapel-diniyah)
+        Route::middleware('permission:kelola-mapel-diniyah')->group(function () {
+            Route::get('diniyah/mapel', [App\Http\Controllers\DiniyahMapelController::class, 'index'])->name('diniyah.mapel');
+            Route::post('diniyah/mapel', [App\Http\Controllers\DiniyahMapelController::class, 'store'])->name('diniyah.mapel.simpan');
+            Route::put('diniyah/mapel/{id}', [App\Http\Controllers\DiniyahMapelController::class, 'update'])->where('id', '[0-9]+')->name('diniyah.mapel.perbarui');
+            Route::patch('diniyah/mapel/{id}/status', [App\Http\Controllers\DiniyahMapelController::class, 'status'])->where('id', '[0-9]+')->name('diniyah.mapel.status');
+        });
+
+        // Periode (semester) — Kepala Diniyah
+        Route::middleware('permission:kelola-periode-diniyah')->group(function () {
+            Route::get('diniyah/periode', [App\Http\Controllers\DiniyahPeriodeController::class, 'index'])->name('diniyah.periode');
+            Route::post('diniyah/periode', [App\Http\Controllers\DiniyahPeriodeController::class, 'store'])->name('diniyah.periode.simpan');
+            Route::patch('diniyah/periode/{id}/buka', [App\Http\Controllers\DiniyahPeriodeController::class, 'buka'])->where('id', '[0-9]+')->name('diniyah.periode.buka');
+            Route::patch('diniyah/periode/{id}/tutup', [App\Http\Controllers\DiniyahPeriodeController::class, 'tutup'])->where('id', '[0-9]+')->name('diniyah.periode.tutup');
+        });
+
+        // Nilai — musyrif/musyrifah mengisi, guru pengampu mengoreksi
+        Route::middleware('permission:nilai-diniyah')->group(function () {
+            Route::get('diniyah/nilai', [App\Http\Controllers\DiniyahNilaiController::class, 'index'])->name('diniyah.nilai');
+            Route::post('diniyah/nilai', [App\Http\Controllers\DiniyahNilaiController::class, 'simpan'])->name('diniyah.nilai.simpan');
+        });
+
+        // Absensi — per pertemuan kajian
+        Route::middleware('permission:absensi-diniyah')->group(function () {
+            Route::get('diniyah/absensi', [App\Http\Controllers\DiniyahAbsensiController::class, 'index'])->name('diniyah.absensi');
+            Route::post('diniyah/absensi/pertemuan', [App\Http\Controllers\DiniyahAbsensiController::class, 'simpanPertemuan'])->name('diniyah.absensi.pertemuan');
+            Route::post('diniyah/absensi', [App\Http\Controllers\DiniyahAbsensiController::class, 'simpanAbsensi'])->name('diniyah.absensi.simpan');
+        });
+
+        // Rapor berbahasa Arab — semua pemegang buka-menu-diniyah boleh melihat;
+        // cetak dibatasi izin cetak-rapor-diniyah (cakupan santri diatur controller).
+        Route::get('diniyah/rapor', [App\Http\Controllers\DiniyahRaporController::class, 'index'])->name('diniyah.rapor');
+        Route::get('diniyah/rapor/cetak', [App\Http\Controllers\DiniyahRaporController::class, 'cetak'])
+            ->middleware('permission:cetak-rapor-diniyah')->name('diniyah.rapor.cetak');
+    });
 
     // Halaman 2: Dashboard Karakter (Rekap Poin)
     Route::get('student-root/dashboard', [App\Http\Controllers\SrDashboardController::class, 'index'])->name('sr.dashboard');

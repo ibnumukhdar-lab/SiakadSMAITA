@@ -78,11 +78,23 @@
         <a href="{{ route('ortu.rapor.adab') }}" target="_blank" class="inline-block mt-3 px-4 py-2 rounded-lg bg-gray-800 text-white text-xs font-black">Buka Rapot Adab &amp; Keasramaan</a>
     </div>
 
-    {{-- Rapor Diniyah (menyusul) --}}
+    {{-- Rapor Diniyah --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-        <p class="text-sm font-black text-gray-800">Rapor Diniyah</p>
-        <p class="text-xs font-semibold text-gray-600 mt-0.5">Kulliyyat Diiniyyah Al-Arafah.</p>
-        <p class="text-xs font-bold text-gray-500 mt-1">Belum tersedia — menyusul setelah modul penilaian diniyah dipasang di SIAKAD.</p>
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <p class="text-sm font-black text-gray-800">Rapor Diniyah <span class="text-xs font-black text-emerald-700">(berbahasa Arab)</span></p>
+                <p class="text-xs font-semibold text-gray-600 mt-0.5">
+                    Nilai kajian diniyah per mata pelajaran + rekap kehadiran (hadir, sakit, izin, tanpa keterangan).
+                </p>
+                @if(! $adaNilaiDiniyah)
+                    <p class="text-xs font-bold text-amber-700 mt-1">Nilai diniyah ananda belum diisi musyrif/musyrifah pada periode ini.</p>
+                @endif
+                @if(! $adaAbsenDiniyah)
+                    <p class="text-xs font-bold text-amber-700 mt-1">Absensi kajian diniyah belum tercatat.</p>
+                @endif
+            </div>
+        </div>
+        <a href="{{ route('ortu.rapor.diniyah') }}" target="_blank" class="inline-block mt-3 px-4 py-2 rounded-lg bg-emerald-700 text-white text-xs font-black">Buka Rapor Diniyah</a>
     </div>
 
     <div class="pb-6">

@@ -13,6 +13,7 @@
     $arsipOn = request()->routeIs('arsip.*');
     $siswaOn = request()->routeIs('siswa.*');
     $nilaiOn = request()->routeIs('penilaian.*');
+    $dinOn   = request()->routeIs('diniyah.*');
     $kelasOn = request()->routeIs('kelas.*');
     $tahunOn = request()->routeIs('tahun-ajaran.*');
     $kenaikanOn = request()->routeIs('kenaikan.*');
@@ -132,6 +133,40 @@
                     @can('kelola-master-penilaian')
                         <a href="{{ route('penilaian.master') }}" class="{{ $sub }}">Pertanyaan &amp; Ambang</a>
                     @endcan
+                </div>
+            </details>
+        </div>
+    @endcan
+
+    {{-- ===== DINIYAH: mata pelajaran, nilai, absensi, rapor berbahasa Arab (1 Okt 2026) ===== --}}
+    @can('buka-menu-diniyah')
+        <div class="nav-grup">
+            <div class="nav-grup-label">Diniyah</div>
+            <details class="nav-sec" {{ $dinOn ? 'open' : '' }}>
+                <summary class="{{ $sum }} {{ $dinOn ? $sumAct : '' }}">
+                    <span class="{{ $ico }}">🕌</span> Kulliyyat Diiniyyah
+                    <svg class="chev ms-auto h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </summary>
+                <div class="mt-0.5 space-y-0.5">
+                    @can('kelola-mapel-diniyah')
+                        <a href="{{ route('diniyah.mapel') }}" class="{{ $sub }}">Mata Pelajaran</a>
+                    @endcan
+
+                    @can('nilai-diniyah')
+                        <a href="{{ route('diniyah.nilai') }}" class="{{ $sub }}">Input Nilai</a>
+                    @endcan
+
+                    @can('absensi-diniyah')
+                        <a href="{{ route('diniyah.absensi') }}" class="{{ $sub }}">Absensi Kajian</a>
+                    @endcan
+
+                    @can('kelola-periode-diniyah')
+                        <a href="{{ route('diniyah.periode') }}" class="{{ $sub }}">Periode &amp; Sesi</a>
+                    @endcan
+
+                    <a href="{{ route('diniyah.rapor') }}" class="{{ $sub }}">Rapor Diniyah</a>
                 </div>
             </details>
         </div>

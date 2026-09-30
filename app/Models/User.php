@@ -76,6 +76,28 @@ class User extends Authenticatable
     }
 
     /**
+     * DINIYAH (1 Okt 2026) — apakah pengguna ini boleh menilai/melihat SELURUH
+     * kelas diniyah, bukan hanya santri kamar binaannya?
+     * Yang boleh: Kepala Diniyah, Super Admin, Kepala Sekolah, Tata Usaha, dan
+     * siapa pun yang memegang izin `kelola-mapel-diniyah` / `kelola-periode-diniyah`.
+     * Musyrif/musyrifah TIDAK termasuk — mereka hanya santri kamar binaannya.
+     */
+    public function bolehSemuaDiniyah(): bool
+    {
+        if ($this->hasAnyRole(['Super Admin', 'Kepala Diniyah', 'Kepala Sekolah', 'Tata Usaha'])) {
+            return true;
+        }
+
+        return $this->can('kelola-mapel-diniyah') || $this->can('kelola-periode-diniyah');
+    }
+
+    /** Apakah pengguna ini guru pengampu salah satu mapel diniyah? */
+    public function mapelDiniyahDiampu()
+    {
+        return \App\Models\DiniyahMapel::where('guru_id', $this->id)->orderBy('urutan')->get();
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

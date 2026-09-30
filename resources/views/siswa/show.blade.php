@@ -72,6 +72,9 @@
                     <div class="flex-1 text-center sm:text-left">
                         <h3 class="text-2xl font-black text-slate-800">{{ $siswa->nama_lengkap }}</h3>
                         <p class="text-slate-600 font-bold text-sm">NISN: {{ $siswa->nisn }} | NIS: {{ $siswa->nis ?? '-' }}</p>
+                        @if($siswa->nama_arab)
+                            <p class="text-slate-700 mt-1" style="font-family: 'Amiri', serif; direction: rtl; font-size: 20px;">{{ $siswa->nama_arab }}</p>
+                        @endif
                         <div class="mt-2 flex gap-2 justify-center sm:justify-start">
                             <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full border border-blue-200 print:border-blue-500">Kelas {{ $siswa->kelas ?? '-' }}</span>
                             <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full border border-green-200 print:border-green-500">Angkatan {{ $siswa->thn_masuk ?? '-' }}</span>

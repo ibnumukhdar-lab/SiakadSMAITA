@@ -16,7 +16,7 @@ class SiswaController extends Controller
      * (mis. deleted_at / thn_lulus) bisa disetel dari browser.
      */
     private const KOLOM_ISI = [
-        'nama_lengkap', 'nisn', 'nis', 'ttl', 'tempat_lahir', 'tanggal_lahir', 'jk', 'status', 'kelas',
+        'nama_lengkap', 'nama_arab', 'nisn', 'nis', 'ttl', 'tempat_lahir', 'tanggal_lahir', 'jk', 'status', 'kelas',
         'thn_masuk', 'thn_lulus', 'tahun_ajaran',
         'nama_ayah', 'status_ayah', 'pekerjaan_ayah',
         'nama_ibu', 'status_ibu', 'pekerjaan_ibu',
@@ -159,7 +159,7 @@ class SiswaController extends Controller
             fwrite($keluar, "\xEF\xBB\xBF"); // BOM supaya Excel membaca UTF-8 dengan benar
 
             fputcsv($keluar, [
-                'NISN', 'NIS', 'Nama Lengkap', 'Jenis Kelamin', 'Kelas', 'Status',
+                'NISN', 'NIS', 'Nama Lengkap', 'Nama Arab', 'Jenis Kelamin', 'Kelas', 'Status',
                 'Tempat Lahir', 'Tanggal Lahir', 'Tempat Tgl Lahir (lama)', 'Tahun Masuk', 'Tahun Ajaran', 'No HP Ortu',
                 'Nama Ayah', 'Pekerjaan Ayah', 'Nama Ibu', 'Pekerjaan Ibu',
                 'Nama Wali', 'No HP Wali', 'Alamat', 'Tinggal Bersama', 'Jarak (km)',
@@ -168,7 +168,7 @@ class SiswaController extends Controller
 
             foreach ($daftar as $s) {
                 fputcsv($keluar, [
-                    $s->nisn, $s->nis, $s->nama_lengkap, $s->jk, $s->kelas, $s->status,
+                    $s->nisn, $s->nis, $s->nama_lengkap, $s->nama_arab, $s->jk, $s->kelas, $s->status,
                     $s->tempat_lahir, $s->tanggal_lahir ? $s->tanggal_lahir->format('d/m/Y') : '', $s->ttl,
                     $s->thn_masuk, $s->tahun_ajaran, $s->hp_ortu,
                     $s->nama_ayah, $s->pekerjaan_ayah, $s->nama_ibu, $s->pekerjaan_ibu,
@@ -421,6 +421,7 @@ class SiswaController extends Controller
 
             $siapSimpan[$nisn] = [
                 'nama_lengkap'    => $nama,
+                'nama_arab'       => $this->rapikanTeks($ambil('nama_arab')),
                 'nis'             => $nis,
                 'nisn'            => $nisn,
                 'ttl'             => \App\Support\SandiOrtu::rangkai($tempatLahir, $tanggalLahir) ?: $ambil('ttl'),
@@ -556,14 +557,14 @@ class SiswaController extends Controller
             $file = fopen('php://output', 'w');
             fwrite($file, "\xEF\xBB\xBF");
             fputcsv($file, [
-                'Nama Lengkap', 'NIS', 'NISN', 'Tempat Lahir', 'Tanggal Lahir', 'Jenis Kelamin', 'Status', 'Kelas',
+                'Nama Lengkap', 'Nama Arab', 'NIS', 'NISN', 'Tempat Lahir', 'Tanggal Lahir', 'Jenis Kelamin', 'Status', 'Kelas',
                 'Tahun Masuk', 'No HP Utama Ortu', 'Nama Ayah', 'Status Ayah', 'Pekerjaan Ayah',
                 'Nama Ibu', 'Status Ibu', 'Pekerjaan Ibu', 'Nama Wali', 'Pekerjaan Wali', 'No HP Wali',
                 'No KIP PKH', 'Tinggal Bersama', 'Jarak km', 'Transportasi', 'Asal Sekolah',
                 'Alamat Lengkap', 'Riwayat Penyakit', 'Tahun Ajaran',
             ]);
             fputcsv($file, [
-                'Ahmad Dahlan', '23241001', '0051234567', 'Sampit', '12/05/2008', 'Laki-laki', 'Aktif', 'X',
+                'Ahmad Dahlan', 'أحمد دحلان', '23241001', '0051234567', 'Sampit', '12/05/2008', 'Laki-laki', 'Aktif', 'X',
                 '2024', '08123456789', 'Budi', 'Masih Hidup', 'Wiraswasta',
                 'Siti', 'Masih Hidup', 'Ibu Rumah Tangga', '', '', '',
                 '', 'Orang Tua', '2.5', 'Sepeda Motor', 'SMPN 1 Sampit',
@@ -580,6 +581,7 @@ class SiswaController extends Controller
     {
         $alias = [
             'nama_lengkap'    => ['namalengkap', 'nama', 'namasiswa', 'namapesertadidik'],
+            'nama_arab'       => ['namaarab', 'nama arab', 'namabahasaarab', 'alasmaularab', 'arab'],
             'nis'             => ['nis', 'nislokal', 'nomorinduk'],
             'nisn'            => ['nisn', 'nomornisn', 'nisnnasional'],
             'ttl'             => ['tempatTGLLahir', 'tempattgllahir', 'ttl', 'tempat tanggallahir', 'tempat/tgl lahir'],
@@ -638,7 +640,7 @@ class SiswaController extends Controller
 
         // Judul tidak dikenali (mis. berkas tanpa baris judul) → pakai urutan bawaan
         if (count($peta) < 3) {
-            $urutan = ['nama_lengkap', 'nis', 'nisn', 'ttl', 'jk', 'status', 'kelas', 'thn_masuk', 'hp_ortu',
+            $urutan = ['nama_lengkap', 'nama_arab', 'nis', 'nisn', 'ttl', 'jk', 'status', 'kelas', 'thn_masuk', 'hp_ortu',
                 'nama_ayah', 'status_ayah', 'pekerjaan_ayah', 'nama_ibu', 'status_ibu', 'pekerjaan_ibu',
                 'nama_wali', 'pekerjaan_wali', 'hp_wali', 'kesejahteraan', 'tinggal_bersama', 'jarak',
                 'transportasi', 'asal_sekolah', 'alamat', 'penyakit', 'tahun_ajaran'];
@@ -804,6 +806,7 @@ class SiswaController extends Controller
             }],
             'nis' => 'nullable|string|max:30',
             'ttl' => 'nullable|string|max:150',
+            'nama_arab' => 'nullable|string|max:150',
             'tempat_lahir' => 'nullable|string|max:100',
             'tanggal_lahir' => 'nullable|date',
             'jk' => 'nullable|in:Laki-laki,Perempuan',

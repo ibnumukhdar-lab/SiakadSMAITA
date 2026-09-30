@@ -136,6 +136,8 @@ class PortalOrtuController extends Controller
                 ?? PenilaianPeriode::orderByDesc('aktif')->orderByDesc('nama')->first(),
             'adaNilaiAdab'  => DB::table('penilaian_jawaban')->where('siswa_id', $siswa->id)->exists(),
             'adaPoinSr'     => DB::table('sr_point_entries')->where('student_id', $siswa->id)->whereNull('deleted_at')->exists(),
+            'adaNilaiDiniyah' => DB::table('diniyah_nilai')->where('siswa_id', $siswa->id)->whereNotNull('nilai')->exists(),
+            'adaAbsenDiniyah' => DB::table('diniyah_absensi')->where('siswa_id', $siswa->id)->exists(),
         ]);
     }
 
@@ -167,6 +169,20 @@ class PortalOrtuController extends Controller
         $request->merge(['kembaliKe' => route('ortu.rapor'), 'modeOrtu' => true]);
 
         return $raporAdab->halamanRapor($request, $periodeId, (int) $siswa->id);
+    }
+
+    /** Rapor Diniyah berbahasa Arab resmi (anak sendiri) — 1 Okt 2026. */
+    public function raporDiniyah(Request $request, DiniyahRaporController $raporDiniyah)
+    {
+        $siswa = $this->siswaPortal($request);
+
+        if (! $siswa) {
+            return redirect()->route('ortu.masuk');
+        }
+
+        $request->merge(['kembaliKe' => route('ortu.rapor'), 'modeOrtu' => true]);
+
+        return $raporDiniyah->halamanRapor($request, (int) $siswa->id);
     }
 
     /** Semester berjalan (s1 = Juli–Desember, s2 = Januari–Juni). */

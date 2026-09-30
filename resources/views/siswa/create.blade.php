@@ -44,6 +44,11 @@
                             <input type="text" name="nama_lengkap" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" required>
                         </div>
                         <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Nama dalam Tulisan Arab</label>
+                            <input type="text" name="nama_arab" value="{{ old('nama_arab') }}" dir="rtl" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="mis. أحمد دحلان">
+                            <p class="text-[11px] text-slate-400 mt-1">Transliterasi untuk rapor diniyah. Boleh dikosongkan.</p>
+                        </div>
+                        <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">NISN *</label>
                             <input type="text" name="nisn" value="{{ old('nisn') }}" inputmode="numeric" maxlength="20" placeholder="10 digit angka" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" required>
                             <p class="text-[11px] text-slate-400 mt-1">Wajib 10 digit angka. Spasi / karakter tak terlihat otomatis dibuang.</p>
