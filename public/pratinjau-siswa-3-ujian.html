@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Mengerjakan — Evaluasi Triwulan I 2026/2027</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#f5f7fb;font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;color:#0f172a;padding-bottom:96px}
+  .kepala{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#152a47,#1e3a8a);color:#fff;padding:14px 16px}
+  .kepala-atas{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .kepala h1{margin:0;font-size:15px;font-weight:800;line-height:1.3}
+  .kepala small{display:block;font-weight:500;opacity:.8;font-size:11.5px;margin-top:2px}
+  .jam{background:rgba(255,255,255,.14);border-radius:10px;padding:7px 12px;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .jam.waspada{background:#b91c1c}
+  .bar{height:5px;background:rgba(255,255,255,.2);margin-top:12px;border-radius:999px;overflow:hidden}
+  .bar span{display:block;height:100%;width:0;background:#facc15;transition:width .25s}
+  .bungkus{max-width:680px;margin:0 auto;padding:16px}
+  .kartu{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px}
+  .nomor{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8}
+  .petunjuk{font-size:13.5px;color:#475569;margin:10px 0 4px;line-height:1.6}
+  .tanya{font-size:26px;font-weight:800;color:#1e3a8a;margin:14px 0 4px;line-height:1.4;word-break:break-word}
+  .tanya.arab{font-size:30px;direction:rtl;text-align:right;font-family:'Noto Naskh Arabic','Amiri',serif}
+  .sub{font-size:13px;color:#64748b;font-style:italic}
+  .pilihan{display:grid;gap:10px;margin-top:16px}
+  .pilih{border:1.5px solid #e2e8f0;background:#fff;border-radius:12px;padding:14px;font-size:15.5px;text-align:left;cursor:pointer;font-weight:600;color:#0f172a}
+  .pilih:hover{border-color:#93c5fd}
+  .pilih.aktif{border-color:#1e3a8a;background:#eff6ff;color:#1e3a8a}
+  .huruf,.kata{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .huruf button,.kata button{border:1.5px solid #dbe4f0;background:#fff;border-radius:10px;padding:10px 14px;font-size:16px;font-weight:700;cursor:pointer;color:#0f172a}
+  .huruf button:disabled{opacity:.3;cursor:default}
+  .jawab{border:1.5px dashed #cbd5e1;border-radius:12px;min-height:52px;padding:12px;margin-top:16px;font-size:16px;font-weight:700;color:#1e3a8a;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+  .jawab.kosong{color:#cbd5e1;font-weight:500;font-size:14px}
+  .balik{border:0;background:#f1f5f9;color:#475569;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer;margin-top:12px}
+  .audio{border:0;background:#1e3a8a;color:#fff;border-radius:12px;padding:14px 20px;font-size:15px;font-weight:800;cursor:pointer;margin-top:14px}
+  .kendali{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #e2e8f0;padding:12px 16px;display:flex;gap:10px;align-items:center}
+  .kendali .bungkus-kecil{max-width:680px;margin:0 auto;display:flex;gap:10px;width:100%}
+  .kendali button{flex:1;border:0;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer}
+  .kendali .kedua{background:#f1f5f9;color:#334155}
+  .kendali .utama{background:#1e3a8a;color:#fff}
+  .kendali .utama.selesai{background:#15803d}
+  .daftar-nomor{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .daftar-nomor button{width:32px;height:32px;border-radius:9px;border:1px solid #e2e8f0;background:#fff;font-size:12.5px;font-weight:700;color:#64748b;cursor:pointer}
+  .daftar-nomor button.terjawab{background:#dcfce7;border-color:#86efac;color:#166534}
+  .daftar-nomor button.kini{border-color:#1e3a8a;color:#1e3a8a;box-shadow:0 0 0 2px #bfdbfe}
+  .peringatan{background:#fef3c7;border:1px solid #fde68a;color:#92400e;border-radius:12px;padding:12px 14px;font-size:13px;margin-bottom:12px;line-height:1.6}
+</style>
+</head>
+<body><div style="position:sticky;top:0;z-index:99;background:#facc15;color:#713f12;font:700 12.5px system-ui;padding:9px 14px;text-align:center">PRATINJAU — tampilan asli halaman siswa. Tombol tidak berfungsi di pratinjau ini.</div>
+
+<div class="kepala">
+  <div class="kepala-atas">
+    <h1>Evaluasi Triwulan I 2026/2027 — Bahasa Inggris<small>Ahmad Fauzan (contoh) · X · NIS 000000</small></h1>
+    <div class="jam" id="jam">25:00</div>
+  </div>
+  <div class="bar"><span id="bar"></span></div>
+</div>
+
+<div class="bungkus">
+  <div class="peringatan" id="peringatan" style="display:none">
+    Jawabanmu tersimpan otomatis di server setiap kali diisi. Kalau koneksi terputus, muat ulang halaman ini — jawaban yang sudah tersimpan tidak hilang.
+  </div>
+
+  <div class="kartu">
+    <div class="nomor">Soal <span id="noKini">1</span> dari 8</div>
+    <div id="wadahSoal"></div>
+  </div>
+
+  <div class="kartu" style="margin-top:14px">
+    <div class="nomor">Peta soal</div>
+    <div class="daftar-nomor" id="peta"></div>
+  </div>
+</div>
+
+<form method="post" action="https://siakad.smaitarafah.sch.id/evaluasi-bee/9xbcrys7ci8r/selesai" id="formSelesai">
+  <input type="hidden" name="_token" value="m2S6nK9eEyQoMpuN1jWc1dp5nuaoemF7vZpKUYOh" autocomplete="off">  <div id="kiriman"></div>
+</form>
+
+<div class="kendali">
+  <div class="bungkus-kecil">
+    <button type="button" class="kedua" id="tombolBalik">← Sebelumnya</button>
+    <button type="button" class="utama" id="tombolMaju">Berikutnya →</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  const SOAL = [{"mode":"pg_arti","petunjuk":"Pilih arti bahasa Inggris yang tepat untuk kata Arab berikut.","tanya":"\u062e\u0650\u0632\u064e\u0627\u0646\u064e\u0629\u064c","tanya_arab":true,"pilihan":["Pen","Table","Wardrobe","School uniform"],"nomor":1},{"mode":"pg_arti","petunjuk":"Pilih arti bahasa Inggris yang tepat untuk kata Arab berikut.","tanya":"\u0645\u0650\u0631\u0652\u0648\u064e\u062d\u064e\u0629\u064c","tanya_arab":true,"pilihan":["Review","Fan","In the library","Lesson schedule"],"nomor":2},{"mode":"susun_kata","petunjuk":"Susun kata-kata berikut menjadi kalimat yang benar.","tanya":"Susun kalimat","kata":["I","soft","sleep","on","a","mattress"],"jumlah_kata":6,"nomor":3},{"mode":"pg_arti","petunjuk":"Pilih arti bahasa Inggris yang tepat untuk kata Arab berikut.","tanya":"\u0627\u0644\u0632\u0651\u0650\u064a\u0651\u064f \u0627\u0644\u0652\u0645\u064e\u062f\u0652\u0631\u064e\u0633\u0650\u064a\u0651\u064f","tanya_arab":true,"pilihan":["Clothes hanger","make the bed","Chair","School uniform"],"nomor":4},{"mode":"pg_arti","petunjuk":"Pilih arti bahasa Inggris yang tepat untuk kata Arab berikut.","tanya":"\u0643\u064f\u0631\u0652\u0633\u0650\u064a\u0651\u064c","tanya_arab":true,"pilihan":["Notebook","Wardrobe","Chair","Finish"],"nomor":5},{"mode":"susun_huruf","petunjuk":"Susun huruf-huruf ini menjadi kata yang benar.","tanya":"\u0642\u064e\u0644\u064e\u0645\u064f \u0631\u064e\u0635\u064e\u0627\u0635\u064d","huruf":["l","n","i","c","P","e"],"nomor":6},{"mode":"susun_kata","petunjuk":"Susun kata-kata berikut menjadi kalimat yang benar.","tanya":"Susun kalimat","kata":["class","schedule","before","lesson","the","I","check"],"jumlah_kata":7,"nomor":7},{"mode":"dengar","petunjuk":"Dengarkan audio, lalu pilih kata yang tepat.","tanya":"\ud83c\udfa7 Audio","audio":"bee_audios\/UjdU38iqC3aYHYN8PGoxNDOhrDBNhNE2baQdNDA0.webm","petunjuk_kalimat":"I read a book every day","pilihan":["Book","To read","change clothes","School uniform"],"nomor":8}];
+  const KODE = "9xbcrys7ci8r";
+  const SIMPAN = "https:\/\/siakad.smaitarafah.sch.id\/evaluasi-bee\/9xbcrys7ci8r\/simpan";
+  const TOKEN = "m2S6nK9eEyQoMpuN1jWc1dp5nuaoemF7vZpKUYOh";
+  const AUDIO = "https:\/\/siakad.smaitarafah.sch.id\/berkas";
+  let jawaban = {};
+  let kini = 0;
+  let sisa = 1500;
+  let selesai = false;
+
+  const wadah = document.getElementById('wadahSoal');
+  const jam = document.getElementById('jam');
+  const bar = document.getElementById('bar');
+  const peta = document.getElementById('peta');
+  const noKini = document.getElementById('noKini');
+
+  document.getElementById('peringatan').style.display = 'block';
+
+  function simpanJawaban(nomor, nilai) {
+    jawaban[nomor] = nilai;
+    fetch(SIMPAN, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': TOKEN, 'Accept': 'application/json'},
+      body: JSON.stringify({nomor: nomor, jawaban: nilai})
+    }).catch(function () {});
+    gambarPeta();
+  }
+
+  function terjawab(n) {
+    return jawaban[n] !== undefined && String(jawaban[n]).trim() !== '';
+  }
+
+  function gambarPeta() {
+    peta.innerHTML = '';
+    SOAL.forEach(function (s, i) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = s.nomor;
+      if (terjawab(s.nomor)) { b.className = 'terjawab'; }
+      if (i === kini) { b.className += ' kini'; }
+      b.addEventListener('click', function () { kini = i; gambar(); });
+      peta.appendChild(b);
+    });
+    const total = SOAL.length;
+    const sudah = SOAL.filter(function (s) { return terjawab(s.nomor); }).length;
+    bar.style.width = (total ? (sudah / total * 100) : 0) + '%';
+  }
+
+  function tombolPilihan(teks, nilai, aktif) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pilih' + (aktif ? ' aktif' : '');
+    b.textContent = teks;
+    b.addEventListener('click', function () { simpanJawaban(SOAL[kini].nomor, nilai); gambar(); });
+    return b;
+  }
+
+  function gambar() {
+    const s = SOAL[kini];
+    noKini.textContent = kini + 1;
+    wadah.innerHTML = '';
+
+    const p = document.createElement('div');
+    p.className = 'petunjuk';
+    p.textContent = s.petunjuk || '';
+    wadah.appendChild(p);
+
+    // ---- soal mendengar: audio dulu
+    if (s.mode === 'dengar' && s.audio) {
+      const putar = document.createElement('button');
+      putar.type = 'button';
+      putar.className = 'audio';
+      putar.textContent = '▶ Putar audio';
+      putar.addEventListener('click', function () {
+        const a = new Audio(AUDIO + '/' + s.audio);
+        a.play();
+      });
+      wadah.appendChild(putar);
+    }
+
+    // ---- pertanyaan
+    const t = document.createElement('div');
+    t.className = 'tanya' + (s.tanya_arab ? ' arab' : '');
+    t.textContent = s.tanya || '';
+    wadah.appendChild(t);
+
+    if (s.petunjuk_kalimat) {
+      const sub = document.createElement('div');
+      sub.className = 'sub';
+      sub.textContent = s.petunjuk_kalimat;
+      wadah.appendChild(sub);
+    }
+
+    const nilaiKini = jawaban[s.nomor] || '';
+
+    // ---- pilihan ganda / mendengar
+    if (s.pilihan) {
+      const kotak = document.createElement('div');
+      kotak.className = 'pilihan';
+      if (s.pilihan_arab) { kotak.setAttribute('dir', 'rtl'); }
+      s.pilihan.forEach(function (pilih) {
+        kotak.appendChild(tombolPilihan(pilih, pilih, String(nilaiKini) === String(pilih)));
+      });
+      wadah.appendChild(kotak);
+      gambarPeta();
+      return;
+    }
+
+    // ---- susun huruf
+    if (s.huruf) {
+      const susun = document.createElement('div');
+      susun.className = 'jawab' + (nilaiKini ? '' : ' kosong');
+      susun.textContent = nilaiKini || 'Ketuk huruf di bawah…';
+      wadah.appendChild(susun);
+
+      const kotak = document.createElement('div');
+      kotak.className = 'huruf';
+      s.huruf.forEach(function (h, idx) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = h;
+        b.disabled = nilaiKini.toLowerCase().split('').includes(h) && nilaiKini.toLowerCase().split('').filter(function (x) { return x === h; }).length > s.huruf.slice(0, idx).filter(function (x) { return x === h; }).length;
+        b.addEventListener('click', function () {
+          simpanJawaban(s.nomor, (String(jawaban[s.nomor] || '') + h));
+          gambar();
+        });
+        kotak.appendChild(b);
+      });
+      wadah.appendChild(kotak);
+
+      const balik = document.createElement('button');
+      balik.type = 'button';
+      balik.className = 'balik';
+      balik.textContent = '⌫ Hapus satu huruf';
+      balik.addEventListener('click', function () {
+        const a = String(jawaban[s.nomor] || '');
+        simpanJawaban(s.nomor, a.slice(0, -1));
+        gambar();
+      });
+      wadah.appendChild(balik);
+      gambarPeta();
+      return;
+    }
+
+    // ---- susun kata
+    if (s.kata) {
+      const susun = document.createElement('div');
+      susun.className = 'jawab' + (nilaiKini ? '' : ' kosong');
+      if (s.kata_arab) { susun.setAttribute('dir', 'rtl'); susun.style.fontSize = '20px'; }
+      susun.textContent = nilaiKini || (s.kata_arab ? 'Ketuk kata Arab sesuai urutan…' : 'Ketuk kata sesuai urutan…');
+      wadah.appendChild(susun);
+
+      const kotak = document.createElement('div');
+      kotak.className = 'kata';
+      if (s.kata_arab) { kotak.setAttribute('dir', 'rtl'); }
+      s.kata.forEach(function (k, idx) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = k;
+        b.addEventListener('click', function () {
+          const a = String(jawaban[s.nomor] || '').trim();
+          simpanJawaban(s.nomor, a ? a + ' ' + k : k);
+          gambar();
+        });
+        kotak.appendChild(b);
+      });
+      wadah.appendChild(kotak);
+
+      const balik = document.createElement('button');
+      balik.type = 'button';
+      balik.className = 'balik';
+      balik.textContent = '⌫ Hapus kata terakhir';
+      balik.addEventListener('click', function () {
+        const bagian = String(jawaban[s.nomor] || '').trim().split(/\s+/);
+        bagian.pop();
+        simpanJawaban(s.nomor, bagian.join(' '));
+        gambar();
+      });
+      wadah.appendChild(balik);
+      gambarPeta();
+    }
+  }
+
+  document.getElementById('tombolMaju').addEventListener('click', function () {
+    if (kini < SOAL.length - 1) { kini++; gambar(); } else { kirimSelesai(); }
+  });
+  document.getElementById('tombolBalik').addEventListener('click', function () {
+    if (kini > 0) { kini--; gambar(); }
+  });
+
+  function detik() {
+    const m = Math.floor(sisa / 60), s = sisa % 60;
+    jam.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    if (sisa <= 120) { jam.className = 'jam waspada'; }
+  }
+
+  const pengatur = setInterval(function () {
+    sisa--;
+    detik();
+    if (sisa <= 0) { clearInterval(pengatur); kirimSelesai(); }
+  }, 1000);
+  detik();
+
+  function kirimSelesai() {
+    if (selesai) { return; }
+    const belum = SOAL.filter(function (s) { return !terjawab(s.nomor); }).length;
+    if (belum > 0 && sisa > 0) {
+      if (!confirm('Masih ada ' + belum + ' soal yang belum dijawab. Kirim sekarang?')) { return; }
+    }
+    selesai = true;
+    const wadahKirim = document.getElementById('kiriman');
+    wadahKirim.innerHTML = '';
+    Object.keys(jawaban).forEach(function (n) {
+      const inp = document.createElement('input');
+      inp.type = 'hidden';
+      inp.name = 'jawaban[' + n + ']';
+      inp.value = jawaban[n];
+      wadahKirim.appendChild(inp);
+    });
+    document.getElementById('formSelesai').submit();
+  }
+
+  const tombolMaju = document.getElementById('tombolMaju');
+  tombolMaju.addEventListener('click', function () {
+    if (kini === SOAL.length - 1) { tombolMaju.textContent = 'Selesai & kirim ✓'; tombolMaju.className = 'utama selesai'; }
+  });
+
+  gambar();
+})();
+</script>
+</body>
+</html>

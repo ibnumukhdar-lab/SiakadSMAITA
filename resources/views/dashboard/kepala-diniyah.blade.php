@@ -27,7 +27,9 @@
                 @can('buka-menu-manajemen-kamar')
                 <a href="{{ route('asrama.kamar.index') }}" class="sa-btn sa-btn-ghost">🏢 Manajemen Kamar</a>
                 @endcan
+@hasanyrole('Super Admin|Guru|Kepala Diniyah|Kepala Sekolah|Musyrif|Tata Usaha')
                 <a href="{{ route('sr.dashboard') }}" class="sa-btn sa-btn-ghost">📊 Dashboard Karakter</a>
+@endhasanyrole
             </div>
         </div>
 
@@ -72,7 +74,9 @@
                 <div class="sa-card">
                     <div class="sa-card-h">
                         <h2>🌱 Karakter · Bulan Ini</h2>
+@hasanyrole('Super Admin|Guru|Kepala Diniyah|Kepala Sekolah|Musyrif|Tata Usaha')
                         <a class="lnk" href="{{ route('sr.dashboard') }}">Rekap →</a>
+@endhasanyrole
                     </div>
                     <div class="sa-card-b">
                         <div class="sa-row">

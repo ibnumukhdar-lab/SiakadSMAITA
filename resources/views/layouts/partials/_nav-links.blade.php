@@ -68,6 +68,9 @@
     @endif
 
     {{-- ===== KARAKTER / STUDENT ROOT ===== --}}
+    {{-- Hanya tampil untuk yang memang punya wewenang Student Root — supaya role di luar itu
+         (mis. Operator BEE Smart) tidak melihat menu yang bukan haknya. --}}
+    @hasanyrole('Super Admin|Guru|Kepala Diniyah|Kepala Sekolah|Musyrif|Tata Usaha')
     <div class="nav-grup">
         <div class="nav-grup-label">Karakter</div>
         <details class="nav-sec" {{ $srOn ? 'open' : '' }}>
@@ -107,6 +110,7 @@
             </div>
         </details>
     </div>
+    @endhasanyrole
 
     {{-- ===== PENILAIAN: RAPOR ADAB & KEASRAMaan (alur sederhana 19 Sep 2026) ===== --}}
     @can('buka-menu-penilaian')
@@ -172,7 +176,7 @@
         </div>
     @endcan
 
-    {{-- ===== ASRAMA ===== --}}
+        {{-- ===== ASRAMA ===== --}}
     @can('buka-menu-asrama')
         <div class="nav-grup">
             <div class="nav-grup-label">Asrama</div>
@@ -209,6 +213,7 @@
     {{-- ===== BAHASA ===== --}}
     <div class="nav-grup">
         <div class="nav-grup-label">Bahasa</div>
+        @can('buka-menu-bee-smart')
         <details class="nav-sec" {{ $beeOn ? 'open' : '' }}>
             <summary class="{{ $sum }} {{ $beeOn ? $sumAct : '' }}">
                 <span class="{{ $ico }}">🐝</span> BEE Smart
@@ -218,6 +223,10 @@
             </summary>
             <div class="mt-0.5 space-y-0.5">
                 <a href="{{ route('bee.index') }}" class="{{ $sub }}">Dashboard Modul</a>
+                <a href="{{ route('bee.laporan') }}" class="{{ $sub }}">Laporan Klaim Siswa</a>
+                  @can('kelola-bee-smart')
+                  <a href="{{ route('bee.evaluasi') }}" class="{{ $sub }}">Evaluasi Triwulan &amp; Semester</a>
+                  @endcan
                 <a href="{{ route('bee.classroom') }}" target="_blank" class="{{ $sub }}">
                     Mode Kelas (TV) <span class="ms-auto text-[10px] font-bold text-slate-400">↗</span>
                 </a>
@@ -226,6 +235,7 @@
                 </a>
             </div>
         </details>
+          @endcan
     </div>
 
     {{-- ===== ADMINISTRASI ===== --}}

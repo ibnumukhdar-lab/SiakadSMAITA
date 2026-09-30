@@ -13,8 +13,8 @@
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
                 {{ $pengaturan->nama_sekolah ?? 'SIAKAD Sekolah' }}
             </h1>
-            <p class="text-gray-500 font-semibold tracking-widest uppercase text-xs mt-2">
-                {{ $pengaturan->motto ?? 'SISTEM INFORMASI' }}
+            <p class="text-gray-500 font-semibold tracking-wide text-[11px] sm:text-xs mt-2 leading-relaxed mx-auto px-1">
+                Sistem Informasi Akademik, Karakter, Asrama, dan Diniyah
             </p>
         </div>
 

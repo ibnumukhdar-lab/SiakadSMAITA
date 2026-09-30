@@ -390,6 +390,11 @@ class BeeSmartController extends Controller
         }
 
         $week = BeeWeek::findOrFail($id);
+
+        // Modul harus berstatus aktif: klaim lewat URL modul arsip/draft tidak dilayani.
+        if ($week->status !== 'aktif') {
+            return response()->json(['success' => false, 'message' => 'Modul ini belum dibuka atau sudah ditutup, jadi poinnya belum bisa diklaim.'], 403);
+        }
         $catatan = "Menyelesaikan Kuis Bee Smart: " . $week->judul;
 
         // 1. Pastikan master kriteria "Kuis Bee Smart" tersedia (dibuat sekali, poin +1).
@@ -434,6 +439,7 @@ class BeeSmartController extends Controller
             'student_id'        => $siswa->id,
             'group_id'          => $groupId,
             'criteria_id'       => $kriteria->id,
+              'bee_week_id'       => $week->id,
             'poin'              => 1,
             'catatan'           => $catatan,
             'input_by'          => null,
@@ -443,5 +449,124 @@ class BeeSmartController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => 'Selamat! +1 Poin Karakter berhasil ditambahkan ke akunmu!']);
+    }
+
+    /** Laporan klaim poin BEE Smart: siapa sudah dan belum klaim, per modul & kelas. */
+    public function laporan(Request $request)
+    {
+        return view('bee-smart.laporan', $this->dataLaporan($request));
+    }
+
+    /** Unduh laporan yang sama sebagai CSV (BOM agar rapi di Excel). */
+    public function laporanEkspor(Request $request)
+    {
+        $data = $this->dataLaporan($request);
+
+        $keluar = "\xEF\xBB\xBF";
+        $keluar .= 'Modul;'.($data['mingguTerpilih']->judul ?? '-')."\n";
+        $keluar .= 'Status modul;'.($data['mingguTerpilih']->status ?? '-')."\n";
+        $keluar .= 'Kelas;'.($data['kelasDipilih'] !== '' ? $data['kelasDipilih'] : 'Semua')."\n";
+        $keluar .= 'Rekap;'.$data['ringkas']['sudah'].' sudah / '.$data['ringkas']['belum'].' belum dari '.$data['ringkas']['siswa'].' siswa ('.$data['ringkas']['persen'].'%)'."\n\n";
+        $keluar .= "Nama;Kelas;Status;Waktu klaim\n";
+        foreach ($data['daftar'] as $s) {
+            $keluar .= $this->selCsv($s['nama']).';'.$this->selCsv($s['kelas']).';'
+                .($s['sudah'] ? 'Sudah klaim' : 'Belum klaim').';'.$this->selCsv((string) $s['waktu'])."\n";
+        }
+
+        $nama = 'laporan-bee-smart-'.($data['mingguTerpilih']->id ?? 'kosong').'-'.date('Ymd-His').'.csv';
+
+        return response($keluar, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$nama.'"',
+        ]);
+    }
+
+    private function selCsv($nilai): string
+    {
+        $nilai = str_replace('"', '""', (string) $nilai);
+
+        return (str_contains($nilai, ';') || str_contains($nilai, '"')) ? '"'.$nilai.'"' : $nilai;
+    }
+
+    /** Data laporan: modul terpilih, daftar siswa, status klaim, dan rekap per kelas. */
+    private function dataLaporan(Request $request): array
+    {
+        $minggu = BeeWeek::orderByRaw("FIELD(status, 'aktif', 'draft', 'arsip')")
+            ->orderByDesc('tanggal_mulai')->orderByDesc('id')->get();
+
+        $idModul = (int) $request->query('modul');
+        $mingguTerpilih = $idModul ? $minggu->firstWhere('id', $idModul) : null;
+        if (! $mingguTerpilih) {
+            $mingguTerpilih = $minggu->firstWhere('status', 'aktif') ?: $minggu->first();
+        }
+
+        $dasar = fn () => \App\Models\Siswa::query()
+            ->whereNull('deleted_at')
+            ->where('status', 'Aktif');
+
+        $kelasSemua = $dasar()->orderBy('kelas')->pluck('kelas')->filter()->unique()->values();
+        $kelasDipilih = trim((string) $request->query('kelas', ''));
+
+        $siswa = $dasar()
+            ->when($kelasDipilih !== '', fn ($q) => $q->where('kelas', $kelasDipilih))
+            ->orderBy('kelas')->orderBy('nama_lengkap')
+            ->get(['id', 'nama_lengkap', 'kelas']);
+
+        // Klaim dikenali dari kolom bee_week_id (baru) ATAU teks catatan lama.
+        $klaim = collect();
+        if ($mingguTerpilih) {
+            $klaim = \Illuminate\Support\Facades\DB::table('sr_point_entries')
+                ->whereNull('deleted_at')
+                ->where('poin', '>', 0)
+                ->where(function ($q) use ($mingguTerpilih) {
+                    $q->where('bee_week_id', $mingguTerpilih->id)
+                      ->orWhere('catatan', 'Menyelesaikan Kuis Bee Smart: '.$mingguTerpilih->judul);
+                })
+                ->orderBy('created_at')
+                ->get(['student_id', 'created_at'])
+                ->keyBy('student_id');
+        }
+
+        $daftar = $siswa->map(function ($s) use ($klaim) {
+            $k = $klaim->get($s->id);
+
+            return [
+                'nama' => (string) $s->nama_lengkap,
+                'kelas' => (string) ($s->kelas ?: '-'),
+                'sudah' => (bool) $k,
+                'waktu' => $k ? \Illuminate\Support\Carbon::parse($k->created_at)->translatedFormat('d M Y, H:i') : null,
+            ];
+        })->all();
+
+        $perKelas = collect($daftar)->groupBy('kelas')->map(function ($baris, $kelas) {
+            $sudah = collect($baris)->where('sudah', true)->count();
+            $jml = count($baris);
+
+            return [
+                'kelas' => $kelas,
+                'siswa' => $jml,
+                'sudah' => $sudah,
+                'belum' => $jml - $sudah,
+                'persen' => $jml ? (int) round($sudah / $jml * 100) : 0,
+            ];
+        })->values()->all();
+
+        $jmlSiswa = count($daftar);
+        $jmlSudah = collect($daftar)->where('sudah', true)->count();
+
+        return [
+            'minggu' => $minggu,
+            'mingguTerpilih' => $mingguTerpilih,
+            'kelasSemua' => $kelasSemua,
+            'kelasDipilih' => $kelasDipilih,
+            'daftar' => $daftar,
+            'perKelas' => $perKelas,
+            'ringkas' => [
+                'siswa' => $jmlSiswa,
+                'sudah' => $jmlSudah,
+                'belum' => $jmlSiswa - $jmlSudah,
+                'persen' => $jmlSiswa ? (int) round($jmlSudah / $jmlSiswa * 100) : 0,
+            ],
+        ];
     }
 }

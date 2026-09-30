@@ -2,6 +2,8 @@
     $pengaturan = \App\Models\Pengaturan::first();
     $nama = $pengaturan->nama_sekolah ?? 'SMA IT Arafah';
     $motto = $pengaturan->motto ?? 'Cerdas & Beradab';
+    // Kepanjangan resmi SIAKAD (30 Sep 2026), dipisah 2 baris supaya tidak terpotong
+    $kepanjanganSia = ['Sistem Informasi Akademik,', 'Karakter, Asrama, dan Diniyah'];
     $logoUrl = ($pengaturan && $pengaturan->logo_path) ? url('berkas/' . $pengaturan->logo_path) : null;
 @endphp
 <style>
@@ -93,7 +95,7 @@
                     @endif
                     <div class="leading-tight min-w-0">
                         <div class="font-black text-white text-[13px] uppercase tracking-tight truncate">{{ $nama }}</div>
-                        <div class="text-[10px] text-blue-200 font-bold tracking-widest uppercase truncate">{{ $motto }}</div>
+                        <div class="text-[9px] sm:text-[10px] text-blue-200 font-semibold tracking-wide leading-tight">{{ $kepanjanganSia[0] }}<br>{{ $kepanjanganSia[1] }}</div>
                     </div>
                 </a>
             </div>
@@ -119,7 +121,7 @@
                 @endif
                 <div class="leading-tight min-w-0">
                     <div class="font-black text-white text-[12px] uppercase tracking-tight truncate">{{ $nama }}</div>
-                    <div class="text-[9px] text-blue-200 font-bold tracking-widest uppercase truncate">{{ $motto }}</div>
+                    <div class="text-[9px] sm:text-[10px] text-blue-200 font-semibold tracking-wide leading-tight">{{ $kepanjanganSia[0] }}<br>{{ $kepanjanganSia[1] }}</div>
                 </div>
             </div>
             <label for="navDrawer" class="text-white/90 hover:text-white p-1 rounded-lg hover:bg-white/10 text-xl leading-none cursor-pointer" role="button" aria-label="Tutup">&times;</label>
@@ -159,7 +161,7 @@
         @endif
         <div class="leading-tight min-w-0">
             <div class="font-black text-white text-[15px] uppercase tracking-tight truncate">{{ $nama }}</div>
-            <div class="text-[10px] text-blue-200 font-bold tracking-[0.18em] uppercase truncate">{{ $motto }}</div>
+            <div class="text-[10px] text-blue-200 font-semibold tracking-wide leading-tight">{{ $kepanjanganSia[0] }}<br>{{ $kepanjanganSia[1] }}</div>
         </div>
     </a>
 

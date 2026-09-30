@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pratinjau — Sesi Evaluasi per Kelas</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#f5f7fb;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#0f172a;padding-bottom:60px}
+  .kepala{background:linear-gradient(135deg,#152a47,#1e3a8a);color:#fff;padding:26px 18px}
+  .bungkus{max-width:920px;margin:0 auto;padding:0 16px}
+  .kepala h1{margin:0;font-size:19px;font-weight:800}
+  .kepala p{margin:8px 0 0;font-size:13px;color:rgba(255,255,255,.85);line-height:1.6}
+  .tanda{display:inline-block;background:#facc15;color:#713f12;font-size:11px;font-weight:800;border-radius:999px;padding:4px 11px;margin-bottom:12px}
+  h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin:30px 0 12px}
+  .kartu{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px;margin-bottom:14px}
+  .kartu h3{margin:0 0 4px;font-size:15.5px;color:#1e3a8a;font-weight:800}
+  .kartu .ket{font-size:12.5px;color:#64748b;line-height:1.6}
+  label{display:block;font-size:12px;font-weight:700;color:#334155;margin:14px 0 6px}
+  input,select{width:100%;height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font-size:14px;color:#0f172a;background:#fff}
+  .baris2{display:grid;gap:12px}
+  @media(min-width:640px){.baris2{grid-template-columns:1fr 1fr}}
+  .baris3{display:grid;gap:12px}
+  @media(min-width:640px){.baris3{grid-template-columns:1fr 1fr 1fr}}
+  .pilih-kelas{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .pil-kelas{border:1.5px solid #cbd5e1;border-radius:11px;padding:9px 16px;font-size:13.5px;font-weight:700;color:#334155;background:#fff}
+  .pil-kelas.aktif{border-color:#1e3a8a;background:#eef4ff;color:#1e3a8a}
+  .catatan{background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:12px 14px;font-size:12.5px;line-height:1.65;color:#78350f;margin-top:14px}
+  .catatan.aman{background:#f0fdf4;border-color:#bbf7d0;color:#14532d}
+  .catatan.biru{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
+  .baris-modul{display:flex;align-items:center;gap:11px;padding:11px 13px;border-bottom:1px solid #f1f5f9;font-size:13.5px}
+  .baris-modul:last-child{border-bottom:0}
+  .baris-modul .kotak{width:18px;height:18px;border-radius:5px;border:2px solid #94a3b8;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}
+  .baris-modul .kotak.on{background:#1e3a8a;border-color:#1e3a8a}
+  .baris-modul .nama{font-weight:600}
+  .baris-modul .siap{margin-left:auto;font-size:11.5px;color:#64748b;white-space:nowrap}
+  .baris-modul.abai .nama{color:#94a3b8;font-weight:500}
+  .tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;padding:9px 10px;border-bottom:1px solid #e2e8f0}
+  .tbl td{padding:11px 10px;border-bottom:1px solid #f1f5f9}
+  .tbl tr:last-child td{border-bottom:0}
+  .angka{font-weight:800;color:#1e3a8a}
+  .lulus{color:#15803d;font-weight:700}
+  .belum{color:#b45309;font-weight:700}
+  .tombol{border:0;border-radius:11px;background:#1e3a8a;color:#fff;font-weight:800;font-size:14px;padding:13px 20px;cursor:pointer;width:100%}
+  .tombol.kecil{width:auto;padding:8px 14px;font-size:12.5px;background:#eef2f7;color:#334155}
+  .dua-sesi{display:grid;gap:10px;margin-top:12px}
+  @media(min-width:560px){.dua-sesi{grid-template-columns:1fr 1fr}}
+  .kartu-sesi{border:1.5px solid #e2e8f0;border-radius:13px;padding:13px}
+  .kartu-sesi.ing{border-color:#c7d7f5;background:#f5f9ff}
+  .kartu-sesi.arb{border-color:#f0dfc0;background:#fffaf0}
+  .kartu-sesi .nama{font-size:15px;font-weight:800}
+  .kartu-sesi .ket{font-size:12px;color:#64748b;margin-top:5px;line-height:1.6}
+  .sekat{margin-top:26px;border-top:1px dashed #cbd5e1;padding-top:22px}
+  .kecil{font-size:12px;color:#94a3b8;line-height:1.65;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="kepala">
+  <div class="bungkus">
+    <span class="tanda">PRATINJAU — belum menyentuh aplikasi</span>
+    <h1>🐝 Sesi Evaluasi per Kelas</h1>
+    <p>Usulan rancangan: satu sesi = satu kelas + daftar week yang dicentang. Kelas siswa dibaca dari Data Siswa, jadi ikut menyesuaikan sendiri kalau kelasnya diubah.</p>
+  </div>
+</div>
+
+<div class="bungkus">
+
+  <h2>1 · Panel guru — membuat sesi untuk kelas X</h2>
+  <div class="kartu">
+    <h3>Buat sesi evaluasi</h3>
+    <div class="ket">Sesi ini hanya muncul untuk siswa kelas yang dipilih.</div>
+
+    <label>Kelas yang diujikan</label>
+    <div class="pilih-kelas">
+      <span class="pil-kelas aktif">Kelas X</span>
+      <span class="pil-kelas">Kelas XI</span>
+      <span class="pil-kelas">Kelas XII</span>
+      <span class="pil-kelas">Semua kelas</span>
+    </div>
+    <p class="kecil">Daftar kelas ini dibaca dari kolom kelas pada Data Siswa — kelas baru yang kamu tambahkan di sana otomatis muncul di sini.</p>
+
+    <div class="baris2">
+      <div>
+        <label>Judul sesi</label>
+        <input value="Evaluasi Triwulan I 2026/2027 — Kelas X">
+      </div>
+      <div>
+        <label>Jenis</label>
+        <select><option>Triwulan</option><option>Semester</option></select>
+      </div>
+    </div>
+
+    <div class="baris3">
+      <div><label>Mulai</label><input value="06 Okt 2026"></div>
+      <div><label>Selesai</label><input value="10 Okt 2026"></div>
+      <div><label>Jumlah soal</label><input value="30"></div>
+    </div>
+    <div class="baris3">
+      <div><label>Durasi (menit)</label><input value="25"></div>
+      <div><label>KKM</label><input value="70"></div>
+      <div><label>Maks percobaan</label><input value="2"></div>
+    </div>
+
+    <label style="margin-top:18px">Materi yang diujikan — centang week-nya</label>
+    <div class="baris2" style="align-items:center;margin-bottom:10px">
+      <span class="kecil" style="margin:0">Tercentang otomatis dari judul week yang memuat “grade X”. Tinggal sesuaikan.</span>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="tombol kecil">Centang otomatis</button>
+        <button class="tombol kecil">Kosongkan</button>
+      </div>
+    </div>
+    <div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
+      <div class="baris-modul"><span class="kotak on">✓</span><span class="nama">5th Week grade X</span><span class="siap">10 kosakata · lengkap ✓</span></div>
+      <div class="baris-modul"><span class="kotak on">✓</span><span class="nama">6th Week grade X</span><span class="siap">10 kosakata · lengkap ✓</span></div>
+      <div class="baris-modul"><span class="kotak on">✓</span><span class="nama">7th Week grade X</span><span class="siap">10 kosakata · lengkap ✓</span></div>
+      <div class="baris-modul abai"><span class="kotak"></span><span class="nama">8th Week grade X</span><span class="siap">10 kosakata · 10 belum lengkap</span></div>
+      <div class="baris-modul abai"><span class="kotak"></span><span class="nama">5th Week grade XI and XII</span><span class="siap">milik kelas lain</span></div>
+      <div class="baris-modul abai"><span class="kotak"></span><span class="nama">6th Week grade XI and XII</span><span class="siap">milik kelas lain</span></div>
+    </div>
+    <div class="catatan">⚠️ <strong>8th Week grade X</strong> belum bisa diujikan — padanan Arabnya belum lengkap. Lengkapi dulu di Bank Kosakata.</div>
+    <div class="catatan biru">Tercentang: <strong>3 week · 30 kosakata siap</strong> → cukup untuk 30 soal (sesi Inggris &amp; sesi Arab masing-masing 30 soal).</div>
+
+    <label style="margin-top:18px"><input type="checkbox" style="width:16px;height:16px;vertical-align:-2px"> Aktif — bisa dikerjakan siswa kelas X</label>
+    <div style="margin-top:16px"><button class="tombol">Simpan sesi</button></div>
+  </div>
+
+  <h2>2 · Yang dilihat siswa (kelas dibaca dari Data Siswa)</h2>
+  <div class="kartu">
+    <h3>Rafi — kelas X, NIS 624185</h3>
+    <div class="ket">Setelah memasukkan NIS, hanya sesi kelas X yang muncul. Dua sesi bahasa tetap terpisah, urutan bebas.</div>
+    <div class="dua-sesi">
+      <div class="kartu-sesi ing">
+        <div class="nama">🇬🇧 Bahasa Inggris</div>
+        <div class="ket">Evaluasi Triwulan I 2026/2027 — Kelas X<br>Materi: 5th, 6th, 7th Week grade X</div>
+        <div style="margin-top:10px"><span style="background:#dcfce7;color:#166534;font-size:11px;font-weight:800;border-radius:999px;padding:3px 10px">Lulus · nilai 87</span></div>
+      </div>
+      <div class="kartu-sesi arb">
+        <div class="nama">🇸🇦 Bahasa Arab</div>
+        <div class="ket">Evaluasi Triwulan I 2026/2027 — Kelas X<br>Materi: 5th, 6th, 7th Week grade X</div>
+        <div style="margin-top:10px"><span style="background:#eef2f7;color:#475569;font-size:11px;font-weight:800;border-radius:999px;padding:3px 10px">Belum dikerjakan</span></div>
+      </div>
+    </div>
+    <div class="catatan aman" style="margin-top:14px">Siswa kelas XI yang memasukkan NIS akan melihat sesi kelas XI — bukan sesi ini. Tidak ada lagi daftar sesi campur aduk.</div>
+  </div>
+
+  <h2>3 · Laporan per sesi</h2>
+  <div class="kartu">
+    <h3>Laporan sesi — Evaluasi Triwulan I · Kelas X</h3>
+    <table class="tbl" style="margin-top:10px">
+      <tr><th>Sesi</th><th>Kelas</th><th>Peserta</th><th>Lulus</th><th>Rata-rata</th><th>Materi</th></tr>
+      <tr><td>Bahasa Inggris</td><td>X</td><td>32 dari 34</td><td class="lulus">29</td><td class="angka">81</td><td>3 week</td></tr>
+      <tr><td>Bahasa Arab</td><td>X</td><td>30 dari 34</td><td class="belum">18</td><td class="angka">68</td><td>3 week</td></tr>
+    </table>
+    <p class="kecil">Klik satu baris → daftar peringkat per siswa + tombol Unduh CSV + Buka ulang percobaan siswa yang terkendala.</p>
+
+    <div class="sekat">
+      <h3 style="font-size:14px">Semua sesi pada periode ini</h3>
+      <table class="tbl" style="margin-top:10px">
+        <tr><th>Sesi</th><th>Kelas</th><th>Peserta</th><th>Rata-rata</th></tr>
+        <tr><td>Bahasa Inggris</td><td>X</td><td>32</td><td class="angka">81</td></tr>
+        <tr><td>Bahasa Inggris</td><td>XI</td><td>28</td><td class="angka">76</td></tr>
+        <tr><td>Bahasa Arab</td><td>X</td><td>30</td><td class="angka">68</td></tr>
+        <tr><td>Bahasa Arab</td><td>XI</td><td>26</td><td class="angka">71</td></tr>
+      </table>
+      <p class="kecil">Guru bisa membandingkan kelas X vs XI langsung, tanpa perlu menyilang-nyilangkan data.</p>
+    </div>
+  </div>
+
+  <h2>4 · Ringkasan usulan</h2>
+  <div class="kartu">
+    <table class="tbl">
+      <tr><th>Hal</th><th>Rancangan</th></tr>
+      <tr><td>Satu sesi berisi</td><td>1 kelas + daftar week (checklist) + tanggal + aturan soal</td></tr>
+      <tr><td>Kelas dari mana</td><td>Dibaca dari <strong>Data Siswa</strong> saat siswa memasukkan NIS — ubah kelas di sana, sesi ikut menyesuaikan</td></tr>
+      <tr><td>Bahasa</td><td>Tetap dua sesi terpisah (Inggris &amp; Arab), masing-masing bernilai sendiri</td></tr>
+      <tr><td>Checklist</td><td>Tombol “Centang otomatis” mencentang week sesuai nama kelas dari judul week, lalu bisa diubah manual</td></tr>
+      <tr><td>Laporan</td><td>Per sesi + per kelas, bisa dibandingkan, ada CSV &amp; buka ulang</td></tr>
+      <tr><td>Sesi lintas kelas</td><td>Tersedia pilihan <strong>“Semua kelas”</strong> untuk evaluasi bersama</td></tr>
+      <tr><td>Duplikat</td><td>Tombol “Salin sesi” untuk membuat sesi kelas XI dari kelas X, tinggal ganti centangannya</td></tr>
+    </table>
+    <div class="catatan biru" style="margin-top:14px">
+      <strong>Kalau ini cocok</strong>, aku bangun dengan urutan aman: (1) tambah penanda kelas pada sesi + pilihan kelas dari Data Siswa,
+      (2) tombol centang otomatis, (3) laporan per sesi &amp; per kelas, (4) tombol salin sesi. Semuanya kuji pakai siswa uji, lalu data ujinya kusapu bersih.
+    </div>
+  </div>
+
+  <p class="kecil" style="text-align:center;margin-top:24px">Pratinjau ini halaman diam — tidak mengubah apa pun di aplikasi.</p>
+</div>
+</body>
+</html>

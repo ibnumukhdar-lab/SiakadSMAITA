@@ -1,5 +1,7 @@
 <?php
 
+
+use App\Http\Controllers\BeeEvaluasiController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ArsipSuratController;
@@ -36,7 +38,17 @@ Route::get('student-root/tv-display', [App\Http\Controllers\SrDisplaySettingCont
 // --- RUTE BUKU SAKU DIGITAL BEE SMART & KLAIM POIN (AKSES PUBLIK SISWA) ---
 Route::get('/buku-saku-bahasa', [App\Http\Controllers\BeeSmartController::class, 'bukuSaku'])->name('bee.buku-saku');
 Route::get('/buku-saku-bahasa/{id}', [App\Http\Controllers\BeeSmartController::class, 'bukuSakuShow'])->name('bee.buku-saku.show');
-Route::post('/buku-saku-bahasa/{id}/claim', [App\Http\Controllers\BeeSmartController::class, 'claimPoint'])->name('bee.buku-saku.claim');
+Route::post('/buku-saku-bahasa/{id}/claim', [App\Http\Controllers\BeeSmartController::class, 'claimPoint'])->middleware('throttle:10,1')->name('bee.buku-saku.claim');
+
+// --- EVALUASI BEE SMART (TRIWULAN & SEMESTER) — PUBLIK, CUKUP NIS/NISN ---
+Route::get('/evaluasi-bee', [BeeEvaluasiController::class, 'masuk'])->middleware('throttle:60,1')->name('evaluasi.masuk');
+Route::post('/evaluasi-bee', [BeeEvaluasiController::class, 'verifikasi'])->middleware('throttle:20,1')->name('evaluasi.verifikasi');
+Route::get('/evaluasi-bee/sesi', [BeeEvaluasiController::class, 'sesi'])->name('evaluasi.sesi');
+Route::post('/evaluasi-bee/mulai', [BeeEvaluasiController::class, 'mulai'])->middleware('throttle:30,1')->name('evaluasi.mulai');
+Route::get('/evaluasi-bee/{kode}', [BeeEvaluasiController::class, 'kerjakan'])->name('evaluasi.kerjakan');
+Route::post('/evaluasi-bee/{kode}/simpan', [BeeEvaluasiController::class, 'simpan'])->middleware('throttle:300,1')->name('evaluasi.simpan');
+Route::post('/evaluasi-bee/{kode}/selesai', [BeeEvaluasiController::class, 'selesai'])->middleware('throttle:20,1')->name('evaluasi.selesai');
+Route::get('/evaluasi-bee/{kode}/hasil', [BeeEvaluasiController::class, 'hasil'])->name('evaluasi.hasil');
 
 // --- RUTE DASHBOARD UTAMA (IKHTISAR) ---
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -555,31 +567,44 @@ Route::middleware(['auth'])->group(function () {
     // ==========================================
     // MODUL BEE SMART (BAHASA)
     // ==========================================
-    Route::prefix('bee-smart')->name('bee.')->group(function () {
+    Route::prefix('bee-smart')->name('bee.')->middleware('permission:buka-menu-bee-smart')->group(function () {
         Route::get('/', [App\Http\Controllers\BeeSmartController::class, 'index'])->name('index');
-        Route::post('/minggu-baru', [App\Http\Controllers\BeeSmartController::class, 'storeWeek'])->name('storeWeek');
-        Route::put('/status/{id}', [App\Http\Controllers\BeeSmartController::class, 'updateStatus'])->name('updateStatus');
+        Route::post('/minggu-baru', [App\Http\Controllers\BeeSmartController::class, 'storeWeek'])->name('storeWeek')->middleware('permission:kelola-bee-smart');
+        Route::put('/status/{id}', [App\Http\Controllers\BeeSmartController::class, 'updateStatus'])->name('updateStatus')->middleware('permission:kelola-bee-smart');
         
         // --- EDIT JUDUL & HAPUS MODUL ---
-        Route::put('/minggu/{id}', [App\Http\Controllers\BeeSmartController::class, 'updateWeek'])->name('updateWeek');
-        Route::delete('/minggu/{id}', [App\Http\Controllers\BeeSmartController::class, 'destroyWeek'])->name('destroyWeek');
+        Route::put('/minggu/{id}', [App\Http\Controllers\BeeSmartController::class, 'updateWeek'])->name('updateWeek')->middleware('permission:kelola-bee-smart');
+        Route::delete('/minggu/{id}', [App\Http\Controllers\BeeSmartController::class, 'destroyWeek'])->name('destroyWeek')->middleware('permission:kelola-bee-smart');
         
         // Rute Kelola & Input Kata
-        Route::get('/kelola/{id}', [App\Http\Controllers\BeeSmartController::class, 'manage'])->name('manage');
-        Route::post('/kelola/{id}/tambah', [App\Http\Controllers\BeeSmartController::class, 'storeVocab'])->name('storeVocab');
-        Route::delete('/kosakata/{id}', [App\Http\Controllers\BeeSmartController::class, 'destroyVocab'])->name('destroyVocab');
+        Route::get('/kelola/{id}', [App\Http\Controllers\BeeSmartController::class, 'manage'])->name('manage')->middleware('permission:kelola-bee-smart');
+        Route::post('/kelola/{id}/tambah', [App\Http\Controllers\BeeSmartController::class, 'storeVocab'])->name('storeVocab')->middleware('permission:kelola-bee-smart');
+        Route::delete('/kosakata/{id}', [App\Http\Controllers\BeeSmartController::class, 'destroyVocab'])->name('destroyVocab')->middleware('permission:kelola-bee-smart');
         
         // --- Edit Teks Kosakata ---
-        Route::put('/kosakata/{id}', [App\Http\Controllers\BeeSmartController::class, 'updateVocab'])->name('updateVocab');
+        Route::put('/kosakata/{id}', [App\Http\Controllers\BeeSmartController::class, 'updateVocab'])->name('updateVocab')->middleware('permission:kelola-bee-smart');
 
         // --- GENERATE AUDIO (TTS) & TARGET KATA (2026-09) ---
-        Route::post('/generate-audio', [App\Http\Controllers\BeeSmartController::class, 'generateAudio'])->name('generateAudio');
-        Route::post('/minggu/{id}/generate-missing', [App\Http\Controllers\BeeSmartController::class, 'generateMissingAudio'])->name('generateMissingAudio')->where('id', '[0-9]+');
-        Route::post('/vocab/{id}/audio/{field}', [App\Http\Controllers\BeeSmartController::class, 'generateVocabAudio'])->name('generateVocabAudio')->where('id', '[0-9]+')->where('field', '[A-Za-z_]+');
-        Route::put('/batas/{id}', [App\Http\Controllers\BeeSmartController::class, 'updateBatas'])->name('updateBatas')->where('id', '[0-9]+');
+        Route::post('/generate-audio', [App\Http\Controllers\BeeSmartController::class, 'generateAudio'])->name('generateAudio')->middleware('permission:kelola-bee-smart');
+        Route::post('/minggu/{id}/generate-missing', [App\Http\Controllers\BeeSmartController::class, 'generateMissingAudio'])->name('generateMissingAudio')->where('id', '[0-9]+')->middleware('permission:kelola-bee-smart');
+        Route::post('/vocab/{id}/audio/{field}', [App\Http\Controllers\BeeSmartController::class, 'generateVocabAudio'])->name('generateVocabAudio')->where('id', '[0-9]+')->where('field', '[A-Za-z_]+')->middleware('permission:kelola-bee-smart');
+        Route::put('/batas/{id}', [App\Http\Controllers\BeeSmartController::class, 'updateBatas'])->name('updateBatas')->where('id', '[0-9]+')->middleware('permission:kelola-bee-smart');
 
         // --- Mode Presentasi Kelas (Interaktif) ---
         Route::get('/classroom', [App\Http\Controllers\BeeSmartController::class, 'classroom'])->name('classroom');
+
+        // --- LAPORAN KLAIM (siapa sudah/belum klaim per modul & kelas) ---
+        Route::get('/laporan', [App\Http\Controllers\BeeSmartController::class, 'laporan'])->name('laporan');
+        Route::get('/laporan/ekspor', [App\Http\Controllers\BeeSmartController::class, 'laporanEkspor'])->name('laporan.ekspor');
+
+        // --- Evaluasi triwulan & semester (dikelola guru) ---
+        Route::get('/evaluasi', [BeeEvaluasiController::class, 'daftar'])->middleware('permission:kelola-bee-smart')->name('evaluasi');
+        Route::post('/evaluasi', [BeeEvaluasiController::class, 'simpanPeriode'])->middleware('permission:kelola-bee-smart')->name('evaluasi.simpan');
+        Route::delete('/evaluasi/{id}', [BeeEvaluasiController::class, 'hapus'])->middleware('permission:kelola-bee-smart')->name('evaluasi.hapus');
+        Route::post('/evaluasi/{id}/salin', [BeeEvaluasiController::class, 'salin'])->middleware('permission:kelola-bee-smart')->name('evaluasi.salin');
+        Route::get('/evaluasi/{id}/hasil', [BeeEvaluasiController::class, 'hasilGuru'])->middleware('permission:kelola-bee-smart')->name('evaluasi.hasil');
+        Route::get('/evaluasi/{id}/hasil/ekspor', [BeeEvaluasiController::class, 'hasilEkspor'])->middleware('permission:kelola-bee-smart')->name('evaluasi.hasil.ekspor');
+        Route::post('/evaluasi/{id}/buka-ulang/{siswa}', [BeeEvaluasiController::class, 'bukaUlang'])->middleware('permission:kelola-bee-smart')->name('evaluasi.bukaulang');
     });
 
 });

@@ -79,7 +79,9 @@
             <div class="sa-card">
                 <div class="sa-card-h">
                     <h2>⚡ Aktivitas Poin Terbaru</h2>
+@hasanyrole('Super Admin|Guru|Kepala Diniyah|Kepala Sekolah|Musyrif|Tata Usaha')
                     <a class="lnk" href="{{ route('sr.dashboard') }}">Rekap →</a>
+@endhasanyrole
                 </div>
                 <div class="sa-card-b">
                     @forelse($aktivitas as $a)

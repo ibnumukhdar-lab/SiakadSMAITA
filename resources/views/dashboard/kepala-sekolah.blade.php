@@ -24,7 +24,9 @@
                 @can('buka-menu-kelola-akun')
                 <a href="{{ route('kelola-akun.index') }}" class="sa-btn sa-btn-primary">🛡️ Kelola Akun</a>
                 @endcan
+@hasanyrole('Super Admin|Guru|Kepala Diniyah|Kepala Sekolah|Musyrif|Tata Usaha')
                 <a href="{{ route('sr.dashboard') }}" class="sa-btn sa-btn-ghost">📊 Dashboard Karakter</a>
+@endhasanyrole
             </div>
         </div>
 
@@ -41,7 +43,9 @@
             <div class="sa-card">
                 <div class="sa-card-h">
                     <h2>⚡ Aktivitas Poin Terbaru</h2>
+@hasanyrole('Super Admin|Guru|Kepala Diniyah|Kepala Sekolah|Musyrif|Tata Usaha')
                     <a class="lnk" href="{{ route('sr.dashboard') }}">Lihat rekap →</a>
+@endhasanyrole
                 </div>
                 <div class="sa-card-b">
                     @forelse($aktivitas as $a)

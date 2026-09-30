@@ -20,8 +20,12 @@
                 @endif
             </div>
             <div class="sa-actions">
+@hasanyrole('Super Admin|Guru|Kepala Diniyah|Kepala Sekolah|Musyrif|Tata Usaha')
                 <a href="{{ route('sr.poin.create') }}" class="sa-btn sa-btn-primary">📝 Input Poin Sikap</a>
+@endhasanyrole
+@hasanyrole('Super Admin|Guru|Kepala Diniyah|Kepala Sekolah|Musyrif|Tata Usaha')
                 <a href="{{ route('sr.dashboard') }}" class="sa-btn sa-btn-ghost">📊 Dashboard Karakter</a>
+@endhasanyrole
                 @can('buka-menu-grup-binaan')
                 <a href="{{ route('sr.mygroup') }}" class="sa-btn sa-btn-ghost">👥 Grup Binaan Saya</a>
                 @endcan

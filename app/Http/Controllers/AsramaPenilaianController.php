@@ -27,13 +27,13 @@ class AsramaPenilaianController extends Controller
 
     // =========================================================
     // DUA SESI INSPEKSI (permintaan Fahri, 17 Sep 2026)
-    // Pagi dinilai 05.00–09.00 WIB, sore 17.00–19.30 WIB (jam sore diperpanjang 17 Sep 2026).
+    // Pagi 04.00–14.00 WIB, sore 14.00–21.00 WIB (diubah 25 Sep 2026 atas permintaan Fahri).
     // Sesi hanya menentukan JAM PENGISIAN; penilaian & finalisasi tiap sesi
     // berdiri sendiri (poin terbersih/terkotor keluar per sesi).
     // =========================================================
     public const SESI = [
-        'pagi' => ['label' => 'Sesi Pagi', 'ikon' => '🌅', 'mulai' => '05:00', 'selesai' => '09:00'],
-        'sore' => ['label' => 'Sesi Sore', 'ikon' => '🌇', 'mulai' => '17:00', 'selesai' => '19:30'],
+        'pagi' => ['label' => 'Sesi Pagi', 'ikon' => '🌅', 'mulai' => '04:00', 'selesai' => '14:00'],
+        'sore' => ['label' => 'Sesi Sore', 'ikon' => '🌇', 'mulai' => '14:00', 'selesai' => '21:00'],
     ];
 
     public static function daftarSesi(): array
@@ -46,7 +46,7 @@ class AsramaPenilaianController extends Controller
         return self::SESI[$sesi]['label'] ?? 'Sesi Pagi';
     }
 
-    /** Jam buka–tutup sesi, mis. "05.00–09.00 WIB". */
+    /** Jam buka–tutup sesi, mis. "04.00–14.00 WIB". */
     public static function jendelaSesi($sesi): string
     {
         $s = self::SESI[$sesi] ?? self::SESI['pagi'];
