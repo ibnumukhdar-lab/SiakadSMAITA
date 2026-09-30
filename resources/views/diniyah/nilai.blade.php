@@ -23,7 +23,7 @@
             @if(session('success'))
                 <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs font-bold text-emerald-800">{{ session('success') }}</div>
             @endif
-            @if($errors->any())
+            @if(isset($errors) && $errors->any())
                 <div class="rounded-lg bg-rose-50 border border-rose-200 p-3">
                     @foreach($errors->all() as $e)
                         <p class="text-xs font-bold text-rose-800">{{ $e }}</p>
