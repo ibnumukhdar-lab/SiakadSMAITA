@@ -29,7 +29,10 @@ class RekamJejak
     /** Ambang kata "berulang" tidak dipakai di sini; ini murni modul SIAKAD. */
     public function susun(int $siswaId): ?array
     {
-        $siswa = DB::table('siswas')->where('id', $siswaId)->whereNull('deleted_at')->first();
+        // Pakai model Eloquent (bukan DB::table) supaya kolom tanggal_lahir otomatis
+        // menjadi objek tanggal (cast). Kalau memakai DB::table, nilainya string dan
+        // view yang memanggil ->locale()/->translatedFormat() error 500 (terjadi 1 Okt 2026).
+        $siswa = \App\Models\Siswa::where('id', $siswaId)->whereNull('deleted_at')->first();
 
         if (! $siswa) {
             return null;
