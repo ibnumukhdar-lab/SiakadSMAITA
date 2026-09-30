@@ -46,6 +46,18 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 // --- RUTE PROFIL PUBLIK ---
 Route::get('/siswa/profil/{nisn}', [SiswaController::class, 'showPublic'])->name('siswa.public');
 
+// =====================================================================
+// PORTAL ORANG TUA (publik, 30 Sep 2026)
+// Orang tua masuk dengan NISN + tanggal lahir anak (ddmmyyyy), lalu melihat
+// portofolio anaknya. Hanya-baca; satu NISN = satu anak.
+// =====================================================================
+Route::get('/ortu', [App\Http\Controllers\PortalOrtuController::class, 'masuk'])->name('ortu.masuk');
+Route::post('/ortu/masuk', [App\Http\Controllers\PortalOrtuController::class, 'proses'])
+    ->middleware('throttle:30,1')->name('ortu.proses');
+Route::get('/ortu/dasbor', [App\Http\Controllers\PortalOrtuController::class, 'dasbor'])->name('ortu.dasbor');
+Route::get('/ortu/rapor', [App\Http\Controllers\PortalOrtuController::class, 'rapor'])->name('ortu.rapor');
+Route::post('/ortu/keluar', [App\Http\Controllers\PortalOrtuController::class, 'keluar'])->name('ortu.keluar');
+
 // --- RUTE VERIFIKASI ARSIP PUBLIK ---
 Route::get('/arsip/{id}', [ArsipSuratController::class, 'show'])->name('arsip.show')->where('id', '[0-9]+'); 
 
@@ -93,6 +105,15 @@ Route::middleware(['auth', 'permission:buka-menu-siswa'])->group(function () {
     Route::get('/siswa/ekspor', [SiswaController::class, 'ekspor'])->name('siswa.ekspor');
     Route::get('/siswa/cetak', [SiswaController::class, 'cetak'])->name('siswa.cetak');
     Route::get('/siswa/{id}/kartu', [SiswaController::class, 'kartu'])->where('id', '[0-9]+')->name('siswa.kartu');
+
+    // --- REKAM JEJEK SISWA (30 Sep 2026) ---
+    // Satu halaman merangkum siswa dari semua program: poin karakter Student
+    // Root, project & portofolio, kebersihan/absensi asrama, penilaian Adab &
+    // Keasramaan, catatan rapot. Hanya baca; penyuntingan tetap di /siswa/{id}.
+    Route::get('/siswa/{id}/rekam-jejak', [App\Http\Controllers\RekamJejakController::class, 'siswa'])
+        ->where('id', '[0-9]+')->name('siswa.rekamJejak');
+    Route::get('/siswa/{id}/rekam-jejak/ringkas', [App\Http\Controllers\RekamJejakController::class, 'ringkas'])
+        ->where('id', '[0-9]+')->name('siswa.rekamJejak.ringkas');
 
     Route::post('/siswa/bulk-action', [SiswaController::class, 'bulkAction'])->name('siswa.bulk_action');
 

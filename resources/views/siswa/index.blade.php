@@ -260,6 +260,8 @@
                                                 <div class="flex justify-center gap-1">
                                                     <a href="{{ route('siswa.kartu', $siswa->id) }}" target="_blank" title="Kartu pelajar"
                                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-800 hover:bg-blue-50 transition">🪪</a>
+                                                    <a href="{{ route('siswa.rekamJejak', $siswa->id) }}" title="Rekam jejak (poin, project, asrama, adab)"
+                                                       class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 transition">📈</a>
                                                     <a href="{{ route('siswa.show', $siswa->id) }}" title="Lembar induk"
                                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition">👁️</a>
                                                     <a href="{{ route('siswa.edit', $siswa->id) }}" title="Edit data"
@@ -301,6 +303,8 @@
                                 <div class="flex items-center justify-end gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100">
                                     <a href="{{ route('siswa.kartu', $siswa->id) }}" target="_blank"
                                        class="h-9 px-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 text-slate-600 text-[12px] font-semibold hover:bg-slate-50 transition">🪪 Kartu</a>
+                                    <a href="{{ route('siswa.rekamJejak', $siswa->id) }}"
+                                       class="h-9 px-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 text-emerald-700 text-[12px] font-semibold hover:bg-emerald-50 transition">📈 Rekam Jejak</a>
                                     <a href="{{ route('siswa.show', $siswa->id) }}"
                                        class="h-9 px-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 text-slate-600 text-[12px] font-semibold hover:bg-slate-50 transition">👁️ Profil</a>
                                     <a href="{{ route('siswa.edit', $siswa->id) }}"
