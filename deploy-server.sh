@@ -86,7 +86,7 @@ fi
 echo "== 1/6 kompres kode sumber (tanpa .git/.env/vendor/node_modules/upload/storage) =="
 cd "$SUMBER"
 tar czf - \
-  --exclude=.git --exclude=.env --exclude=vendor --exclude=node_modules \
+  --exclude=.git --exclude=.env --exclude=./vendor --exclude=node_modules \
   --exclude=TUSMAITA.CODE.zip --exclude=cgi-bin \
   --exclude='storage/app/private' --exclude='storage/app/public' \
   --exclude='storage/logs' --exclude='storage/framework/cache' \
@@ -187,6 +187,19 @@ ssh -n -o ConnectTimeout=20 -o BatchMode=yes -o ServerAliveInterval=15 -o Server
 "
 
 echo "== 5/6 verifikasi =="
+# Verifikasi berkas pantauan benar-benar ADA di server dengan md5 yang benar.
+cek_server=$(ssh -n -o ConnectTimeout=20 -o BatchMode=yes nizhom '
+  cd ~/public_html/siakad.smaitarafah.sch.id || exit 1
+  for f in resources/views/auth/login.blade.php resources/views/layouts/navigation.blade.php public/vendor/qrcode.min.js; do
+    if [ -f "$f" ]; then echo "$(md5sum "$f" | cut -c1-32)  $f"; else echo "HILANG  $f"; fi
+  done')
+echo "$cek_server" | sed "s/^/   server: /"
+if echo "$cek_server" | grep -q "HILANG"; then
+  echo ""
+  echo "   ✋ BERHENTI: ada berkas pantauan yang TIDAK ADA di server setelah deploy."
+  echo "      Periksa aturan --exclude pada tar langkah 1/6 (jangan mengecualikan public/vendor)."
+  exit 6
+fi
 KODE=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 25 https://siakad.smaitarafah.sch.id/ || true)
 echo "   https://siakad.smaitarafah.sch.id -> HTTP $KODE"
 if [ "$KODE" != "200" ]; then
