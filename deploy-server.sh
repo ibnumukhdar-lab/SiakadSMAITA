@@ -56,6 +56,33 @@ else
   echo "   -> berkas penting lengkap, lanjut kirim."
 fi
 
+# --- KANAL BERSAMA (protokol agen VPS, 1 Okt 2026) --------------
+# Kotak pesan + kunci kerja hidup di hosting: ~/berbagi-hermes/
+# Pesan baru dicetak di sini; kunci kerja yang masih segar (< 3 jam)
+# MEMBUAT DEPLOY BERHENTI supaya tidak menyentuh berkas yang sedang digarap.
+echo "== 0b/6 kanal bersama: pesan & kunci kerja =="
+ssh -n -o ConnectTimeout=20 -o BatchMode=yes nizhom '
+  if [ -d ~/berbagi-hermes ]; then
+    bash ~/berbagi-hermes/pesan-baca.sh 2>/dev/null | head -80
+    echo "KUNCI_STATUS:$(bash ~/berbagi-hermes/kunci.sh status 2>/dev/null | head -1)"
+  else
+    echo "   (kanal ~/berbagi-hermes belum ada)"
+    echo "KUNCI_STATUS:TIDAK"
+  fi
+' | tee /tmp/siakad-kanal.txt
+
+if grep -q "KUNCI_STATUS:ADA" /tmp/siakad-kanal.txt; then
+  if [ "${LEWATI_KUNCI:-0}" = "1" ]; then
+    echo "   !! ADA KUNCI KERJA — LEWATI_KUNCI=1 -> diteruskan (risiko: berkas yang sedang digarap bisa tertimpa)."
+  else
+    echo ""
+    echo "   ✋ BERHENTI: ada KUNCI KERJA dipegang pihak lain (lihat papan status di atas)."
+    echo "      Tunggu sampai selesai (bash ~/berbagi-hermes/kunci.sh selesai), atau paksa:"
+    echo "                   LEWATI_KUNCI=1 bash deploy-server.sh"
+    exit 5
+  fi
+fi
+
 echo "== 1/6 kompres kode sumber (tanpa .git/.env/vendor/node_modules/upload/storage) =="
 cd "$SUMBER"
 tar czf - \
@@ -173,5 +200,19 @@ ssh -n -o ConnectTimeout=20 -o BatchMode=yes nizhom '
     -exec md5sum {} + | sort -k2 > .manifest-deploy.md5
   echo "   catatan dibuat: $(wc -l < .manifest-deploy.md5) berkas"
   echo "   (hapus ~/public_html/siakad.smaitarafah.sch.id_old_* yang lama untuk menghemat ruang)"
+
+  # Papan status kanal bersama (protokol agen VPS) — perbarui baris "Deploy terakhir".
+  if [ -d ~/berbagi-hermes ]; then
+    BARIS="- **Deploy terakhir:** $(date "+%Y-%m-%d %H:%M") — ${PEMILIK_DEPLOY:-Hermes laptop (klon PC)}"
+    P=~/berbagi-hermes/papan-status.md
+    # Ganti bila barisnya sudah ada; kalau belum, sisipkan tepat setelah baris "Kunci kerja".
+    if grep -q "Deploy terakhir" "$P"; then
+      awk -v b="$BARIS" "{ if (index(\$0, \"Deploy terakhir\") > 0) print b; else print }" "$P" > "$P.baru"
+    else
+      awk -v b="$BARIS" "{ print; if (index(\$0, \"Kunci kerja\") > 0) print b }" "$P" > "$P.baru"
+    fi
+    grep -v "^-$" "$P.baru" > "$P" && rm -f "$P.baru"
+    echo "   papan status diperbarui"
+  fi
 '
 echo "SELESAI"
