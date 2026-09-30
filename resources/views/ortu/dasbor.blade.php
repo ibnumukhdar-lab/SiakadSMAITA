@@ -174,7 +174,7 @@
     {{-- Rapor --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
         <h2 class="text-sm font-black text-gray-800 mb-3">Rapor</h2>
-        <a href="{{ route('ortu.rapor') }}" class="block text-center px-4 py-3 rounded-lg bg-gray-800 text-white text-sm font-black">Lihat / Cetak Rapor Ananda</a>
+        <a href="{{ route('ortu.rapor') }}" class="block text-center px-4 py-3 rounded-lg bg-gray-800 text-white text-sm font-black">Lihat Rapor Ananda</a>
         <p class="text-xs text-gray-500 font-semibold mt-3">
             Halaman ini hanya-baca. Bila ada data yang perlu diperbaiki, mohon menghubungi Tata Usaha sekolah.
         </p>

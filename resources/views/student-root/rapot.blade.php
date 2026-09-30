@@ -146,13 +146,26 @@
 <body>
 
     <div class="bar tanpa-cetak">
-        <button type="button" class="utama" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
-        <a href="{{ route('sr.rapot', ['semester' => $preset]) }}">⬅️ Kembali</a>
-        @if($grupCetak)
+        @if(empty($modeOrtu))
+            <button type="button" class="utama" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+        @endif
+        <a href="{{ $kembaliKe ?? route('sr.rapot', ['semester' => $preset]) }}">⬅️ Kembali</a>
+        @if(! empty($modeOrtu))
+            <span style="font-size: 12.5px; color: #64748b;">Untuk dilihat saja — wali murid tidak dapat mencetak rapor ini.</span>
+        @endif
+        @if($grupCetak && empty($modeOrtu))
             <a class="utama" href="{{ route('sr.rapot.cetak', ['grup' => $grupCetak->id, 'semester' => $preset]) }}">🖨️ Cetak semua ({{ $jumlahSantri }} santri) grup {{ $grupCetak->nama_grup }}</a>
         @endif
-        <span style="font-size: 12.5px; color: #64748b;">{{ $jumlahSantri }} santri · satu halaman per santri</span>
+        @if(empty($modeOrtu))
+            <span style="font-size: 12.5px; color: #64748b;">{{ $jumlahSantri }} santri · satu halaman per santri</span>
+        @endif
     </div>
+    @if(! empty($modeOrtu))
+        <style>
+            /* Wali murid: halaman rapor hanya untuk dilihat (30 Sep 2026). */
+            @media print { body { display: none !important; } }
+        </style>
+    @endif
 
     @forelse($daftar as $d)
         @php

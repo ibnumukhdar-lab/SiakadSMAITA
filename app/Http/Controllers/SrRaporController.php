@@ -127,8 +127,6 @@ class SrRaporController extends Controller
     {
         $this->pastikanBolehMasuk();
 
-        [$dari, $sampai, $preset, $tahunAjaran] = $this->rentangTanggal($request);
-
         $siswaId = (int) $request->input('siswa', 0);
         $grupId = (string) $request->input('grup');
 
@@ -138,6 +136,24 @@ class SrRaporController extends Controller
 
         if ($siswaId > 0) {
             $this->pastikanBolehSiswa($siswaId);
+        }
+
+        return $this->halamanRapor($request, $siswaId, $grupId);
+    }
+
+    /**
+     * HALAMAN RAPOR SESUNGGUHNYA (30 Sep 2026 dipisah supaya bisa dipakai ulang).
+     *
+     * Pemakaiannya dua: (1) petugas lewat cetak() setelah izin diperiksa;
+     * (2) portal orang tua untuk anaknya sendiri lewat PortalOrtuController.
+     * Satu jalur kode = rapor yang dilihat orang tua PERSIS sama dengan rapor
+     * resmi yang dicetak sekolah (tidak ada format kedua yang bisa berbeda).
+     */
+    public function halamanRapor(Request $request, int $siswaId = 0, string $grupId = '')
+    {
+        [$dari, $sampai, $preset, $tahunAjaran] = $this->rentangTanggal($request);
+
+        if ($siswaId > 0) {
             $daftarSiswa = Siswa::where('id', $siswaId)->get();
             $grupCetak = null;
         } else {
@@ -182,6 +198,8 @@ class SrRaporController extends Controller
         $catatan = \App\Models\CatatanRaport::untukSr($daftarSiswa->pluck('id')->all(), $tahunAjaran, $preset);
 
         return view('student-root.rapot', [
+            'kembaliKe' => $request->input('kembaliKe'),
+            'modeOrtu' => (bool) $request->input('modeOrtu'),
             'daftar' => $daftar,
             'catatan' => $catatan,
             'preset' => $preset,

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PenilaianPeriode;
 use App\Models\Siswa;
 use App\Services\RekamJejak;
 use App\Support\SandiOrtu;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
@@ -107,8 +109,18 @@ class PortalOrtuController extends Controller
         ]);
     }
 
-    /** Rapor versi orang tua (siap cetak: poin karakter, project, adab & keasramaan). */
-    public function rapor(Request $request, RekamJejak $layanan)
+    /**
+     * PILIHAN RAPOR (30 Sep 2026).
+     *
+     * Halaman ini TIDAK membuat format rapor baru — ia hanya memanggil kembali
+     * rapor resmi yang sudah ada di SIAKAD:
+     *   • Rapor Student Root  (SrRaporController::halamanRapor)
+     *   • Rapot Adab & Keasramaan (PenilaianRaporController::halamanRapor)
+     *   • Rapor Diniyah — menyusul begitu modulnya ada (belum dibuat)
+     * Jadi angka & tanda tangan yang dilihat orang tua persis sama dengan
+     * rapor yang dicetak sekolah.
+     */
+    public function rapor(Request $request)
     {
         $siswa = $this->siswaPortal($request);
 
@@ -117,8 +129,50 @@ class PortalOrtuController extends Controller
         }
 
         return view('ortu.rapor', [
-            'rj' => $layanan->susun($siswa->id),
+            'siswa'         => $siswa,
+            'semesterList'  => SrRaporController::SEMESTER,
+            'semesterAktif' => $this->semesterAktif(),
+            'periode'       => PenilaianPeriode::aktifSekarang()
+                ?? PenilaianPeriode::orderByDesc('aktif')->orderByDesc('nama')->first(),
+            'adaNilaiAdab'  => DB::table('penilaian_jawaban')->where('siswa_id', $siswa->id)->exists(),
+            'adaPoinSr'     => DB::table('sr_point_entries')->where('student_id', $siswa->id)->whereNull('deleted_at')->exists(),
         ]);
+    }
+
+    /** Rapor Student Root resmi (anak sendiri). */
+    public function raporStudentRoot(Request $request, SrRaporController $raporSr)
+    {
+        $siswa = $this->siswaPortal($request);
+
+        if (! $siswa) {
+            return redirect()->route('ortu.masuk');
+        }
+
+        $request->merge(['kembaliKe' => route('ortu.rapor'), 'modeOrtu' => true]);
+
+        return $raporSr->halamanRapor($request, (int) $siswa->id);
+    }
+
+    /** Rapot Adab & Keasramaan resmi (anak sendiri). */
+    public function raporAdab(Request $request, PenilaianRaporController $raporAdab)
+    {
+        $siswa = $this->siswaPortal($request);
+
+        if (! $siswa) {
+            return redirect()->route('ortu.masuk');
+        }
+
+        $periodeId = (int) $request->input('periode', 0);
+
+        $request->merge(['kembaliKe' => route('ortu.rapor'), 'modeOrtu' => true]);
+
+        return $raporAdab->halamanRapor($request, $periodeId, (int) $siswa->id);
+    }
+
+    /** Semester berjalan (s1 = Juli–Desember, s2 = Januari–Juni). */
+    private function semesterAktif(): string
+    {
+        return (int) now()->format('n') >= 7 ? 's1' : 's2';
     }
 
     /** Keluar. */

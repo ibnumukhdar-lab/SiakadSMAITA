@@ -171,24 +171,34 @@
 
     <div class="bar tanpa-cetak">
         <div class="aksi">
-            <a href="{{ route('penilaian.rapot', ['periode' => $periodeId, 'kamar' => $kamar->id ?? 0]) }}" class="btn">⬅️ Kembali</a>
-            @if($kamar)
+            <a href="{{ $kembaliKe ?? route('penilaian.rapot', ['periode' => $periodeId, 'kamar' => $kamar->id ?? 0]) }}" class="btn">⬅️ Kembali</a>
+            @if($kamar && empty($modeOrtu))
                 <a href="{{ route('penilaian.rapot.cetak', ['periode' => $periodeId, 'kamar' => $kamar->id]) }}" class="btn btn-utama">🖨️ Cetak {{ $daftar->count() }} santri kamar {{ $kamar->nama_kamar }}</a>
             @endif
         </div>
-        <form method="GET" action="{{ route('penilaian.rapot.cetak') }}">
-            @if($kamar)
-                <input type="hidden" name="kamar" value="{{ $kamar->id }}">
-            @endif
-            <select name="periode">
-                @foreach($periodeList as $p)
-                    <option value="{{ $p->id }}" @selected($periodeId === $p->id)>{{ $p->nama }}</option>
-                @endforeach
-            </select>
-            <button type="submit" class="btn">Tampilkan</button>
-            <button type="button" class="btn btn-utama" onclick="window.print()">🖨️ Cetak</button>
-        </form>
+        @if(empty($modeOrtu))
+            <form method="GET" action="{{ route('penilaian.rapot.cetak') }}">
+                @if($kamar)
+                    <input type="hidden" name="kamar" value="{{ $kamar->id }}">
+                @endif
+                <select name="periode">
+                    @foreach($periodeList as $p)
+                        <option value="{{ $p->id }}" @selected($periodeId === $p->id)>{{ $p->nama }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="btn">Tampilkan</button>
+                <button type="button" class="btn btn-utama" onclick="window.print()">🖨️ Cetak</button>
+            </form>
+        @else
+            <span style="font-size: 12.5px; color: #64748b;">Untuk dilihat saja — wali murid tidak dapat mencetak rapot ini.</span>
+        @endif
     </div>
+    @if(! empty($modeOrtu))
+        <style>
+            /* Wali murid: halaman rapot hanya untuk dilihat (30 Sep 2026). */
+            @media print { body { display: none !important; } }
+        </style>
+    @endif
 
     @forelse($daftar as $d)
         @php

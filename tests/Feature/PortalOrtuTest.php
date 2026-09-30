@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Siswa;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -50,16 +51,82 @@ class PortalOrtuTest extends TestCase
             ->assertSee('Perkembangan ananda');
     }
 
-    public function test_rapor_orang_tua_bisa_dibuka_setelah_masuk(): void
+    public function test_rapor_orang_tua_memanggil_rapor_resmi(): void
     {
         $this->buatSiswa();
 
         $this->post('/ortu/masuk', ['nisn' => '0093905443', 'sandi' => '24052009']);
 
+        // Halaman pilihan rapor (memanggil rapor resmi yang sudah ada).
         $this->get('/ortu/rapor')
             ->assertOk()
-            ->assertSee('Rapor Perkembangan Karakter')
-            ->assertSee('Ahmad Contoh');
+            ->assertSee('Rapor ananda')
+            ->assertSee('Rapor Student Root')
+            ->assertSee('Rapot Adab')
+            ->assertSee('Rapor Diniyah');
+
+        // Rapor Student Root resmi (dari SrRaporController) untuk anak sendiri.
+        // Catatan: pada sqlite (basis data uji) halaman ini tidak bisa dirender karena
+        // rekap tren bulanan memakai DATE_FORMAT (khusus MySQL). Rendering sungguhan
+        // diuji terhadap MySQL lokal & produksi.
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            $this->get('/ortu/rapor/student-root')
+                ->assertOk()
+                ->assertSee('Rapor Student Root')
+                ->assertSee('Ahmad Contoh');
+        }
+
+        // Rapot Adab & Keasramaan resmi (dari PenilaianRaporController).
+        // Peran "Super Admin" harus ada karena halaman itu menyaring penilai admin.
+        \Spatie\Permission\Models\Role::findOrCreate('Super Admin', 'web');
+
+        $this->get('/ortu/rapor/adab')
+            ->assertOk()
+            ->assertSee('Adab');
+    }
+
+    public function test_wali_murid_hanya_boleh_melihat_tidak_bisa_mencetak(): void
+    {
+        $this->buatSiswa();
+        \Spatie\Permission\Models\Role::findOrCreate('Super Admin', 'web');
+
+        $this->post('/ortu/masuk', ['nisn' => '0093905443', 'sandi' => '24052009']);
+
+        // Tidak ada tombol cetak/tampilkan periode yang khas petugas di halaman wali murid.
+        $this->get('/ortu/rapor/adab')
+            ->assertOk()
+            ->assertDontSee('window.print()')
+            ->assertDontSee('Cetak / Simpan PDF')
+            ->assertSee('hanya untuk dilihat', false);
+    }
+
+    public function test_wali_murid_tidak_bisa_membuka_rapor_anak_lain(): void
+    {
+        $this->buatSiswa();
+        $this->buatSiswa(['nisn' => '0091111111', 'nama_lengkap' => 'Zulfa Anak Lain', 'ttl' => 'Banjarmasin 5 Jan 2010']);
+
+        \Spatie\Permission\Models\Role::findOrCreate('Super Admin', 'web');
+
+        $this->post('/ortu/masuk', ['nisn' => '0093905443', 'sandi' => '24052009']);
+
+        // Parameter apa pun tidak bisa memindahkan halaman ke anak lain:
+        // id anak diambil dari sesi NISN, bukan dari URL.
+        $this->get('/ortu/rapor/adab?siswa=2&kamar=1')
+            ->assertOk()
+            ->assertSee('Ahmad Contoh')
+            ->assertDontSee('Zulfa Anak Lain');
+
+        $this->get('/ortu/rapor?siswa=2')
+            ->assertOk()
+            ->assertSee('Ahmad Contoh')
+            ->assertDontSee('Zulfa Anak Lain');
+    }
+
+    public function test_halaman_rapor_tidak_bisa_dibuka_tanpa_masuk(): void
+    {
+        $this->get('/ortu/rapor')->assertRedirect(route('ortu.masuk'));
+        $this->get('/ortu/rapor/student-root')->assertRedirect(route('ortu.masuk'));
+        $this->get('/ortu/rapor/adab')->assertRedirect(route('ortu.masuk'));
     }
 
     public function test_sandi_salah_tidak_membuka_dasbor(): void

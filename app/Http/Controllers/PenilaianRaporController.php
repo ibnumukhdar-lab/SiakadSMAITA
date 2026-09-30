@@ -214,19 +214,32 @@ class PenilaianRaporController extends Controller
                 ->with('error', 'Pilih dulu kamar atau siswa yang mau dicetak rapotnya.');
         }
 
-        $kamar = $kamarId > 0 ? AsramaKamar::with('musyrif')->find($kamarId) : null;
+        $this->pastikanBolehCetak($kamarId, $this->siswaCetak($siswaId, $kamarId));
 
-        if ($siswaId > 0) {
-            $daftarSiswa = Siswa::where('id', $siswaId)->get();
-        } else {
-            $anggota = DB::table('asrama_members')->where('kamar_id', $kamarId)->whereNull('tanggal_keluar')->pluck('student_id')->all();
-            $daftarSiswa = Siswa::whereIn('id', $anggota ?: [0])->where('status', 'Aktif')->orderBy('nama_lengkap')->get();
+        return $this->halamanRapor($request, $periodeId, $siswaId, $kamarId);
+    }
+
+    /**
+     * HALAMAN RAPOT SESUNGGUHNYA (30 Sep 2026 dipisah supaya bisa dipakai ulang).
+     *
+     * Dipakai (1) petugas lewat cetak() setelah izin diperiksa dan (2) portal
+     * orang tua untuk anaknya sendiri. Satu jalur kode = rapot yang dilihat
+     * orang tua PERSIS sama dengan rapot resmi yang dicetak sekolah.
+     */
+    public function halamanRapor(Request $request, int $periodeId = 0, int $siswaId = 0, int $kamarId = 0)
+    {
+        $periodeList = PenilaianPeriode::orderByDesc('aktif')->orderByDesc('nama')->get();
+
+        if ($periodeId === 0) {
+            $periodeId = (int) (PenilaianPeriode::aktifSekarang()?->id ?? $periodeList->first()?->id ?? 0);
         }
 
-        $this->pastikanBolehCetak($kamarId, $daftarSiswa);
+        $kamar = $kamarId > 0 ? AsramaKamar::with('musyrif')->find($kamarId) : null;
+        $daftarSiswa = $this->siswaCetak($siswaId, $kamarId);
 
         $hasilAdab = $periodeId ? $this->tanpaAdmin(PenilaianSesi::hasilPeriode($periodeId, 'adab')) : [];
         $hasilAsrama = $periodeId ? $this->tanpaAdmin(PenilaianSesi::hasilPeriode($periodeId, 'keasramaan')) : [];
+
         $musyrifDivisi = $this->musyrifPerDivisi();
 
         $petaKamar = $daftarSiswa->isEmpty() ? [] : DB::table('asrama_members as m')
@@ -257,6 +270,8 @@ class PenilaianRaporController extends Controller
         $catatan = \App\Models\CatatanRaport::untukAdab($daftarSiswa->pluck('id')->all(), $periodeId);
 
         return view('penilaian.rapot', [
+            'kembaliKe' => $request->input('kembaliKe'),
+            'modeOrtu' => (bool) $request->input('modeOrtu'),
             'daftar' => $daftar,
             'catatan' => $catatan,
             'periode' => $periodeList->firstWhere('id', $periodeId),
@@ -268,6 +283,18 @@ class PenilaianRaporController extends Controller
             'kepalaDiniyah' => $this->namaKepalaDiniyah(),
             'kepalaKulliyyah' => $this->kepalaKulliyyah(),
         ]);
+    }
+
+    /** Daftar santri yang akan dicetak: satu siswa, atau seluruh penghuni kamar. */
+    private function siswaCetak(int $siswaId, int $kamarId)
+    {
+        if ($siswaId > 0) {
+            return Siswa::where('id', $siswaId)->get();
+        }
+
+        $anggota = DB::table('asrama_members')->where('kamar_id', $kamarId)->whereNull('tanggal_keluar')->pluck('student_id')->all();
+
+        return Siswa::whereIn('id', $anggota ?: [0])->where('status', 'Aktif')->orderBy('nama_lengkap')->get();
     }
 
     /**

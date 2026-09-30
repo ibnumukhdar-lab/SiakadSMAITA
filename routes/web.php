@@ -56,6 +56,9 @@ Route::post('/ortu/masuk', [App\Http\Controllers\PortalOrtuController::class, 'p
     ->middleware('throttle:30,1')->name('ortu.proses');
 Route::get('/ortu/dasbor', [App\Http\Controllers\PortalOrtuController::class, 'dasbor'])->name('ortu.dasbor');
 Route::get('/ortu/rapor', [App\Http\Controllers\PortalOrtuController::class, 'rapor'])->name('ortu.rapor');
+// Rapor resmi yang sudah ada dipanggil kembali untuk anak sendiri (lihat PortalOrtuController).
+Route::get('/ortu/rapor/student-root', [App\Http\Controllers\PortalOrtuController::class, 'raporStudentRoot'])->name('ortu.rapor.sr');
+Route::get('/ortu/rapor/adab', [App\Http\Controllers\PortalOrtuController::class, 'raporAdab'])->name('ortu.rapor.adab');
 Route::post('/ortu/keluar', [App\Http\Controllers\PortalOrtuController::class, 'keluar'])->name('ortu.keluar');
 
 // --- RUTE VERIFIKASI ARSIP PUBLIK ---
