@@ -71,7 +71,7 @@ class PortalOrtuController extends Controller
             return back()->withInput()->withErrors(['sandi' => $pesanGagal]);
         }
 
-        $sandiBenar = SandiOrtu::dariTtl($siswa->ttl ?? null);
+        $sandiBenar = SandiOrtu::untukSiswa($siswa);
 
         if ($sandiBenar === null) {
             return back()->withInput()->withErrors([

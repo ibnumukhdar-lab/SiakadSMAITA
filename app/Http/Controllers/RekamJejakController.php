@@ -31,7 +31,7 @@ class RekamJejakController extends Controller
             return redirect()->route('siswa.index')->with('error', 'Siswa tidak ditemukan atau sudah dihapus.');
         }
 
-        $sandiOrtu = \App\Support\SandiOrtu::dariTtl($data['siswa']->ttl ?? null);
+        $sandiOrtu = \App\Support\SandiOrtu::untukSiswa($data['siswa']);
 
         return view('siswa.rekam-jejak', [
             'rj'          => $data,

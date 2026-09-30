@@ -20,5 +20,6 @@ class Siswa extends Model
     protected $casts = [
         'prestasi' => 'array',
         'pelanggaran' => 'array',
+        'tanggal_lahir' => 'date',
     ];
 }

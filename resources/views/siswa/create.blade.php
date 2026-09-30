@@ -53,8 +53,13 @@
                             <input type="text" name="nis" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tempat, Tgl Lahir</label>
-                            <input type="text" name="ttl" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="Contoh: Jakarta, 12 Mei 2008">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tempat Lahir</label>
+                            <input type="text" name="tempat_lahir" value="{{ old('tempat_lahir') }}" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="Contoh: Sampit">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tanggal Lahir</label>
+                            <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir') }}" min="1980-01-01" max="{{ date('Y-m-d') }}" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
+                            <p class="text-[11px] text-slate-400 mt-1">Dipakai otomatis sebagai kata sandi portal orang tua (ddmmyyyy).</p>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Jenis Kelamin</label>

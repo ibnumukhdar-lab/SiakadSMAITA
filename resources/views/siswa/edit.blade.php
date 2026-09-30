@@ -60,9 +60,20 @@
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">NIS Lokal</label>
                             <input type="text" name="nis" value="{{ $siswa->nis }}" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
                         </div>
+                        @php
+                            // Data lama masih menyimpan tempat+tanggal di satu kolom `ttl`;
+                            // tampilkan hasil bedahnya supaya petugas tinggal memeriksa/membetulkan.
+                            $tempatIsi = old('tempat_lahir', $siswa->tempat_lahir ?: \App\Support\SandiOrtu::tempatLahir($siswa->ttl));
+                            $tanggalIsi = old('tanggal_lahir', $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('Y-m-d') : \App\Support\SandiOrtu::tanggalLahir($siswa->ttl));
+                        @endphp
                         <div>
-                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tempat, Tgl Lahir</label>
-                            <input type="text" name="ttl" value="{{ $siswa->ttl }}" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tempat Lahir</label>
+                            <input type="text" name="tempat_lahir" value="{{ $tempatIsi }}" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="Contoh: Sampit">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tanggal Lahir</label>
+                            <input type="date" name="tanggal_lahir" value="{{ $tanggalIsi }}" min="1980-01-01" max="{{ date('Y-m-d') }}" class="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition">
+                            <p class="text-[11px] text-slate-400 mt-1">Menjadi kata sandi portal orang tua (ddmmyyyy) — pastikan benar.</p>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Jenis Kelamin</label>

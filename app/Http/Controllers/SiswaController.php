@@ -16,7 +16,7 @@ class SiswaController extends Controller
      * (mis. deleted_at / thn_lulus) bisa disetel dari browser.
      */
     private const KOLOM_ISI = [
-        'nama_lengkap', 'nisn', 'nis', 'ttl', 'jk', 'status', 'kelas',
+        'nama_lengkap', 'nisn', 'nis', 'ttl', 'tempat_lahir', 'tanggal_lahir', 'jk', 'status', 'kelas',
         'thn_masuk', 'thn_lulus', 'tahun_ajaran',
         'nama_ayah', 'status_ayah', 'pekerjaan_ayah',
         'nama_ibu', 'status_ibu', 'pekerjaan_ibu',
@@ -160,7 +160,7 @@ class SiswaController extends Controller
 
             fputcsv($keluar, [
                 'NISN', 'NIS', 'Nama Lengkap', 'Jenis Kelamin', 'Kelas', 'Status',
-                'Tempat Tgl Lahir', 'Tahun Masuk', 'Tahun Ajaran', 'No HP Ortu',
+                'Tempat Lahir', 'Tanggal Lahir', 'Tempat Tgl Lahir (lama)', 'Tahun Masuk', 'Tahun Ajaran', 'No HP Ortu',
                 'Nama Ayah', 'Pekerjaan Ayah', 'Nama Ibu', 'Pekerjaan Ibu',
                 'Nama Wali', 'No HP Wali', 'Alamat', 'Tinggal Bersama', 'Jarak (km)',
                 'Transportasi', 'No KIP/PKH', 'Asal Sekolah', 'Riwayat Penyakit',
@@ -169,7 +169,8 @@ class SiswaController extends Controller
             foreach ($daftar as $s) {
                 fputcsv($keluar, [
                     $s->nisn, $s->nis, $s->nama_lengkap, $s->jk, $s->kelas, $s->status,
-                    $s->ttl, $s->thn_masuk, $s->tahun_ajaran, $s->hp_ortu,
+                    $s->tempat_lahir, $s->tanggal_lahir ? $s->tanggal_lahir->format('d/m/Y') : '', $s->ttl,
+                    $s->thn_masuk, $s->tahun_ajaran, $s->hp_ortu,
                     $s->nama_ayah, $s->pekerjaan_ayah, $s->nama_ibu, $s->pekerjaan_ibu,
                     $s->nama_wali, $s->hp_wali, $s->alamat, $s->tinggal_bersama, $s->jarak,
                     $s->transportasi, $s->kesejahteraan, $s->asal_sekolah, $s->penyakit,
@@ -412,11 +413,19 @@ class SiswaController extends Controller
                 continue;
             }
 
+            // Tempat & tanggal lahir: dari kolom terpisah bila ada, kalau tidak
+            // dibedah dari kolom gabungan "Tempat Tgl Lahir" (30 Sep 2026).
+            $ttlMentah = $ambil('ttl');
+            $tempatLahir = $this->rapikanTeks($ambil('tempat_lahir')) ?: \App\Support\SandiOrtu::tempatLahir($ttlMentah);
+            $tanggalLahir = \App\Support\SandiOrtu::tanggalLahir($ambil('tanggal_lahir') ?: $ttlMentah);
+
             $siapSimpan[$nisn] = [
                 'nama_lengkap'    => $nama,
                 'nis'             => $nis,
                 'nisn'            => $nisn,
-                'ttl'             => $ambil('ttl'),
+                'ttl'             => \App\Support\SandiOrtu::rangkai($tempatLahir, $tanggalLahir) ?: $ambil('ttl'),
+                'tempat_lahir'    => $tempatLahir,
+                'tanggal_lahir'   => $tanggalLahir ?: null,
                 'jk'              => $this->rapikanJk($ambil('jk')),
                 'status'          => $this->rapikanStatus($ambil('status')) ?? 'Aktif',
                 'kelas'           => $this->rapikanKelas($ambil('kelas')),
@@ -547,14 +556,14 @@ class SiswaController extends Controller
             $file = fopen('php://output', 'w');
             fwrite($file, "\xEF\xBB\xBF");
             fputcsv($file, [
-                'Nama Lengkap', 'NIS', 'NISN', 'Tempat Tgl Lahir', 'Jenis Kelamin', 'Status', 'Kelas',
+                'Nama Lengkap', 'NIS', 'NISN', 'Tempat Lahir', 'Tanggal Lahir', 'Jenis Kelamin', 'Status', 'Kelas',
                 'Tahun Masuk', 'No HP Utama Ortu', 'Nama Ayah', 'Status Ayah', 'Pekerjaan Ayah',
                 'Nama Ibu', 'Status Ibu', 'Pekerjaan Ibu', 'Nama Wali', 'Pekerjaan Wali', 'No HP Wali',
                 'No KIP PKH', 'Tinggal Bersama', 'Jarak km', 'Transportasi', 'Asal Sekolah',
                 'Alamat Lengkap', 'Riwayat Penyakit', 'Tahun Ajaran',
             ]);
             fputcsv($file, [
-                'Ahmad Dahlan', '23241001', '0051234567', 'Sampit, 12 Mei 2008', 'Laki-laki', 'Aktif', 'X',
+                'Ahmad Dahlan', '23241001', '0051234567', 'Sampit', '12/05/2008', 'Laki-laki', 'Aktif', 'X',
                 '2024', '08123456789', 'Budi', 'Masih Hidup', 'Wiraswasta',
                 'Siti', 'Masih Hidup', 'Ibu Rumah Tangga', '', '', '',
                 '', 'Orang Tua', '2.5', 'Sepeda Motor', 'SMPN 1 Sampit',
@@ -573,7 +582,9 @@ class SiswaController extends Controller
             'nama_lengkap'    => ['namalengkap', 'nama', 'namasiswa', 'namapesertadidik'],
             'nis'             => ['nis', 'nislokal', 'nomorinduk'],
             'nisn'            => ['nisn', 'nomornisn', 'nisnnasional'],
-            'ttl'             => ['tempatTGLLahir', 'tempattgllahir', 'ttl', 'tempatlahir', 'tanggallahir', 'tempat tanggallahir'],
+            'ttl'             => ['tempatTGLLahir', 'tempattgllahir', 'ttl', 'tempat tanggallahir', 'tempat/tgl lahir'],
+            'tempat_lahir'    => ['tempatlahir', 'tempat lahir', 'tempatlahir siswa', 'kotalahir'],
+            'tanggal_lahir'   => ['tanggallahir', 'tanggal lahir', 'tgllahir', 'tgl lahir', 'tanggallahir siswa'],
             'jk'              => ['jeniskelamin', 'jk', 'gender', 'lp'],
             'status'          => ['status', 'statussiswa', 'statuspesertadidik'],
             'kelas'           => ['kelas', 'rombel', 'kelasrombel'],
@@ -793,6 +804,8 @@ class SiswaController extends Controller
             }],
             'nis' => 'nullable|string|max:30',
             'ttl' => 'nullable|string|max:150',
+            'tempat_lahir' => 'nullable|string|max:100',
+            'tanggal_lahir' => 'nullable|date',
             'jk' => 'nullable|in:Laki-laki,Perempuan',
             'status' => 'nullable|in:Aktif,Alumni,Pindah',
             'kelas' => ['nullable', 'string', 'max:60', function ($attribute, $value, $fail) use ($siswa) {
@@ -867,7 +880,32 @@ class SiswaController extends Controller
         $data['prestasi'] = $this->rapikanLogbook($request->input('prestasi'), ['tgl', 'tingkat', 'nama']);
         $data['pelanggaran'] = $this->rapikanLogbook($request->input('pelanggaran'), ['tgl', 'kategori', 'kasus', 'tindakan']);
 
+        // TEMPAT & TANGGAL LAHIR (30 Sep 2026): dipisah supaya kata sandi portal
+        // orang tua bisa dibuat otomatis dari pemilih kalender, tanpa menebak teks.
+        $data['tempat_lahir'] = $this->rapikanTeks($request->input('tempat_lahir'));
+        $data['tanggal_lahir'] = $this->tanggalSah($request->input('tanggal_lahir'));
+
+        // Kolom lama `ttl` tetap dirapikan agar cetak lembar induk & ekspor CSV utuh.
+        $rangkaian = \App\Support\SandiOrtu::rangkai($data['tempat_lahir'], $data['tanggal_lahir']);
+        $data['ttl'] = $rangkaian ?: ($this->rapikanTeks($request->input('ttl')) ?: null);
+
         return $this->kosongKeNull($data);
+    }
+
+    /** Ubah isian tanggal (dari pemilih kalender) menjadi Y-m-d; null bila tak sah. */
+    private function tanggalSah($nilai): ?string
+    {
+        $nilai = trim((string) $nilai);
+
+        if ($nilai === '') {
+            return null;
+        }
+
+        try {
+            return \Carbon\Carbon::parse($nilai)->toDateString();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     private function bersihkanNisn($nilai): string

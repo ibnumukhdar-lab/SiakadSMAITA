@@ -45,7 +45,7 @@
                             NISN {{ $s->nisn ?: '-' }} · NIS {{ $s->nis ?: '-' }} · Kelas {{ $s->kelas ?: '-' }} · {{ $s->jk ?: '-' }} · {{ $s->status ?: '-' }}
                         </p>
                         <p class="text-xs text-gray-600 font-semibold mt-1">
-                            {{ $s->ttl ?: 'Tempat/tanggal lahir belum diisi' }}
+                            {{ $s->tempat_lahir ?: \App\Support\SandiOrtu::tempatLahir($s->ttl) }}{{ $s->tanggal_lahir ? ', '.$s->tanggal_lahir->locale('id')->translatedFormat('d F Y') : ($s->ttl ? ', '.(\App\Support\SandiOrtu::tanggalLahir($s->ttl) ?: $s->ttl) : ' — tanggal lahir belum lengkap, orang tua belum bisa masuk portal') }}
                         </p>
                         <div class="flex flex-wrap gap-2 mt-3">
                             <span class="px-2 py-1 rounded bg-gray-100 border border-gray-200 text-xs font-bold text-gray-700">Kamar: {{ $rj['kamar']?->nama_kamar ?? 'belum ada' }}</span>

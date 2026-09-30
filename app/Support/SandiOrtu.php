@@ -2,23 +2,29 @@
 
 namespace App\Support;
 
+use Carbon\Carbon;
+
 /**
- * SANDI ORANG TUA DARI TANGGAL LAHIR (mulai 30 Sep 2026)
+ * SANDI ORANG TUA DARI TANGGAL LAHIR (mulai 30 Sep 2026, disempurnakan 30 Sep 2026)
  * =====================================================================
  * Keputusan pemilik sekolah: kata sandi portal orang tua = tanggal lahir anak
  * dengan format ddmmyyyy (mis. 24 Mei 2009 -> 24052009).
  *
- * Kolom `siswas.ttl` berisi teks bebas, misalnya:
- *   "Banyuwangi 24 Mei 2009"
- *   "bekasi 06 agustus 2008"
- *   "Yogyakarta  27 Mei 2009"       (spasi ganda)
- *   "Pematang Siantar, 8 Maret 2011" (koma & tanggal satu digit)
- * Jadi pembacaannya harus toleran: cari angka tanggal, nama bulan Indonesia,
- * lalu empat angka tahun — di mana pun posisinya di dalam teks.
+ * Sejak 30 Sep 2026 tanggal lahir disimpan di kolom sendiri
+ * (`siswas.tanggal_lahir`, tipe DATE, diisi lewat pemilih kalender) dan
+ * `siswas.tempat_lahir`. Fungsi di sini melayani DUA keadaan:
+ *   1. data baru  -> baca `tanggal_lahir` (pasti benar, tanpa tebak-tebakan);
+ *   2. data lama  -> bedah teks `ttl` (kolom warisan) sebagai cadangan.
  *
- * Data produksi 30 Sep 2026: 128 dari 130 siswa bisa dibaca; 2 siswa belum ada
- * tanggal lahirnya (Alif Nizham Muzakki, Nur Alya Aqila Azahra) sehingga belum
- * bisa memakai portal ini sampai data induknya dilengkapi Tata Usaha.
+ * Bentuk teks `ttl` yang nyata di produksi (30 Sep 2026, 130 siswa):
+ *   "Pematang Siantar, 8 Maret 2011"          (106 siswa) nama bulan Indonesia
+ *   "Kotawaringin Timur 2009-11-23 00:00:00"  ( 22 siswa) hasil impor ISO
+ *   ""                                        (  2 siswa) belum ada isian
+ * Karena itu pembacaan teks harus tahan: spasi ganda, koma, huruf kecil,
+ * tanggal satu digit, bulan singkat, dan bentuk ISO/numerik.
+ *
+ * Alat bantu: `php artisan siswa:pilah-ttl --uji` (lihat rencana pengisian),
+ * `php artisan siswa:pilah-ttl` (isi tempat_lahir & tanggal_lahir dari ttl).
  */
 class SandiOrtu
 {
@@ -29,38 +35,130 @@ class SandiOrtu
         'september' => 9, 'oktober' => 10, 'november' => 11, 'desember' => 12,
     ];
 
+    // =================================================================
+    //  BAGIAN 1 — kata sandi portal
+    // =================================================================
+
     /**
-     * Kata sandi (ddmmyyyy) dari teks tanggal lahir. Null bila tak bisa dibaca.
+     * Kata sandi (ddmmyyyy) untuk seorang siswa.
+     * Diutamakan kolom `tanggal_lahir`; bila belum ada, teks `ttl` dibedah.
+     */
+    public static function untukSiswa($siswa): ?string
+    {
+        if (! $siswa) {
+            return null;
+        }
+
+        $tanggal = $siswa->tanggal_lahir ?? null;
+
+        if ($tanggal) {
+            return Carbon::parse($tanggal)->format('dmY');
+        }
+
+        return self::dariTtl($siswa->ttl ?? null);
+    }
+
+    /**
+     * Kata sandi (ddmmyyyy) dari teks. Null bila tak bisa dibaca.
+     * Dipertahankan sebagai jalan cadangan untuk baris lama.
      */
     public static function dariTtl(?string $ttl): ?string
     {
-        $teks = trim((string) $ttl);
+        $tanggal = self::tanggalLahir($ttl);
+
+        return $tanggal === null ? null : Carbon::parse($tanggal)->format('dmY');
+    }
+
+    /** Apakah sandi siswa ini siap dipakai? */
+    public static function bisaSiswa($siswa): bool
+    {
+        return self::untukSiswa($siswa) !== null;
+    }
+
+    /** Apakah teks tanggal lahir ini bisa dibaca? */
+    public static function bisa(?string $ttl): bool
+    {
+        return self::dariTtl($ttl) !== null;
+    }
+
+    // =================================================================
+    //  BAGIAN 2 — pembedah teks tempat + tanggal lahir
+    // =================================================================
+
+    /**
+     * Tanggal lahir (Y-m-d) hasil bedah teks. Null bila tak bisa dibaca.
+     * Menerima tiga bentuk: nama bulan Indonesia, ISO (2009-11-23), numerik
+     * (23/11/2009, 23-11-2009, 23.11.2009). Tanggal ISO dianggap TAHUN-BULAN-HARI
+     * karena begitulah isi data impor; bentuk numerik dianggap HARI-BULAN-TAHUN.
+     */
+    public static function tanggalLahir(?string $teks): ?string
+    {
+        $teks = trim((string) $teks);
 
         if ($teks === '') {
             return null;
         }
 
-        // Tanggal, nama bulan, tahun — dipisah spasi/koma/titik apa saja.
-        if (! preg_match('/(\d{1,2})\s*[^\dA-Za-z]?\s*([A-Za-z]+)\s+(\d{4})/u', $teks, $m)) {
-            return null;
+        // (a) 2009-11-23 (iso, boleh diikuti jam 00:00:00 dari impor)
+        if (preg_match('/(\d{4})-(\d{1,2})-(\d{1,2})/', $teks, $m)) {
+            return self::sah((int) $m[3], (int) $m[2], (int) $m[1]);
         }
 
-        $hari = (int) $m[1];
-        $bulan = self::bulan($m[2]);
-        $tahun = (int) $m[3];
-
-        if ($bulan === 0 || ! checkdate($bulan, $hari, $tahun)) {
-            return null;
+        // (b) 23/11/2009, 23-11-2009, 23.11.2009
+        if (preg_match('#(\d{1,2})\s*[/.\-]\s*(\d{1,2})\s*[/.\-]\s*(\d{4})#', $teks, $m)) {
+            return self::sah((int) $m[1], (int) $m[2], (int) $m[3]);
         }
 
-        return sprintf('%02d%02d%04d', $hari, $bulan, $tahun);
+        // (c) 24 Mei 2009 / 24 Mei 2009 / "8 Maret 2011"
+        if (preg_match('/(\d{1,2})\s*[^\dA-Za-z]?\s*([A-Za-z]+)\s+(\d{4})/u', $teks, $m)) {
+            $bulan = self::bulan($m[2]);
+
+            if ($bulan === 0) {
+                return null;
+            }
+
+            return self::sah((int) $m[1], $bulan, (int) $m[3]);
+        }
+
+        return null;
     }
 
-    /** Apakah tanggal lahir siswa ini bisa dijadikan sandi? */
-    public static function bisa(?string $ttl): bool
+    /**
+     * Nama tempat lahir dari teks (bagian sebelum angka/tahun).
+     * "Pematang Siantar, 8 Maret 2011" -> "Pematang Siantar"
+     * "Kotawaringin Timur 2009-11-23 00:00:00" -> "Kotawaringin Timur"
+     */
+    public static function tempatLahir(?string $teks): ?string
     {
-        return self::dariTtl($ttl) !== null;
+        $teks = trim((string) $teks);
+
+        if ($teks === '') {
+            return null;
+        }
+
+        // Buang bagian tanggal: mulai dari angka/tahun pertama.
+        $potong = preg_split('/\d/', $teks, 2);
+        $tempat = trim((string) ($potong[0] ?? ''), " \t\n\r,-.");
+
+        return $tempat === '' ? null : $tempat;
     }
+
+    /** Rangkaian ulang "Tempat, 24 Mei 2009" untuk kolom lama `ttl`. */
+    public static function rangkai(?string $tempat, ?string $tanggal): ?string
+    {
+        if (! $tanggal) {
+            return $tempat ?: null;
+        }
+
+        $tanggal = Carbon::parse($tanggal);
+        $teks = $tempat ? $tempat . ', ' : '';
+
+        return $teks . $tanggal->format('j') . ' ' . self::namaBulan((int) $tanggal->format('n')) . ' ' . $tanggal->format('Y');
+    }
+
+    // =================================================================
+    //  ALAT INTERNAL
+    // =================================================================
 
     /** Nama bulan angka (1-12), 0 bila tidak dikenali (termasuk singkatan "Jan"). */
     private static function bulan(string $nama): int
@@ -71,7 +169,6 @@ class SandiOrtu
             return self::BULAN[$nama];
         }
 
-        // Toleransi singkatan: "jan", "feb", "agu", "des", dst.
         if (mb_strlen($nama) >= 3) {
             $awalan = mb_substr($nama, 0, 3);
 
@@ -83,5 +180,26 @@ class SandiOrtu
         }
 
         return 0;
+    }
+
+    private static function namaBulan(int $angka): string
+    {
+        $nama = array_keys(self::BULAN);
+
+        return ucfirst($nama[$angka - 1] ?? '-');
+    }
+
+    /** Tanggal sah -> "Y-m-d", sebaliknya null. Tahun wajar 1980-2026. */
+    private static function sah(int $hari, int $bulan, int $tahun): ?string
+    {
+        if (! checkdate($bulan, $hari, $tahun)) {
+            return null;
+        }
+
+        if ($tahun < 1980 || $tahun > 2026) {
+            return null;
+        }
+
+        return sprintf('%04d-%02d-%02d', $tahun, $bulan, $hari);
     }
 }

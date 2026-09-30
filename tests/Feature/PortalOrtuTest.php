@@ -150,4 +150,20 @@ class PortalOrtuTest extends TestCase
 
         $this->assertNotNull(session('ortu_siswa_id'));
     }
+
+    public function test_kolom_tanggal_lahir_baru_dipakai_untuk_sandi(): void
+    {
+        // Petugas mengisi lewat pemilih kalender; teks lama `ttl` boleh keliru/tidak rapi.
+        $this->buatSiswa([
+            'nisn' => '0095555555',
+            'nama_lengkap' => 'Kalender Baru',
+            'ttl' => 'Sampit (belum rapi)',
+            'tanggal_lahir' => '2011-03-08',
+        ]);
+
+        $this->post('/ortu/masuk', ['nisn' => '0095555555', 'sandi' => '08032011'])
+            ->assertRedirect(route('ortu.dasbor'));
+
+        $this->assertNotNull(session('ortu_siswa_id'));
+    }
 }

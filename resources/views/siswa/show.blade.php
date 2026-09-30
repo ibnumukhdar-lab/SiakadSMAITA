@@ -98,8 +98,12 @@
                             <dd class="col-span-2 text-sm text-slate-800 font-medium">{{ $siswa->jk }}</dd>
                         </div>
                         <div class="py-2.5 grid grid-cols-3 gap-4">
-                            <dt class="text-[12px] font-bold uppercase tracking-wider text-slate-400">Tempat, Tgl Lahir</dt>
-                            <dd class="col-span-2 text-sm text-slate-800 font-medium">{{ $siswa->ttl ?? '-' }}</dd>
+                            <dt class="text-[12px] font-bold uppercase tracking-wider text-slate-400">Tempat Lahir</dt>
+                            <dd class="col-span-2 text-sm text-slate-800 font-medium">{{ $siswa->tempat_lahir ?: (\App\Support\SandiOrtu::tempatLahir($siswa->ttl) ?: '-') }}</dd>
+                        </div>
+                        <div class="py-2.5 grid grid-cols-3 gap-4">
+                            <dt class="text-[12px] font-bold uppercase tracking-wider text-slate-400">Tanggal Lahir</dt>
+                            <dd class="col-span-2 text-sm text-slate-800 font-medium">{{ $siswa->tanggal_lahir ? $siswa->tanggal_lahir->locale('id')->translatedFormat('d F Y') : (\App\Support\SandiOrtu::tanggalLahir($siswa->ttl) ?? '-') }}</dd>
                         </div>
                         <div class="py-2.5 grid grid-cols-3 gap-4">
                             <dt class="text-[12px] font-bold uppercase tracking-wider text-slate-400">Tahun Ajaran Berlangsung</dt>
