@@ -4,8 +4,60 @@
 # Aman: .env, storage (upload+cache), vendor, node_modules, zip backup TIDAK ditimpa.
 set -euo pipefail
 
-echo "== 1/6 kompres kode lokal (tanpa .git/.env/vendor/node_modules/upload/storage) =="
-cd /d/SIAKAD-SMAITA
+# Direktori kode sumber: bisa diberikan sebagai argumen (dipakai agen VPS/Linux)
+#   bash deploy-server.sh /root/siakad-src
+SUMBER="${1:-/d/SIAKAD-SMAITA}"
+if [ ! -f "$SUMBER/artisan" ]; then
+  echo "!! Direktori sumber tidak sah: $SUMBER (tidak ada berkas artisan)."
+  echo "   Pakai: bash deploy-server.sh /path/ke/klon-siakad"
+  exit 2
+fi
+
+
+# =====================================================================
+# 0/6 — PEMERIKSAAN BERKAS PENTING DI KODE SUMBER (gabungan agen PC+VPS, 1 Okt 2026)
+# ---------------------------------------------------------------------
+# Isi pemeriksaan ini berasal dari agen Hermes VPS (Telegram); pengaman 1b/6 dari
+# agen PC. Digabung dalam SATU skrip supaya kedua sisi memakai aturan yang sama.
+# Latar: deploy 30 Sep 2026 menimpa kepanjangan "SIAKAD" di login & navigation
+# dan menghapus public/vendor/qrcode.min.js (QR halaman evaluasi BEE hilang).
+# Sengaja dilewati:  LEWATI_CEK_BERKAS=1 bash deploy-server.sh
+# =====================================================================
+echo "== 0/6 periksa berkas penting di kode sumber =="
+GAGAL_BERKAS=0
+
+cek_teks() {   # $1=berkas  $2=teks wajib  $3=keterangan
+  if [ ! -f "$SUMBER/$1" ]; then
+    echo "   X  TIDAK ADA: $1   ($3)"
+    GAGAL_BERKAS=1
+  elif grep -qF -- "$2" "$SUMBER/$1"; then
+    echo "   ok $1   ($3)"
+  else
+    echo "   X  TIDAK MEMUAT \"$2\": $1   ($3)"
+    GAGAL_BERKAS=1
+  fi
+  return 0
+}
+
+cek_teks "resources/views/auth/login.blade.php" "Sistem Informasi Akademik" "kepanjangan SIAKAD di halaman login"
+cek_teks "resources/views/layouts/navigation.blade.php" "kepanjanganSia" "kepanjangan SIAKAD di 3 titik navigasi"
+cek_teks "public/vendor/qrcode.min.js" "QRCode" "pustaka QR halaman evaluasi BEE"
+
+if [ "$GAGAL_BERKAS" = "1" ]; then
+  if [ "${LEWATI_CEK_BERKAS:-0}" = "1" ]; then
+    echo "   !! LEWATI_CEK_BERKAS=1 -> dikirim juga walau tidak lengkap (berkas itu akan HILANG di server)."
+  else
+    echo ""
+    echo "   X  BERHENTI: lengkapi berkas di atas di klon ini, lalu jalankan ulang."
+    echo "      Bila memang sengaja: LEWATI_CEK_BERKAS=1 bash deploy-server.sh"
+    exit 4
+  fi
+else
+  echo "   -> berkas penting lengkap, lanjut kirim."
+fi
+
+echo "== 1/6 kompres kode sumber (tanpa .git/.env/vendor/node_modules/upload/storage) =="
+cd "$SUMBER"
 tar czf - \
   --exclude=.git --exclude=.env --exclude=vendor --exclude=node_modules \
   --exclude=TUSMAITA.CODE.zip --exclude=cgi-bin \
