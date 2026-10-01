@@ -128,21 +128,60 @@ ssh -n -o ConnectTimeout=20 -o BatchMode=yes nizhom '
   join -1 2 -2 2 -o 1.2,1.1,2.1 /tmp/md5-lama.txt /tmp/md5-baru.txt | awk "\$2 != \$3 {print \$1}"
 ' | tee /tmp/siakad-selisih.txt
 
-if grep -qE "^(app|resources|routes|database|config|public)/" /tmp/siakad-selisih.txt; then
-  if [ "${IZINKAN_TIMPA:-0}" = "1" ]; then
-    echo "   !! ADA PERUBAHAN DI SERVER — IZINKAN_TIMPA=1 → tetap dilanjutkan (berkas itu akan ditimpa; salinan lama tetap ada di _old_<ts>)."
-    cp /tmp/siakad-selisih.txt "/tmp/siakad-selisih-$(date +%Y%m%d_%H%M%S).txt"
-  else
-    echo ""
-    echo "   ✋ BERHENTI: ada berkas di server yang tidak dikenal kode lokal (daftar di atas)."
-    echo "      Deploy ini akan MENGHAPUS/ MENIMPA berkas tersebut."
-    echo "      Pilihan: (1) tarik dulu perubahan itu ke repo lokal (repot tapi benar), atau"
-    echo "               (2) jalankan ulang bila memang mau ditimpa:"
-    echo "                   IZINKAN_TIMPA=1 bash deploy-server.sh"
-    exit 3
+DAFTAR_SELISIH=$(grep -E "^(app|resources|routes|database|config|public)/" /tmp/siakad-selisih.txt || true)
+
+if [ -n "$DAFTAR_SELISIH" ]; then
+  # Pisahkan dua hal yang BERBEDA (pelajaran 1 Okt 2026 — supaya tidak berhenti
+  # hanya karena berkas yang di server memang sudah ada di repo lokal kita):
+  #   (a) "sudah ada di repo"  → isi server == isi klon lokal  → hanya info, deploy boleh lanjut;
+  #   (b) "ASING"              → isi berbeda / tidak ada di klon → BERHENTI (deploy akan menghapusnya).
+  ssh -n -o ConnectTimeout=20 -o BatchMode=yes nizhom '
+    cd ~/public_html/siakad.smaitarafah.sch.id || exit 1
+    find app resources routes database config public -type f \
+      -not -path "public/build/*" -not -name ".manifest-deploy.md5" \
+      -exec md5sum {} +
+  ' | tr -d '\r' | sed -E 's/^([0-9a-f]{32}) \*(.*)$/\1  \2/' > /tmp/md5-server-terbaru.txt
+
+  ASING=""
+  SAMA=""
+  for f in $DAFTAR_SELISIH; do
+    md5_srv=$(awk -v p="$f" '$2 == p {print $1; exit}' /tmp/md5-server-terbaru.txt)
+    if [ -f "$SUMBER/$f" ]; then
+      md5_lok=$(md5sum "$SUMBER/$f" | sed -E 's/^([0-9a-f]{32}) \*(.*)$/\1  \2/' | awk '{print $1}')
+    else
+      md5_lok="(tidak-ada)"
+    fi
+    if [ "$md5_srv" = "$md5_lok" ] && [ -n "$md5_srv" ]; then
+      SAMA="$SAMA $f"
+    else
+      ASING="$ASING $f"
+    fi
+  done
+
+  if [ -n "$SAMA" ]; then
+    echo "   ── sudah sama dengan klon lokal (aman, hanya info) ──"
+    for f in $SAMA; do echo "   = $f"; done
   fi
+
+  if [ -n "$ASING" ]; then
+    if [ "${IZINKAN_TIMPA:-0}" = "1" ]; then
+      echo "   !! ADA PERUBAHAN ASING DI SERVER — IZINKAN_TIMPA=1 → tetap dilanjutkan (akan ditimpa; salinan lama ada di _old_<ts>):"
+      for f in $ASING; do echo "   ! $f"; done
+      cp /tmp/siakad-selisih.txt "/tmp/siakad-selisih-$(date +%Y%m%d_%H%M%S).txt"
+    else
+      echo ""
+      echo "   ✋ BERHENTI: ada berkas di server yang TIDAK ADA / BERBEDA di klon lokal (daftar di atas):"
+      for f in $ASING; do echo "      $f"; done
+      echo "      Deploy ini akan MENGHAPUS/ MENIMPA berkas tersebut."
+      echo "      Pilihan: (1) tarik dulu perubahan itu ke repo lokal (bash tarik-dari-server.sh) — repot tapi benar, atau"
+      echo "               (2) jalankan ulang bila memang mau ditimpa:"
+      echo "                   IZINKAN_TIMPA=1 bash deploy-server.sh"
+      exit 3
+    fi
+  fi
+else
+  echo "   aman — tidak ada berkas asing di server."
 fi
-echo "   aman — tidak ada perubahan asing di server."
 
 echo "== 2/6 kirim & ekstrak di folder _tmp =="
 ssh -o ConnectTimeout=20 -o BatchMode=yes nizhom "
