@@ -84,6 +84,10 @@
                 <a href="{{ route('sr.poin.create') }}" class="{{ $sub }}">Input Poin Sikap</a>
                 <a href="{{ route('sr.dashboard') }}" class="{{ $sub }}">Dashboard Karakter</a>
 
+                @if(auth()->user()->can('buka-menu-grup-binaan') || auth()->user()->can('buka-menu-master-student-root'))
+                    <a href="{{ route('sr.statistik') }}" class="{{ $sub }}">Statistik Program</a>
+                @endif
+
                 @can('buka-menu-grup-binaan')
                     <a href="{{ route('sr.mygroup') }}" class="{{ $sub }}">Grup Binaan Saya</a>
                 @endcan

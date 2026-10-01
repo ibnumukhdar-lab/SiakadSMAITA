@@ -417,6 +417,20 @@ Route::middleware(['auth'])->group(function () {
     Route::get('student-root/rapot/cetak', [App\Http\Controllers\SrRaporController::class, 'cetak'])->name('sr.rapot.cetak');
 
     // =================================================================
+    //  STATISTIK STUDENT ROOT (1 Okt 2026) — BACA-SAJA.
+    //  Membandingkan bulan ke bulan (naik/turun poin, santri yang dapat
+    //  plus & minus), aktivitas terbanyak + catatannya, sebaran kelas/grup,
+    //  dan panel kualitas data. Hak akses diperiksa di controller:
+    //  pengawas (Super Admin/Kepala Diniyah/Kepala Sekolah/TU) melihat semua,
+    //  mentor hanya grup binaannya. Tanpa izin baru.
+    // =================================================================
+    Route::middleware('permission:buka-menu-master-student-root|buka-menu-grup-binaan')->group(function () {
+        Route::get('student-root/statistik', [App\Http\Controllers\SrStatistikController::class, 'index'])->name('sr.statistik');
+        Route::get('student-root/statistik/cetak', [App\Http\Controllers\SrStatistikController::class, 'cetak'])->name('sr.statistik.cetak');
+        Route::get('student-root/statistik/ekspor', [App\Http\Controllers\SrStatistikController::class, 'ekspor'])->name('sr.statistik.ekspor');
+    });
+
+    // =================================================================
     //  MODUL DINIYAH (1 Okt 2026) — mata pelajaran, nilai, absensi, rapor Arab
     //  Kepala Diniyah: menetapkan mapel & periode.
     //  Musyrif/musyrifah: mengisi nilai & absensi (hanya kamar binaannya).
