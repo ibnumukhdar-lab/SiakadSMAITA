@@ -105,14 +105,14 @@
                 const banner = document.createElement('div');
                 banner.id = 'pwa-install-banner';
                 banner.innerHTML = `
-                    <div style="position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background: #1e3a8a; color: white; padding: 15px 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); display: flex; align-items: center; gap: 15px; z-index: 99999; width: 90%; max-width: 400px; justify-content: space-between; border: 1px solid #3b82f6;">
+                    <div style="position: relative; width: 100%; background: #1e3a8a; color: white; padding: 10px 16px; border-radius: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.14); display: flex; align-items: center; gap: 12px; z-index: 30; justify-content: space-between; border-bottom: 1px solid #3b82f6;">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <div style="background: white; padding: 8px; border-radius: 10px;">
                                 <img src="/logo.png" alt="Logo" style="width: 24px; height: 24px;">
                             </div>
                             <div style="line-height: 1.3;">
                                 <p style="margin: 0; font-weight: 900; font-size: 14px; font-family: sans-serif;">Instal SIAKAD</p>
-                                <p style="margin: 0; font-size: 11px; color: #bfdbfe; font-family: sans-serif;">Akses asrama lebih cepat!</p>
+                                <p style="margin: 0; font-size: 11px; color: #bfdbfe; font-family: sans-serif;">Akses lebih cepat, bisa dari layar utama HP.</p>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px;">
@@ -121,12 +121,19 @@
                         </div>
                     </div>
                 `;
-                document.body.appendChild(banner);
+                // Ditaruh di dalam alur halaman (paling atas konten) supaya
+                // tidak pernah menutupi isi halaman / tabel.
+                const wadahUtama = document.querySelector('main') || document.body;
+                wadahUtama.insertBefore(banner, wadahUtama.firstChild);
+
+                function tutupBanner() {
+                    banner.style.display = 'none';
+                }
 
                 // Jika tombol "INSTAL" ditekan
                 document.getElementById('pwa-install-btn').addEventListener('click', async () => {
                     // Sembunyikan banner kita
-                    banner.style.display = 'none';
+                    tutupBanner();
                     // Munculkan Pop-up Instalasi Bawaan Sistem (Android/Chrome)
                     deferredPrompt.prompt();
                     // Tunggu respon pengguna (apakah menekan "Install" atau "Cancel" di pop-up Android)
@@ -138,7 +145,7 @@
 
                 // Jika tombol "X" ditekan
                 document.getElementById('pwa-close-btn').addEventListener('click', () => {
-                    banner.style.display = 'none';
+                    tutupBanner();
                 });
             }
 

@@ -29,17 +29,18 @@ if [ "$#" -gt 0 ]; then
 else
   echo "== mencari berkas yang berbeda antara server dan kode lokal =="
   TEMP=$(mktemp -d)
-  ssh -n -o ConnectTimeout=20 nizhom "cd $SERVER_DIR && find $DIR_SERUPA -type f -not -path 'public/build/*' -not -name '.manifest-deploy.md5' -exec md5sum {} + | sort -k2" > "$TEMP/md5-server.txt"
-  ( cd "$SUMBER_LOKAL" && find $DIR_SERUPA -type f -not -path 'public/build/*' -not -name '.manifest-deploy.md5' -exec md5sum {} + | sort -k2 ) > "$TEMP/md5-lokal.txt"
+  ssh -n -o ConnectTimeout=20 nizhom "cd $SERVER_DIR && find $DIR_SERUPA -type f -not -path 'public/build/*' -not -name '.manifest-deploy.md5' -exec md5sum {} +" | tr -d '\r' | LC_ALL=C sort -k2 > "$TEMP/md5-server.txt"
+  ( cd "$SUMBER_LOKAL" && find $DIR_SERUPA -type f -not -path 'public/build/*' -not -name '.manifest-deploy.md5' -exec md5sum {} + \
+      | sed -E 's/^([0-9a-f]{32}) \*(.*)$/\1  \2/' | tr -d '\r' | LC_ALL=C sort -k2 ) > "$TEMP/md5-lokal.txt"
 
-  awk '{print $2}' "$TEMP/md5-lokal.txt" | sort > "$TEMP/nama-lokal.txt"
-  awk '{print $2}' "$TEMP/md5-server.txt" | sort > "$TEMP/nama-server.txt"
+  awk '{print $2}' "$TEMP/md5-lokal.txt" | LC_ALL=C sort > "$TEMP/nama-lokal.txt"
+  awk '{print $2}' "$TEMP/md5-server.txt" | LC_ALL=C sort > "$TEMP/nama-server.txt"
 
   # berkas baru di server + berkas yang isinya berbeda
-  comm -13 "$TEMP/nama-lokal.txt" "$TEMP/nama-server.txt" > "$TEMP/baru.txt"
-  join -1 2 -2 2 -o 1.2,1.1,2.1 "$TEMP/md5-lokal.txt" "$TEMP/md5-server.txt" | awk '$2 != $3 {print $1}' > "$TEMP/beda.txt"
+  LC_ALL=C comm -13 "$TEMP/nama-lokal.txt" "$TEMP/nama-server.txt" > "$TEMP/baru.txt"
+  LC_ALL=C join -1 2 -2 2 -o 1.2,1.1,2.1 "$TEMP/md5-lokal.txt" "$TEMP/md5-server.txt" | awk '$2 != $3 {print $1}' > "$TEMP/beda.txt"
 
-  BERKAS=$(cat "$TEMP/baru.txt" "$TEMP/beda.txt" | sort -u)
+  BERKAS=$(cat "$TEMP/baru.txt" "$TEMP/beda.txt" | LC_ALL=C sort -u)
   echo "   berkas baru di server : $(wc -l < "$TEMP/baru.txt")"
   echo "   berkas berbeda isi    : $(wc -l < "$TEMP/beda.txt")"
   rm -rf "$TEMP"
