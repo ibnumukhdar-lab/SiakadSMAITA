@@ -91,8 +91,23 @@ tar czf - \
   --exclude='storage/app/private' --exclude='storage/app/public' \
   --exclude='storage/logs' --exclude='storage/framework/cache' \
   --exclude='storage/framework/sessions' --exclude='storage/framework/views' \
+  --exclude='./_dari-server' --exclude='./_old_*' --exclude='./_tmp*' \
   . > /tmp/siakad-deploy.tar.gz
-echo "   ukuran: $(du -h /tmp/siakad-deploy.tar.gz | cut -f1)"
+UKURAN_BYTE=$(stat -c%s /tmp/siakad-deploy.tar.gz 2>/dev/null || wc -c < /tmp/siakad-deploy.tar.gz)
+echo "   ukuran: $(du -h /tmp/siakad-deploy.tar.gz | cut -f1) ($UKURAN_BYTE byte)"
+# ---------------------------------------------------------------------
+# PENGAMAN UKURAN (14 Okt 2026): tarball pernah membengkak jadi 72 MB
+# karena folder sementara `_dari-server` (7,4 GB) ikut terbawa, lalu
+# MENGHABISKAN disk VPS perantara (0 byte sisa) saat di-ekstrak.
+# Kode seharusnya hanya beberapa MB. Lewati dengan: LEWATI_CEK_UKURAN=1
+# ---------------------------------------------------------------------
+if [ "$UKURAN_BYTE" -gt 26214400 ] && [ "${LEWATI_CEK_UKURAN:-0}" != "1" ]; then
+  echo ""
+  echo "   ✋ BERHENTI: tarball > 25 MB ($(du -h /tmp/siakad-deploy.tar.gz | cut -f1)) — biasanya ada folder besar yang belum dikecualikan."
+  echo "      Periksa: du -sh * | sort -h | tail -5   (klon ini)"
+  echo "      Bila memang sengaja: LEWATI_CEK_UKURAN=1 bash deploy-server.sh"
+  exit 6
+fi
 
 # =====================================================================
 # 1b/6 — PENGAMAN PERUBAHAN DI SERVER (ditambahkan 1 Okt 2026)
