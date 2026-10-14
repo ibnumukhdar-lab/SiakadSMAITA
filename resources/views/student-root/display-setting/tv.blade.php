@@ -157,50 +157,11 @@
         $bulanIni = \Carbon\Carbon::now()->month;
         $tahunIni = \Carbon\Carbon::now()->year;
 
-        // 1. DATA KLASEMEN BULANAN (DIUBAH AGAR MEMBIDIK TABEL DETAIL SKOR)
-        $semuaKamar = \App\Models\AsramaKamar::where('status', 'aktif')->get();
-        if($semuaKamar->count() == 0) {
-            $semuaKamar = \App\Models\AsramaKamar::all(); 
-        }
-
-        $inspeksiFinalBulanIni = \App\Models\AsramaPenilaian::where('status', 'final')
-                                    ->whereMonth('tanggal', $bulanIni)
-                                    ->whereYear('tanggal', $tahunIni)
-                                    ->pluck('id');
-
-        $penilaianDetail = \App\Models\AsramaPenilaianKamar::whereIn('penilaian_id', $inspeksiFinalBulanIni)->get();
-
-        $users = \Illuminate\Support\Facades\DB::table('users')->pluck('name', 'id');
-
-        $rankingKamarRaw = $semuaKamar->map(function ($kamar) use ($penilaianDetail, $users) {
-            $sidakKamarIni = $penilaianDetail->where('kamar_id', $kamar->id);
-            $jumlahSidak = $sidakKamarIni->count();
-            
-            $rataRata = $jumlahSidak > 0 ? $sidakKamarIni->avg('total_skor') : 0;
-
-            $musyrifId = $kamar->musyrif_id ?? $kamar->pembina_id ?? $kamar->guru_id ?? null;
-            $namaMusyrif = $musyrifId ? ($users[$musyrifId] ?? 'Tidak Ditemukan') : 'Belum Diatur';
-            $kategori = strtolower($kamar->kategori ?? $kamar->tipe_kamar ?? '');
-
-            return (object) [
-                'id' => $kamar->id,
-                'nama_kamar' => $kamar->nama_kamar ?? $kamar->nama ?? 'Kamar ' . $kamar->id,
-                'nama_musyrif' => $namaMusyrif,
-                'jumlah_sidak' => $jumlahSidak,
-                'rata_rata_skor' => (float) $rataRata,
-                'kategori' => $kategori
-            ];
-        });
-
-        $rankingKamar = $rankingKamarRaw->sortByDesc('rata_rata_skor')->values();
-
-        // Top 3 Bulanan Putra
-        $putraAktif = $rankingKamar->filter(fn($k) => (str_contains($k->kategori, 'putra') || str_contains($k->kategori, 'ikhwan')) && $k->jumlah_sidak > 0)->values();
-        $putraTerbersih = $putraAktif->take(3);
-
-        // Top 3 Bulanan Putri
-        $putriAktif = $rankingKamar->filter(fn($k) => (str_contains($k->kategori, 'putri') || str_contains($k->kategori, 'akhwat')) && $k->jumlah_sidak > 0)->values();
-        $putriTerbersih = $putriAktif->take(3);
+        // 1. KLASEMEN BULANAN — SATU SUMBER ANGKA dengan dashboard asrama & Peringkat Bulanan.
+        //    Dasar juara: TOTAL SKOR capaian (jumlah skor sidak harian bulan ini), bukan rata-rata.
+        $klasemenBulan  = \App\Services\KlasemenKebersihan::bulan($bulanIni, $tahunIni);
+        $putraTerbersih = \App\Services\KlasemenKebersihan::juara(\App\Services\KlasemenKebersihan::divisi($klasemenBulan, 'putra'));
+        $putriTerbersih = \App\Services\KlasemenKebersihan::juara(\App\Services\KlasemenKebersihan::divisi($klasemenBulan, 'putri'));
 
         // 2. DATA HIGHLIGHT SIDAK TERAKHIR (DENGAN FOTO)
         //    ATURAN 17 Sep 2026: kamar terkotor hanya sah bila nilainya < 70% dari skor maksimal.
@@ -448,15 +409,16 @@
                         </div>
                         @endif
                         <div class="bg-gradient-to-b from-blue-800 to-indigo-900 rounded-[1.5rem] p-6 shadow-xl flex-1 flex flex-col justify-center">
-                            <h4 class="text-white font-black text-center mb-5 uppercase tracking-widest text-sm border-b border-blue-700 pb-3">📊 Klasemen Rata-Rata Bulan Ini</h4>
+                            <h4 class="text-white font-black text-center mb-5 uppercase tracking-widest text-sm border-b border-blue-700 pb-3">📊 Klasemen Total Skor Bulan Ini</h4>
                             <div class="space-y-4 flex-1 flex flex-col justify-center">
-                                @forelse($putraTerbersih->take(3) as $k)
+                                @forelse($putraTerbersih as $k)
                                     <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-3 flex items-center gap-4 border border-white/5">
                                         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-yellow-500 text-yellow-900 font-black flex items-center justify-center text-lg shrink-0 shadow-md">{{ $loop->iteration }}</div>
                                         <div class="flex-1 min-w-0">
                                             <h5 class="text-white font-bold text-lg truncate">{{ $k->nama_kamar }}</h5>
+                                            <p class="text-[11px] font-semibold text-white/70">👑 {{ $k->menang }}× terbersih · rata {{ number_format((float) $k->rata, 1) }}/25</p>
                                         </div>
-                                        <div class="text-white font-black bg-black/30 px-3 py-1.5 rounded-lg text-sm shrink-0 shadow-inner">{{ number_format($k->rata_rata_skor, 1) }}</div>
+                                        <div class="text-white font-black bg-black/30 px-3 py-1.5 rounded-lg text-sm shrink-0 shadow-inner" title="Total skor capaian">{{ number_format($k->total) }}</div>
                                     </div>
                                 @empty
                                     <div class="text-center text-blue-300 font-bold text-sm">Belum ada data asrama bulan ini.</div>
@@ -564,15 +526,16 @@
                         </div>
                         @endif
                         <div class="bg-gradient-to-b from-pink-700 to-rose-900 rounded-[1.5rem] p-6 shadow-xl flex-1 flex flex-col justify-center">
-                            <h4 class="text-white font-black text-center mb-5 uppercase tracking-widest text-sm border-b border-pink-500 pb-3">📊 Klasemen Rata-Rata Bulan Ini</h4>
+                            <h4 class="text-white font-black text-center mb-5 uppercase tracking-widest text-sm border-b border-pink-500 pb-3">📊 Klasemen Total Skor Bulan Ini</h4>
                             <div class="space-y-4 flex-1 flex flex-col justify-center">
-                                @forelse($putriTerbersih->take(3) as $k)
+                                @forelse($putriTerbersih as $k)
                                     <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-3 flex items-center gap-4 border border-white/5">
                                         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-yellow-500 text-yellow-900 font-black flex items-center justify-center text-lg shrink-0 shadow-md">{{ $loop->iteration }}</div>
                                         <div class="flex-1 min-w-0">
                                             <h5 class="text-white font-bold text-lg truncate">{{ $k->nama_kamar }}</h5>
+                                            <p class="text-[11px] font-semibold text-white/70">👑 {{ $k->menang }}× terbersih · rata {{ number_format((float) $k->rata, 1) }}/25</p>
                                         </div>
-                                        <div class="text-white font-black bg-black/30 px-3 py-1.5 rounded-lg text-sm shrink-0 shadow-inner">{{ number_format($k->rata_rata_skor, 1) }}</div>
+                                        <div class="text-white font-black bg-black/30 px-3 py-1.5 rounded-lg text-sm shrink-0 shadow-inner" title="Total skor capaian">{{ number_format($k->total) }}</div>
                                     </div>
                                 @empty
                                     <div class="text-center text-pink-300 font-bold text-sm">Belum ada data asrama bulan ini.</div>

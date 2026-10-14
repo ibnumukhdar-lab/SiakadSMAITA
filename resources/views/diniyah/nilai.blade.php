@@ -1,49 +1,30 @@
 <x-app-layout>
-    <div class="py-8">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-5">
+    @include('diniyah._gaya')
+    <div class="dk-wrap">
+        <div class="dk-tumpuk">
+            @include('diniyah._kepala', [
+                'judul' => 'Input Nilai Kajian Diniyah',
+                'keterangan' => $bolehSemua
+                    ? 'Anda dapat menilai seluruh kelas (pengelola / guru pengampu).'
+                    : 'Anda menilai santri kamar binaan Anda saja.',
+                'tab' => 'nilai',
+            ])
 
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <p class="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">Kulliyyat Diiniyyah Al-Arafah</p>
-                    <h1 class="text-xl font-extrabold text-slate-800">Input Nilai Kajian Diniyah</h1>
-                    <p class="text-xs font-semibold text-slate-500">
-                        @if($bolehSemua)
-                            Anda dapat menilai seluruh kelas (pengelola/guru pengampu).
-                        @else
-                            Anda menilai santri kamar binaan Anda saja.
-                        @endif
-                    </p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('diniyah.absensi') }}" class="px-4 py-2 rounded-lg bg-slate-100 border border-slate-300 text-xs font-extrabold text-slate-700">Absensi</a>
-                    <a href="{{ route('diniyah.rapor') }}" class="px-4 py-2 rounded-lg bg-slate-800 text-white text-xs font-extrabold">Rapor</a>
-                </div>
-            </div>
-
-            @if(session('success'))
-                <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs font-bold text-emerald-800">{{ session('success') }}</div>
-            @endif
-            @if(isset($errors) && $errors->any())
-                <div class="rounded-lg bg-rose-50 border border-rose-200 p-3">
-                    @foreach($errors->all() as $e)
-                        <p class="text-xs font-bold text-rose-800">{{ $e }}</p>
-                    @endforeach
-                </div>
-            @endif
-
-            <div class="bg-white rounded-xl border border-slate-200 kertas p-5">
-                <form method="GET" action="{{ route('diniyah.nilai') }}" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label class="block">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Periode</span>
-                        <select name="periode" onchange="this.form.submit()" class="mt-1 w-full h-10 rounded-lg border border-slate-300 px-3 text-sm font-semibold">
-                            @foreach($periodeList as $p)
+            <div class="dk-kartu">
+                <form method="GET" action="{{ route('diniyah.nilai') }}" class="dk-kisi dua">
+                    <label class="dk-lbl">
+                        <span>Periode</span>
+                        <select name="periode" onchange="this.form.submit()" class="dk-kendali">
+                            @forelse($periodeList as $p)
                                 <option value="{{ $p->id }}" @selected($periode && $periode->id === $p->id)>{{ $p->label() }}{{ $p->terbuka ? ' (terbuka)' : '' }}</option>
-                            @endforeach
+                            @empty
+                                <option value="">— belum ada periode —</option>
+                            @endforelse
                         </select>
                     </label>
-                    <label class="block">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Mata pelajaran</span>
-                        <select name="mapel" onchange="this.form.submit()" class="mt-1 w-full h-10 rounded-lg border border-slate-300 px-3 text-sm font-semibold">
+                    <label class="dk-lbl">
+                        <span>Mata pelajaran</span>
+                        <select name="mapel" onchange="this.form.submit()" class="dk-kendali">
                             @forelse($mapelList as $m)
                                 <option value="{{ $m->id }}" @selected($terpilih && $terpilih->id === $m->id)>{{ $m->nama }} ({{ implode(', ', $m->daftarKelas()) }})</option>
                             @empty
@@ -53,73 +34,104 @@
                     </label>
                 </form>
                 @if($periode && ! $periode->terbuka)
-                    <p class="text-[11px] font-bold text-amber-700 mt-2">Periode ini masih tertutup — nilai tetap bisa disimpan sebagai draf, tetapi buka dulu di menu Periode bila penilaian sudah berjalan.</p>
+                    <p class="dk-bantu"><strong style="color:#b45309">Periode ini masih tertutup</strong> — nilai tetap bisa disimpan sebagai draf; buka dulu di menu Periode bila penilaian sudah berjalan.</p>
                 @endif
             </div>
 
             @if($terpilih)
-                <form method="POST" action="{{ route('diniyah.nilai.simpan') }}" class="bg-white rounded-xl border border-slate-200 kertas p-5">
+                <form method="POST" action="{{ route('diniyah.nilai.simpan') }}" class="dk-kartu">
                     @csrf
                     <input type="hidden" name="periode_id" value="{{ $periode?->id }}">
                     <input type="hidden" name="mapel_id" value="{{ $terpilih->id }}">
 
-                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                        <div>
-                            <p class="text-sm font-extrabold text-slate-800">{{ $terpilih->nama }}@if($terpilih->nama_arab) <span style="font-family: 'Amiri', serif;" class="text-slate-500">{{ $terpilih->nama_arab }}</span>@endif</p>
-                            <p class="text-[11px] font-semibold text-slate-500">Guru pengampu: {{ $terpilih->guruTampil() }} · {{ count($daftar) }} santri</p>
-                        </div>
-                        <p class="text-[11px] font-semibold text-slate-500">Nilai 0–100 · satu nilai akhir per mapel</p>
+                    <h2>
+                        {{ $terpilih->nama }}@if($terpilih->nama_arab) <span class="dk-arab">· {{ $terpilih->nama_arab }}</span>@endif
+                        <span class="dk-ket">Guru pengampu: {{ $terpilih->guruTampil() }} · {{ count($daftar) }} santri · nilai 0–100, satu nilai akhir per mapel</span>
+                    </h2>
+
+                    {{-- HP: kartu per santri --}}
+                    <div class="dk-saja-hp">
+                        @forelse($daftar as $i => $baris)
+                            <div class="dk-baris-santri dk-bar-santri">
+                                <p class="dk-nama">{{ $i + 1 }}. {{ $baris->siswa->nama_lengkap }}@if($baris->dikoreksi) <span style="font-size:10.5px; font-weight:800; color:#0369a1">· dikoreksi guru</span>@endif</p>
+                                <p class="dk-meta" style="margin-top:4px">
+                                    <span class="dk-pil">{{ $baris->siswa->kelas }}</span>
+                                    @if(\App\Support\DiniyahArab::predikatArab($baris->nilai)) &nbsp;Predikat: {{ \App\Support\DiniyahArab::predikatArab($baris->nilai) }} @endif
+                                </p>
+                                <label class="dk-lbl" style="margin-top:10px">
+                                    <span>Nilai (0–100)</span>
+                                    <input type="number" min="0" max="100" name="nilai[{{ $baris->siswa->id }}]" value="{{ $baris->nilai }}" class="dk-kendali">
+                                </label>
+                                <label class="dk-lbl" style="margin-top:10px">
+                                    <span>Catatan (opsional)</span>
+                                    <input name="catatan[{{ $baris->siswa->id }}]" value="{{ $baris->catatan }}" placeholder="mis. perlu latihan i'rab" class="dk-kendali dk-kecil">
+                                </label>
+                            </div>
+                        @empty
+                            <div class="dk-kosong">Tidak ada santri pada mapel ini untuk Anda (cek kamar binaan atau kelas mapel).</div>
+                        @endforelse
                     </div>
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr class="text-[11px] uppercase tracking-wider text-slate-400 text-left">
-                                    <th class="py-2 w-10">No</th>
-                                    <th class="py-2">Nama santri</th>
-                                    <th class="py-2 w-16">Kelas</th>
-                                    <th class="py-2 w-28 text-center">Nilai</th>
-                                    <th class="py-2 w-24 text-center">Predikat</th>
-                                    <th class="py-2">Catatan</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 font-semibold">
-                                @forelse($daftar as $i => $baris)
+                    {{-- layar lebar: tabel --}}
+                    <div class="dk-saja-lebar">
+                        <div class="dk-tabel-bungkus">
+                            <table class="dk-tabel" style="min-width:860px">
+                                <colgroup>
+                                    <col style="width:56px"><col><col style="width:74px">
+                                    <col style="width:120px"><col style="width:110px"><col style="width:280px">
+                                </colgroup>
+                                <thead>
                                     <tr>
-                                        <td class="py-2">{{ $i + 1 }}</td>
-                                        <td class="py-2">
-                                            {{ $baris->siswa->nama_lengkap }}
-                                            @if($baris->dikoreksi)
-                                                <span class="text-[10px] font-extrabold uppercase tracking-wider text-sky-700">· dikoreksi guru</span>
-                                            @endif
-                                        </td>
-                                        <td class="py-2">{{ $baris->siswa->kelas }}</td>
-                                        <td class="py-2">
-                                            <input type="number" min="0" max="100" name="nilai[{{ $baris->siswa->id }}]" value="{{ $baris->nilai }}"
-                                                   class="w-20 h-9 rounded-lg border border-slate-300 px-2 text-sm font-bold text-center">
-                                        </td>
-                                        <td class="py-2 text-center text-[11px] font-bold text-slate-500">
-                                            {{ \App\Support\DiniyahArab::predikatArab($baris->nilai) ?: '—' }}
-                                        </td>
-                                        <td class="py-2">
-                                            <input name="catatan[{{ $baris->siswa->id }}]" value="{{ $baris->catatan }}" placeholder="—"
-                                                   class="w-full h-9 rounded-lg border border-slate-200 px-2 text-xs">
-                                        </td>
+                                        <th class="dk-tengah">No</th>
+                                        <th>Nama santri</th>
+                                        <th>Kelas</th>
+                                        <th class="dk-tengah">Nilai</th>
+                                        <th class="dk-tengah">Predikat</th>
+                                        <th>Catatan</th>
                                     </tr>
-                                @empty
-                                    <tr><td colspan="6" class="py-3 text-xs font-semibold text-slate-500">Tidak ada santri pada mapel ini untuk Anda (cek kamar binaan atau kelas mapel).</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @forelse($daftar as $i => $baris)
+                                        <tr class="dk-bar-santri">
+                                            <td class="dk-nomor">{{ $i + 1 }}</td>
+                                            <td class="nama">
+                                                {{ $baris->siswa->nama_lengkap }}
+                                                @if($baris->dikoreksi)<span style="font-size:10.5px; font-weight:800; color:#0369a1"> · dikoreksi guru</span>@endif
+                                            </td>
+                                            <td>{{ $baris->siswa->kelas }}</td>
+                                            <td class="dk-tengah">
+                                                <input type="number" min="0" max="100" name="nilai[{{ $baris->siswa->id }}]" value="{{ $baris->nilai }}" class="dk-kendali dk-kecil dk-tengah" style="width:86px">
+                                            </td>
+                                            <td class="dk-tengah dk-arab">{{ \App\Support\DiniyahArab::predikatArab($baris->nilai) ?: '—' }}</td>
+                                            <td>
+                                                <input name="catatan[{{ $baris->siswa->id }}]" value="{{ $baris->catatan }}" placeholder="—" class="dk-kendali dk-kecil">
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="6" class="dk-kosong">Tidak ada santri pada mapel ini untuk Anda.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     @if(count($daftar) > 0)
-                        <div class="mt-4 flex flex-wrap items-center gap-2">
-                            <button class="px-4 py-2 rounded-lg bg-slate-800 text-white text-xs font-extrabold">Simpan nilai</button>
-                            <span class="text-[11px] font-semibold text-slate-500">Terisi {{ $daftar->whereNotNull('nilai')->count() }} dari {{ count($daftar) }}</span>
+                        <div class="dk-bar">
+                            <span id="dk-hitung" class="dk-hitung" data-kata="santri" data-dasar="Terisi {{ $daftar->whereNotNull('nilai')->count() }} dari {{ count($daftar) }}"></span>
+                            <div class="dk-cari">
+                                <button class="dk-tombol utama">Simpan nilai</button>
+                            </div>
                         </div>
                     @endif
                 </form>
+            @else
+                <div class="dk-kartu">
+                    <div class="dk-kosong">
+                        <span class="dk-ikon">📝</span>
+                        Belum ada mata pelajaran untuk dinilai.<br>
+                        Tetapkan dulu di <a href="{{ route('diniyah.mapel') }}" style="color:#1f3a5f; font-weight:800">Mata Pelajaran</a>.
+                    </div>
+                </div>
             @endif
         </div>
     </div>

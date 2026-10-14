@@ -1,35 +1,18 @@
 <x-app-layout>
-    <div class="py-8">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-5">
+    @include('diniyah._gaya')
+    <div class="dk-wrap">
+        <div class="dk-tumpuk">
+            @include('diniyah._kepala', [
+                'judul' => 'Absensi Kajian Diniyah',
+                'keterangan' => 'Dicatat per pertemuan (tanggal + mapel + jam ke). Rekapnya masuk rapor otomatis.',
+                'tab' => 'absensi',
+            ])
 
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <p class="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">Kulliyyat Diiniyyah Al-Arafah</p>
-                    <h1 class="text-xl font-extrabold text-slate-800">Absensi Kajian Diniyah</h1>
-                    <p class="text-xs font-semibold text-slate-500">Dicatat per pertemuan (tanggal + mapel + jam ke). Rekapnya masuk rapor otomatis.</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('diniyah.nilai') }}" class="px-4 py-2 rounded-lg bg-slate-100 border border-slate-300 text-xs font-extrabold text-slate-700">Input Nilai</a>
-                    <a href="{{ route('diniyah.rapor') }}" class="px-4 py-2 rounded-lg bg-slate-800 text-white text-xs font-extrabold">Rapor</a>
-                </div>
-            </div>
-
-            @if(session('success'))
-                <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs font-bold text-emerald-800">{{ session('success') }}</div>
-            @endif
-            @if(isset($errors) && $errors->any())
-                <div class="rounded-lg bg-rose-50 border border-rose-200 p-3">
-                    @foreach($errors->all() as $e)
-                        <p class="text-xs font-bold text-rose-800">{{ $e }}</p>
-                    @endforeach
-                </div>
-            @endif
-
-            <div class="bg-white rounded-xl border border-slate-200 kertas p-5">
-                <form method="GET" action="{{ route('diniyah.absensi') }}" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label class="block">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Mata pelajaran</span>
-                        <select name="mapel" onchange="this.form.submit()" class="mt-1 w-full h-10 rounded-lg border border-slate-300 px-3 text-sm font-semibold">
+            <div class="dk-kartu">
+                <form method="GET" action="{{ route('diniyah.absensi') }}" class="dk-kisi dua">
+                    <label class="dk-lbl">
+                        <span>Mata pelajaran</span>
+                        <select name="mapel" onchange="this.form.submit()" class="dk-kendali">
                             @forelse($mapelList as $m)
                                 <option value="{{ $m->id }}" @selected($terpilih && $terpilih->id === $m->id)>{{ $m->nama }} ({{ implode(', ', $m->daftarKelas()) }})</option>
                             @empty
@@ -37,9 +20,9 @@
                             @endforelse
                         </select>
                     </label>
-                    <label class="block">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pertemuan</span>
-                        <select name="pertemuan" onchange="this.form.submit()" class="mt-1 w-full h-10 rounded-lg border border-slate-300 px-3 text-sm font-semibold">
+                    <label class="dk-lbl">
+                        <span>Pertemuan</span>
+                        <select name="pertemuan" onchange="this.form.submit()" class="dk-kendali">
                             @forelse($pertemuanList as $pt)
                                 <option value="{{ $pt->id }}" @selected($pertemuan && $pertemuan->id === $pt->id)>
                                     {{ $pt->tanggal->format('d/m/Y') }}@if($pt->jam_ke) · jam ke-{{ $pt->jam_ke }}@endif @if($pt->materi) · {{ \Illuminate\Support\Str::limit($pt->materi, 28) }} @endif
@@ -51,89 +34,131 @@
                     </label>
                 </form>
                 @if($periode)
-                    <p class="text-[11px] font-semibold text-slate-500 mt-2">Periode aktif: {{ $periode->label() }}@if(! $periode->terbuka) <span class="font-bold text-amber-700">(tertutup — absensi masih tersimpan sebagai draf)</span>@endif</p>
+                    <p class="dk-bantu">
+                        Periode aktif: {{ $periode->label() }}@if(! $periode->terbuka) — <strong style="color:#b45309">masih tertutup, absensi tersimpan sebagai draf</strong>@endif
+                    </p>
                 @endif
             </div>
 
             @if($terpilih)
-                <div class="bg-white rounded-xl border border-slate-200 kertas p-5">
-                    <h2 class="text-sm font-extrabold text-slate-800 mb-3">Catat pertemuan baru</h2>
-                    <form method="POST" action="{{ route('diniyah.absensi.pertemuan') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div class="dk-kartu">
+                    <h2>Catat pertemuan baru <span class="dk-ket">Isi tanggal &amp; materi, lalu langsung isi kehadiran di daftar bawah.</span></h2>
+                    <form method="POST" action="{{ route('diniyah.absensi.pertemuan') }}" class="dk-kisi empat">
                         @csrf
                         <input type="hidden" name="mapel_id" value="{{ $terpilih->id }}">
-                        <label class="block">
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tanggal</span>
-                            <input type="date" name="tanggal" required value="{{ now()->toDateString() }}" class="mt-1 w-full h-10 rounded-lg border border-slate-300 px-3 text-sm font-semibold">
+                        <label class="dk-lbl">
+                            <span>Tanggal</span>
+                            <input type="date" name="tanggal" required value="{{ now()->toDateString() }}" class="dk-kendali">
                         </label>
-                        <label class="block">
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Jam ke</span>
-                            <input type="number" name="jam_ke" min="1" max="20" class="mt-1 w-full h-10 rounded-lg border border-slate-300 px-3 text-sm font-semibold">
+                        <label class="dk-lbl">
+                            <span>Jam ke</span>
+                            <input type="number" name="jam_ke" min="1" max="20" class="dk-kendali">
                         </label>
-                        <label class="block sm:col-span-2">
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Materi / topik kajian</span>
-                            <input name="materi" placeholder="mis. Bab Isim &amp; Fi'il — latihan i'rab" class="mt-1 w-full h-10 rounded-lg border border-slate-300 px-3 text-sm font-semibold">
+                        <label class="dk-lbl dk-span2">
+                            <span>Materi / topik kajian</span>
+                            <input name="materi" placeholder="mis. Bab Isim &amp; Fi'il — latihan i'rab" class="dk-kendali">
                         </label>
-                        <div class="sm:col-span-4">
-                            <button class="px-4 py-2 rounded-lg bg-slate-800 text-white text-xs font-extrabold">Simpan pertemuan &amp; isi absensi</button>
+                        <div class="dk-lebar">
+                            <button class="dk-tombol utama">Simpan pertemuan &amp; isi absensi</button>
                         </div>
                     </form>
+                </div>
+            @else
+                <div class="dk-kartu">
+                    <div class="dk-kosong">
+                        <span class="dk-ikon">📋</span>
+                        Belum ada mata pelajaran untuk Anda.<br>
+                        Buka <a href="{{ route('diniyah.mapel') }}" style="color:#1f3a5f; font-weight:800">Mata Pelajaran</a> untuk menetapkan mapel &amp; kelasnya lebih dulu.
+                    </div>
                 </div>
             @endif
 
             @if($pertemuan)
-                <form method="POST" action="{{ route('diniyah.absensi.simpan') }}" class="bg-white rounded-xl border border-slate-200 kertas p-5">
+                <form method="POST" action="{{ route('diniyah.absensi.simpan') }}" class="dk-kartu">
                     @csrf
                     <input type="hidden" name="pertemuan_id" value="{{ $pertemuan->id }}">
 
-                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                        <div>
-                            <p class="text-sm font-extrabold text-slate-800">{{ $terpilih->nama }} — {{ $pertemuan->tanggal->format('d/m/Y') }}@if($pertemuan->jam_ke) (jam ke-{{ $pertemuan->jam_ke }})@endif</p>
-                            <p class="text-[11px] font-semibold text-slate-500">{{ $pertemuan->materi ?: 'belum ada materi' }} · {{ $sudahTercatat }} dari {{ count($daftar) }} sudah pernah tercatat</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button type="button" onclick="document.querySelectorAll('select[name^=status]').forEach(s => s.value = 'hadir')"
-                                    class="px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-300 text-[11px] font-extrabold text-emerald-800">Semua hadir</button>
-                            <button class="px-4 py-2 rounded-lg bg-slate-800 text-white text-xs font-extrabold">Simpan absensi</button>
+                    <h2>
+                        {{ $terpilih->nama }} — {{ $pertemuan->tanggal->format('d/m/Y') }}@if($pertemuan->jam_ke) (jam ke-{{ $pertemuan->jam_ke }})@endif
+                        <span class="dk-ket">{{ $pertemuan->materi ?: 'belum ada materi' }} · catatan tersimpan: {{ $sudahTercatat }} · daftar santri sekarang: {{ count($daftar) }}</span>
+                    </h2>
+
+                    {{-- HP: satu kartu per santri, status sekali sentuh --}}
+                    <div class="dk-saja-hp">
+                        @forelse($daftar as $i => $baris)
+                            <div class="dk-baris-santri dk-bar-santri">
+                                <p class="dk-nama">{{ $i + 1 }}. {{ $baris->siswa->nama_lengkap }}</p>
+                                <p class="dk-meta" style="margin-top:4px"><span class="dk-pil">{{ $baris->siswa->kelas }}</span></p>
+                                <div class="dk-pilih">
+                                    @foreach($statusList as $kode => $label)
+                                        <label>
+                                            <input type="radio" name="status[{{ $baris->siswa->id }}]" value="{{ $kode }}" @checked($baris->status === $kode)>
+                                            <span>{{ $label }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <label class="dk-lbl" style="margin-top:10px">
+                                    <span>Keterangan (opsional)</span>
+                                    <input name="keterangan[{{ $baris->siswa->id }}]" value="{{ $baris->keterangan }}" placeholder="mis. sakit demam" class="dk-kendali dk-kecil">
+                                </label>
+                            </div>
+                        @empty
+                            <div class="dk-kosong">Tidak ada santri untuk mapel ini pada wewenang Anda.</div>
+                        @endforelse
+                    </div>
+
+                    {{-- layar lebar: tabel --}}
+                    <div class="dk-saja-lebar">
+                        <div class="dk-tabel-bungkus">
+                            <table class="dk-tabel" style="min-width:860px">
+                                <colgroup>
+                                    <col style="width:56px"><col><col style="width:74px">
+                                    <col style="width:200px"><col style="width:280px">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th class="dk-tengah">No</th>
+                                        <th>Nama santri</th>
+                                        <th>Kelas</th>
+                                        <th>Status kehadiran</th>
+                                        <th>Keterangan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($daftar as $i => $baris)
+                                        <tr class="dk-bar-santri">
+                                            <td class="dk-nomor">{{ $i + 1 }}</td>
+                                            <td class="nama">{{ $baris->siswa->nama_lengkap }}</td>
+                                            <td>{{ $baris->siswa->kelas }}</td>
+                                            <td>
+                                                <select name="status[{{ $baris->siswa->id }}]" class="dk-kendali dk-kecil">
+                                                    @foreach($statusList as $kode => $label)
+                                                        <option value="{{ $kode }}" @selected($baris->status === $kode)>{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input name="keterangan[{{ $baris->siswa->id }}]" value="{{ $baris->keterangan }}" placeholder="—" class="dk-kendali dk-kecil">
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="5" class="dk-kosong">Tidak ada santri untuk mapel ini pada wewenang Anda.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr class="text-[11px] uppercase tracking-wider text-slate-400 text-left">
-                                    <th class="py-2 w-10">No</th>
-                                    <th class="py-2">Nama santri</th>
-                                    <th class="py-2 w-16">Kelas</th>
-                                    <th class="py-2 w-40 text-center">Status kehadiran</th>
-                                    <th class="py-2">Keterangan</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 font-semibold">
-                                @forelse($daftar as $i => $baris)
-                                    <tr>
-                                        <td class="py-2">{{ $i + 1 }}</td>
-                                        <td class="py-2">{{ $baris->siswa->nama_lengkap }}</td>
-                                        <td class="py-2">{{ $baris->siswa->kelas }}</td>
-                                        <td class="py-2">
-                                            <select name="status[{{ $baris->siswa->id }}]" class="w-full h-9 rounded-lg border border-slate-300 px-2 text-xs font-bold">
-                                                @foreach($statusList as $kode => $label)
-                                                    <option value="{{ $kode }}" @selected($baris->status === $kode)>{{ $label }}</option>
-                                                @endforeach
-                                            </select>
-                                        </td>
-                                        <td class="py-2">
-                                            <input name="keterangan[{{ $baris->siswa->id }}]" value="{{ $baris->keterangan }}" placeholder="—" class="w-full h-9 rounded-lg border border-slate-200 px-2 text-xs">
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr><td colspan="5" class="py-3 text-xs font-semibold text-slate-500">Tidak ada santri untuk mapel ini pada wewenang Anda.</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <div class="dk-bar">
+                        <span id="dk-hitung" class="dk-hitung" data-kata="santri dalam daftar"></span>
+                        <div class="dk-cari">
+                            <button type="button" class="dk-tombol sekunder" onclick="dkSemuaHadir()">Semua hadir</button>
+                            <button class="dk-tombol utama">Simpan absensi</button>
+                        </div>
                     </div>
 
                     @if($rekap)
-                        <p class="text-[11px] font-bold text-slate-600 mt-3">
+                        <p class="dk-bantu">
                             Tercatat pada pertemuan ini: {{ $rekap['hadir'] }} hadir · {{ $rekap['sakit'] }} sakit · {{ $rekap['izin'] }} izin · {{ $rekap['alpa'] }} alpa
                         </p>
                     @endif

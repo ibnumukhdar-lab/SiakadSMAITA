@@ -68,6 +68,29 @@
         .catatan-box .judul-kecil { font-family: Amiri, serif; font-size: 15px; font-weight: 700; }
         .catatan-box .judul-kecil-id { font-size: 10px; font-weight: 700; color: #64748b; }
         .kaki { margin-top: 16px; font-size: 10.5px; font-weight: 700; color: #64748b; border-top: 1px solid #cbd5e1; padding-top: 8px; }
+        /* Layar kecil (HP): rapor tetap terbaca tanpa geser ke samping.
+           Cetak tetap A4 (lihat @media print di bawah). */
+        @media (max-width: 640px) {
+            body { overflow-x: hidden; }
+            .bar { margin: 10px auto 0; padding: 0 12px; }
+            .bar a, .bar button { font-size: 12px; padding: 8px 12px; }
+            .hal { max-width: 100%; margin: 10px auto 20px; padding: 16px 14px; }
+            .kop .nama { font-size: 20px; }
+            .kop .sub { font-size: 13px; }
+            .judul { font-size: 18px; }
+            table.identitas, table.identitas tbody, table.identitas tr, table.identitas td { display: block; width: 100%; }
+            table.identitas tr { margin-bottom: 6px; }
+            .identitas .lb { width: auto; white-space: normal; font-size: 14px; }
+            .identitas .isi { padding-left: 0; }
+            .nama-arab { font-size: 17px; }
+            .dua-kolom { display: block; }
+            .dua-kolom > div + div { margin-top: 12px; }
+            .ttd { flex-direction: column; gap: 26px; margin-top: 24px; }
+            table.tabel th, table.tabel td { font-size: 11px; padding: 4px 5px; }
+            table.tabel th { font-size: 13px; }
+            .hal table { table-layout: auto; }
+        }
+
         @media print {
             body { background: #fff; }
             .bar { display: none !important; }

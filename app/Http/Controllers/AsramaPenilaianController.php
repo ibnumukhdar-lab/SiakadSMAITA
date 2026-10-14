@@ -137,74 +137,16 @@ class AsramaPenilaianController extends Controller
 
     // =========================================================
     // 2. FUNGSI DASHBOARD (KLASEMEN)
-    // =========================================================
+    /**
+     * Rute '/asrama/dashboard' sekarang dilayani AsramaDashboardController::index().
+     * Method ini hanya penerus agar pemanggil lama tidak pecah — angkanya memakai
+     * SUMBER YANG SAMA, yaitu App\Services\KlasemenKebersihan (total skor capaian).
+     */
     public function dashboard()
     {
-        $bulanIni = now()->month;
-        $tahunIni = now()->year;
-
-        $semuaKamar = AsramaKamar::where('status', 'aktif')->get();
-        if ($semuaKamar->count() == 0) {
-            $semuaKamar = AsramaKamar::all();
-        }
-
-        $totalKamarPutra = $semuaKamar->filter(fn ($k) => strtolower($k->kategori ?? '') == 'putra')->count();
-        $totalKamarPutri = $semuaKamar->filter(fn ($k) => strtolower($k->kategori ?? '') == 'putri')->count();
-
-        $inspeksiFinalBulanIni = AsramaPenilaian::where('status', 'final')
-                                    ->whereMonth('tanggal', $bulanIni)
-                                    ->whereYear('tanggal', $tahunIni)
-                                    ->pluck('id');
-
-        $totalInspeksiPutra = AsramaPenilaian::whereIn('id', $inspeksiFinalBulanIni)->where('kategori', 'putra')->count();
-        $totalInspeksiPutri = AsramaPenilaian::whereIn('id', $inspeksiFinalBulanIni)->where('kategori', 'putri')->count();
-
-        $penilaianDetail = AsramaPenilaianKamar::whereIn('penilaian_id', $inspeksiFinalBulanIni)->get();
-        $users = DB::table('users')->pluck('name', 'id');
-
-        $rankingKamarRaw = $semuaKamar->map(function ($kamar) use ($penilaianDetail, $users) {
-            $sidakKamarIni = $penilaianDetail->where('kamar_id', $kamar->id);
-            $jumlahSidak = $sidakKamarIni->count();
-
-            $rataRata = $jumlahSidak > 0 ? $sidakKamarIni->avg('total_skor') : 0;
-
-            $musyrifId = $kamar->musyrif_id ?? null;
-            $namaMusyrif = $musyrifId ? ($users[$musyrifId] ?? 'Belum Diatur') : 'Belum Diatur';
-
-            return (object) [
-                'id' => $kamar->id,
-                'nama_kamar' => $kamar->nama_kamar ?? 'Kamar ' . $kamar->id,
-                'nama_musyrif' => $namaMusyrif,
-                'kategori' => strtolower($kamar->kategori ?? ''),
-                'jumlah_sidak' => $jumlahSidak,
-                'rata_rata_skor' => (float) $rataRata,
-            ];
-        });
-
-        $rankingKamar = $rankingKamarRaw->sortByDesc('rata_rata_skor')->values();
-
-        $rankingPutra = $rankingKamar->where('kategori', 'putra')->values();
-        $putraAktif = $rankingPutra->filter(fn ($k) => $k->jumlah_sidak > 0)->values();
-        $putraTerbersih = $putraAktif->take(3);
-        $putraTerkotor = $putraAktif->filter(fn ($k) => $k->rata_rata_skor < self::batasTerkotor())
-                                    ->reverse()->take(3)->values();
-
-        $rankingPutri = $rankingKamar->where('kategori', 'putri')->values();
-        $putriAktif = $rankingPutri->filter(fn ($k) => $k->jumlah_sidak > 0)->values();
-        $putriTerbersih = $putriAktif->take(3);
-        $putriTerkotor = $putriAktif->filter(fn ($k) => $k->rata_rata_skor < self::batasTerkotor())
-                                    ->reverse()->take(3)->values();
-
-        return view('asrama.dashboard', compact(
-            'totalKamarPutra', 'totalKamarPutri',
-            'totalInspeksiPutra', 'totalInspeksiPutri',
-            'rankingPutra', 'rankingPutri',
-            'putraTerbersih', 'putraTerkotor',
-            'putriTerbersih', 'putriTerkotor'
-        ));
+        return app(AsramaDashboardController::class)->index();
     }
 
-    // =========================================================
     // 3. FUNGSI HARI INI — dua sesi (pagi & sore) × dua divisi
     // =========================================================
     /**

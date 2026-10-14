@@ -2,86 +2,48 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\AsramaKamar;
-use App\Models\AsramaPenilaian;
-use App\Models\AsramaPenilaianKamar; // <-- Pastikan Model Detail dipanggil
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use App\Services\KlasemenKebersihan;
 
 class AsramaDashboardController extends Controller
 {
+    /**
+     * Dashboard klasemen kebersihan kamar bulan berjalan.
+     *
+     * Seluruh angka diambil dari App\Services\KlasemenKebersihan supaya
+     * dashboard, slide TV, dan halaman Peringkat Bulanan selalu berbunyi sama.
+     */
     public function index()
     {
-        $bulanIni = Carbon::now()->month;
-        $tahunIni = Carbon::now()->year;
+        $bulan = (int) now()->month;
+        $tahun = (int) now()->year;
 
-        // 1. Tarik Data Master Kamar & User (Ambil yang aktif saja sebagai prioritas)
-        $semuaKamar = AsramaKamar::where('status', 'aktif')->get();
-        if($semuaKamar->count() == 0) {
-            $semuaKamar = AsramaKamar::all(); 
-        }
-        $users = DB::table('users')->pluck('name', 'id');
+        $baris = KlasemenKebersihan::bulan($bulan, $tahun);
 
-        // 2. Tarik Data Inspeksi Bulan Ini & Filter Otomatis (Hanya yang berstatus 'final')
-        $inspeksiFinalBulanIni = AsramaPenilaian::where('status', 'final')
-                            ->whereMonth('tanggal', $bulanIni)
-                            ->whereYear('tanggal', $tahunIni)
-                            ->pluck('id');
+        $rankingPutra = KlasemenKebersihan::divisi($baris, 'putra');
+        $rankingPutri = KlasemenKebersihan::divisi($baris, 'putri');
 
-        // Tarik Total Inspeksi Per Kategori (Untuk Angka di Kartu Statistik)
-        $totalInspeksiPutra = AsramaPenilaian::whereIn('id', $inspeksiFinalBulanIni)->where('kategori', 'putra')->count();
-        $totalInspeksiPutri = AsramaPenilaian::whereIn('id', $inspeksiFinalBulanIni)->where('kategori', 'putri')->count();
+        // Juara bulan = TOTAL SKOR capaian tertinggi (bukan rata-rata)
+        $putraTerbersih = KlasemenKebersihan::juara($rankingPutra);
+        $putriTerbersih = KlasemenKebersihan::juara($rankingPutri);
 
-        // Tarik Data Skor Kamar dari Tabel Detail
-        $penilaianDetail = AsramaPenilaianKamar::whereIn('penilaian_id', $inspeksiFinalBulanIni)->get();
+        // Perlu perhatian = rata-rata di bawah batas terkotor (tetap aturan 17 Sep 2026)
+        $putraTerkotor = KlasemenKebersihan::perhatian($rankingPutra);
+        $putriTerkotor = KlasemenKebersihan::perhatian($rankingPutri);
 
-        // 3. Rakit data klasemen Global
-        $rankingKamarRaw = $semuaKamar->map(function ($kamar) use ($penilaianDetail, $users) {
-            // Cocokkan ID kamar dengan ID kamar di tabel detail skor
-            $sidakKamarIni = $penilaianDetail->where('kamar_id', $kamar->id);
-            $jumlahSidak = $sidakKamarIni->count();
-            
-            $rataRata = $jumlahSidak > 0 ? $sidakKamarIni->avg('total_skor') : 0;
-
-            $musyrifId = $kamar->musyrif_id ?? $kamar->pembina_id ?? $kamar->guru_id ?? null;
-            $namaMusyrif = $musyrifId ? ($users[$musyrifId] ?? 'Belum Diatur') : 'Belum Diatur';
-
-            return (object) [
-                'id' => $kamar->id,
-                'nama_kamar' => $kamar->nama_kamar ?? 'Kamar ' . $kamar->id,
-                'nama_musyrif' => $namaMusyrif,
-                'kategori' => strtolower($kamar->kategori ?? ''),
-                'jumlah_sidak' => $jumlahSidak,
-                'rata_rata_skor' => (float) $rataRata,
-            ];
-        });
-
-        // Urutkan dari skor tertinggi ke terendah
-        $rankingKamar = $rankingKamarRaw->sortByDesc('rata_rata_skor')->values();
-
-        // 4. Pisahkan Klasemen Putra & Putri (Beserta Kandidat Top 3)
-        
-        // ZONA PUTRA
-        $rankingPutra = $rankingKamar->where('kategori', 'putra')->values();
-        $putraAktif = $rankingPutra->filter(fn($k) => $k->jumlah_sidak > 0)->values(); 
-        $putraTerbersih = $putraAktif->take(3); 
-        $putraTerkotor = $putraAktif->reverse()->take(3)->values(); 
         $totalKamarPutra = $rankingPutra->count();
-
-        // ZONA PUTRI
-        $rankingPutri = $rankingKamar->where('kategori', 'putri')->values();
-        $putriAktif = $rankingPutri->filter(fn($k) => $k->jumlah_sidak > 0)->values(); 
-        $putriTerbersih = $putriAktif->take(3); 
-        $putriTerkotor = $putriAktif->reverse()->take(3)->values(); 
         $totalKamarPutri = $rankingPutri->count();
+        $totalInspeksiPutra = KlasemenKebersihan::jumlahInspeksi($bulan, $tahun, 'putra');
+        $totalInspeksiPutri = KlasemenKebersihan::jumlahInspeksi($bulan, $tahun, 'putri');
+
+        $labelBulan = now()->locale('id')->translatedFormat('F Y');
 
         return view('asrama.dashboard', compact(
-            'totalKamarPutra', 'totalKamarPutri', 
+            'totalKamarPutra', 'totalKamarPutri',
             'totalInspeksiPutra', 'totalInspeksiPutri',
-            'rankingPutra', 'rankingPutri', 
-            'putraTerbersih', 'putraTerkotor', 
-            'putriTerbersih', 'putriTerkotor'
+            'rankingPutra', 'rankingPutri',
+            'putraTerbersih', 'putraTerkotor',
+            'putriTerbersih', 'putriTerkotor',
+            'labelBulan'
         ));
     }
 }

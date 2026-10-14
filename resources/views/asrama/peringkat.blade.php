@@ -6,7 +6,7 @@
             <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
                 <div>
                     <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">🏆 Peringkat Kebersihan Kamar</h3>
-                    <p class="text-sm text-slate-500 mt-0.5">Rekap poin kebersihan per bulan — juara &amp; kamar yang perlu perhatian</p>
+                    <p class="text-sm text-slate-500 mt-0.5">Rekap <span class="font-semibold text-slate-700">total skor capaian</span> per bulan — juara &amp; kamar yang perlu perhatian</p>
                 </div>
                 <button type="button" onclick="window.print()" class="no-print inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold shadow-sm transition whitespace-nowrap">
                     🖨️ Cetak
@@ -69,7 +69,7 @@
                     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm px-4 py-3.5">
                         <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kamar Masuk Peringkat</div>
                         <div class="text-base font-extrabold text-slate-900 mt-0.5">{{ count($teratas) }} kamar</div>
-                        <div class="text-[11px] font-semibold text-slate-400 mt-0.5">poin tertinggi bulan ini</div>
+                        <div class="text-[11px] font-semibold text-slate-400 mt-0.5">total skor tertinggi bulan ini</div>
                     </div>
                     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm px-4 py-3.5">
                         <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sidak Terakhir</div>
@@ -93,9 +93,9 @@
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-3xl font-black tracking-tight">{{ $juara['poin'] > 0 ? '+' . $juara['poin'] : $juara['poin'] }}</div>
-                                <div class="text-[11px] font-bold uppercase tracking-wider text-blue-200">poin bersih</div>
-                                <div class="text-[12px] text-blue-100 mt-1">👑 {{ $juara['bersih'] }}× terbersih · ⚠️ {{ $juara['kotor'] }}× terkotor</div>
+                                <div class="text-3xl font-black tracking-tight">{{ number_format($juara['total']) }}</div>
+                                <div class="text-[11px] font-bold uppercase tracking-wider text-blue-200">total skor bulan ini</div>
+                                <div class="text-[12px] text-blue-100 mt-1">👑 {{ $juara['bersih'] }}× terbersih · ⚠️ {{ $juara['kotor'] }}× terkotor · {{ $juara['poin'] > 0 ? '+' . $juara['poin'] : $juara['poin'] }} poin</div>
                             </div>
                         </div>
                     </div>
@@ -107,7 +107,7 @@
                     {{-- 5 poin tertinggi --}}
                     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden cetak-kartu">
                         <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3">
-                            <h4 class="text-sm font-extrabold text-slate-900">🏅 5 Kamar Poin Tertinggi</h4>
+                            <h4 class="text-sm font-extrabold text-slate-900">🏅 5 Kamar Total Skor Tertinggi</h4>
                             <span class="text-[11px] font-bold text-slate-400">{{ $divisi === 'semua' ? 'Putra &amp; Putri' : ucfirst($divisi) }}</span>
                         </div>
 
@@ -120,13 +120,12 @@
                                         <div class="min-w-0 flex-1">
                                             <div class="text-[13.5px] font-bold text-slate-900 truncate">{{ $kr->nama_kamar ?? 'Kamar Dihapus' }}</div>
                                             <div class="text-[11px] font-semibold text-slate-400 mt-0.5">
-                                                {{ ucfirst($kr->kategori ?? '-') }} · 👑 {{ $r['bersih'] }}× terbersih · ⚠️ {{ $r['kotor'] }}× terkotor
+                                                {{ ucfirst($kr->kategori ?? '-') }} · 👑 {{ $r['bersih'] }}× terbersih · ⚠️ {{ $r['kotor'] }}× terkotor · Σ {{ number_format($r['total']) }}
                                             </div>
                                         </div>
                                         <div class="shrink-0 text-right">
-                                            <span class="inline-flex items-center rounded-lg px-2.5 py-1 text-[13px] font-black {{ $r['poin'] > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">
-                                                {{ $r['poin'] > 0 ? '+' . $r['poin'] : $r['poin'] }}
-                                            </span>
+                                            <span class="inline-flex items-center rounded-lg px-2.5 py-1 text-[13px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">{{ number_format($r['total']) }}</span>
+                                            <div class="text-[11px] font-semibold text-emerald-600 mt-0.5">{{ $r['poin'] > 0 ? '+' . $r['poin'] : $r['poin'] }} poin</div>
                                         </div>
                                     </div>
                                 @endforeach
@@ -136,10 +135,10 @@
                         @endif
                     </div>
 
-                    {{-- 5 poin terendah --}}
+                     {{-- 5 total skor terendah --}}
                     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden cetak-kartu">
                         <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3">
-                            <h4 class="text-sm font-extrabold text-slate-900">⚠️ 5 Kamar Poin Terendah</h4>
+                            <h4 class="text-sm font-extrabold text-slate-900">⚠️ 5 Kamar Total Skor Terendah</h4>
                             <span class="text-[11px] font-bold text-slate-400">perlu perhatian</span>
                         </div>
 
@@ -152,19 +151,18 @@
                                         <div class="min-w-0 flex-1">
                                             <div class="text-[13.5px] font-bold text-slate-900 truncate">{{ $kr->nama_kamar ?? 'Kamar Dihapus' }}</div>
                                             <div class="text-[11px] font-semibold text-slate-400 mt-0.5">
-                                                {{ ucfirst($kr->kategori ?? '-') }} · 👑 {{ $r['bersih'] }}× terbersih · ⚠️ {{ $r['kotor'] }}× terkotor
+                                                {{ ucfirst($kr->kategori ?? '-') }} · 👑 {{ $r['bersih'] }}× terbersih · ⚠️ {{ $r['kotor'] }}× terkotor · Σ {{ number_format($r['total']) }}
                                             </div>
                                         </div>
                                         <div class="shrink-0 text-right">
-                                            <span class="inline-flex items-center rounded-lg px-2.5 py-1 text-[13px] font-black {{ $r['poin'] < 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">
-                                                {{ $r['poin'] > 0 ? '+' . $r['poin'] : $r['poin'] }}
-                                            </span>
+                                            <span class="inline-flex items-center rounded-lg px-2.5 py-1 text-[13px] font-black bg-rose-50 text-rose-700 border border-rose-200">{{ number_format($r['total']) }}</span>
+                                            <div class="text-[11px] font-semibold text-rose-600 mt-0.5">{{ $r['poin'] > 0 ? '+' . $r['poin'] : $r['poin'] }} poin</div>
                                         </div>
                                     </div>
                                 @endforeach
                             </div>
                         @else
-                            <div class="px-5 py-10 text-center text-sm text-slate-400">Semua kamar sudah masuk daftar poin tertinggi.</div>
+                            <div class="px-5 py-10 text-center text-sm text-slate-400">Semua kamar yang disidak sudah masuk daftar total skor tertinggi.</div>
                         @endif
                     </div>
                 </div>
@@ -194,7 +192,7 @@
                                             @php $kj = $kamar[$j['kamar_id']] ?? null; @endphp
                                             <div class="flex items-center justify-between gap-3">
                                                 <span class="text-[12.5px] font-semibold text-slate-600 truncate">{{ $medali }} {{ $kj->nama_kamar ?? 'Kamar Dihapus' }}</span>
-                                                <span class="text-[12px] font-bold {{ $j['poin'] > 0 ? 'text-emerald-600' : 'text-slate-400' }} shrink-0">{{ $j['poin'] > 0 ? '+' . $j['poin'] : $j['poin'] }}</span>
+                                                <span class="text-[12px] font-bold {{ $j['poin'] > 0 ? 'text-emerald-600' : 'text-slate-400' }} shrink-0">{{ number_format($j['total']) }}</span>
                                             </div>
                                         @endif
                                     @endforeach
@@ -229,7 +227,7 @@
                                                 @if($j)
                                                     @php $kj = $kamar[$j['kamar_id']] ?? null; @endphp
                                                     <span class="font-semibold text-slate-700">{{ $kj->nama_kamar ?? 'Kamar Dihapus' }}</span>
-                                                    <span class="text-[12px] font-bold {{ $j['poin'] > 0 ? 'text-emerald-600' : 'text-slate-400' }}">({{ $j['poin'] > 0 ? '+' . $j['poin'] : $j['poin'] }})</span>
+                                                    <span class="text-[12px] font-bold {{ $j['poin'] > 0 ? 'text-emerald-600' : 'text-slate-400' }}">({{ number_format($j['total']) }})</span>
                                                 @else
                                                     <span class="text-slate-300">—</span>
                                                 @endif
@@ -246,7 +244,7 @@
                 </div>
 
                 <p class="text-[11px] text-slate-400 mt-4">
-                    Poin dihitung dari hasil finalisasi sidak: kamar terbersih +1 dan kamar terkotor −1 untuk setiap penghuni kamar — sama dengan poin yang masuk ke Student Root.
+                <p class="text-[11px] text-slate-400 mt-4">Klasemen bulanan memakai <b>total skor capaian</b> (jumlah skor sidak harian; tiap sidak maksimal 25) — dasar yang sama dipakai dashboard asrama &amp; slide TV. Angka <b>👑 n×</b> / <b>⚠️ n×</b> = berapa kali kamar dipilih terbersih/terkotor; poin (+1 / −1 per penilaian, dibagikan ke seluruh penghuni) masuk ke Student Root.</p>
                 </p>
             @endif
 

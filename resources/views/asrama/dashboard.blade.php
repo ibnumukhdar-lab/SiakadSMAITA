@@ -23,7 +23,11 @@
             <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
                 <div>
                     <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">🛏️ Dashboard Inspeksi Asrama</h3>
-                    <p class="text-sm text-slate-500 mt-0.5">Pantau hasil sidak kebersihan kamar putra &amp; putri</p>
+                    <p class="text-sm text-slate-500 mt-0.5">
+                        Klasemen {{ $labelBulan ?? '' }} — juara dihitung dari
+                        <span class="font-bold text-slate-700">TOTAL SKOR capaian sidak harian</span> (bukan rata-rata),
+                        kolom pendukung: rata-rata per sidak, jumlah 👑 terbersih &amp; ⚠️ terkotor.
+                    </p>
                 </div>
             </div>
 
@@ -84,7 +88,7 @@
                                 <div class="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-2xl">🏆</div>
                                 <div>
                                     <h3 class="text-xl font-black text-gray-800">Top 3 Terbersih (Putra)</h3>
-                                    <p class="text-xs font-bold text-emerald-600">Rata-rata skor tertinggi</p>
+                                    <p class="text-xs font-bold text-emerald-600">Total skor capaian tertinggi bulan ini</p>
                                 </div>
                             </div>
                             
@@ -99,7 +103,8 @@
                                             <p class="text-[11px] font-bold text-gray-500 flex items-center gap-1">👤 {{ $k->nama_musyrif ?? '-' }}</p>
                                         </div>
                                         <div class="text-right bg-white px-3 py-1 rounded-xl shadow-sm border border-gray-100 group-hover:border-emerald-200">
-                                            <div class="font-black text-xl text-emerald-600">{{ number_format($k->rata_rata_skor, 1) }}</div>
+                                            <div class="font-black text-xl text-emerald-600 leading-none">{{ number_format($k->total) }}</div>
+                                            <div class="text-[10px] font-bold text-gray-400 mt-0.5">👑 {{ $k->menang }}× · rata {{ number_format((float) $k->rata, 1) }}</div>
                                         </div>
                                     </div>
                                 @empty
@@ -133,7 +138,8 @@
                                             <p class="text-[11px] font-bold text-gray-500 flex items-center gap-1">👤 {{ $k->nama_musyrif ?? '-' }}</p>
                                         </div>
                                         <div class="text-right bg-white px-3 py-1 rounded-xl shadow-sm border border-red-100 group-hover:border-red-300">
-                                            <div class="font-black text-xl text-red-600">{{ number_format($k->rata_rata_skor, 1) }}</div>
+                                            <div class="font-black text-xl text-red-600 leading-none">{{ number_format((float) $k->rata, 1) }}<span class="text-xs text-gray-400">/25</span></div>
+                                            <div class="text-[10px] font-bold text-gray-400 mt-0.5">{{ $k->persen }}% · total {{ number_format($k->total) }}</div>
                                         </div>
                                     </div>
                                 @empty
@@ -149,7 +155,7 @@
                 <!-- Tabel Putra Full -->
                 <div class="glass-card rounded-[2rem] overflow-hidden flex flex-col hover-lift">
                     <div class="bg-gradient-to-r from-blue-800 to-indigo-900 p-5 flex items-center justify-between">
-                        <h3 class="text-white font-black text-lg tracking-wide">📊 Klasemen Seluruh Kamar Putra</h3>
+                        <h3 class="text-white font-black text-lg tracking-wide">📊 Klasemen Total Skor Bulan Ini — Kamar Putra</h3>
                     </div>
                     <div class="overflow-x-auto p-4 flex-1">
                         <table class="w-full text-left border-collapse">
@@ -157,8 +163,10 @@
                                 <tr class="border-b-2 border-gray-100">
                                     <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-center">Rank</th>
                                     <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider">Kamar & Musyrif</th>
-                                    <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-center">Jumlah Sidak</th>
-                                    <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-right">Skor</th>
+                                    <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-center whitespace-nowrap hidden sm:table-cell">Sidak</th>
+                                    <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-center whitespace-nowrap">👑 Terbersih</th>
+                                    <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-center whitespace-nowrap hidden sm:table-cell">⚠️ Terkotor</th>
+                                    <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-right whitespace-nowrap">Total Skor</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
@@ -172,18 +180,44 @@
                                     <td class="py-4 px-2">
                                         <div class="font-black text-gray-800 text-base group-hover:text-blue-700 transition">{{ $kamar->nama_kamar }}</div>
                                         <div class="text-xs font-bold text-gray-400">👤 {{ $kamar->nama_musyrif ?? 'Belum Diatur' }}</div>
+                                        <div class="text-[10px] font-bold text-gray-400 sm:hidden mt-0.5">{{ $kamar->jumlah_sidak }}× sidak · ⚠️ {{ $kamar->kalah }}× terkotor</div>
+                                    </td>
+                                    <td class="py-4 px-2 text-center hidden sm:table-cell">
+                                        <span class="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg text-xs font-bold border border-gray-200">{{ $kamar->jumlah_sidak }}x</span>
                                     </td>
                                     <td class="py-4 px-2 text-center">
-                                        <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold border border-gray-200">{{ $kamar->jumlah_sidak }}x</span>
+                                        @if($kamar->menang > 0)
+                                            <span class="text-emerald-700 font-black">{{ $kamar->menang }}×</span>
+                                        @else
+                                            <span class="text-gray-300 font-bold">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-4 px-2 text-center hidden sm:table-cell">
+                                        @if($kamar->kalah > 0)
+                                            <span class="text-red-600 font-black">{{ $kamar->kalah }}×</span>
+                                        @else
+                                            <span class="text-gray-300 font-bold">—</span>
+                                        @endif
                                     </td>
                                     <td class="py-4 px-2 text-right">
-                                        <div class="font-black text-xl {{ $kamar->rata_rata_skor >= 80 ? 'text-emerald-600' : ($kamar->rata_rata_skor >= 60 ? 'text-amber-500' : 'text-red-500') }}">
-                                            {{ $kamar->jumlah_sidak > 0 ? number_format($kamar->rata_rata_skor, 1) : 'Belum Dinilai' }}
-                                        </div>
+                                        @if($kamar->jumlah_sidak > 0)
+                                            @php
+                                                $persenSkor = $kamar->persen;
+                                                $kelasSkor = $persenSkor === null
+                                                    ? 'text-gray-400'
+                                                    : ($persenSkor >= \App\Services\KlasemenKebersihan::AMBANG_HIJAU_PERSEN
+                                                        ? 'text-emerald-600'
+                                                        : ($persenSkor >= \App\Services\KlasemenKebersihan::BATAS_TERKOTOR_PERSEN ? 'text-amber-500' : 'text-red-500'));
+                                            @endphp
+                                            <div class="font-black text-xl {{ $kelasSkor }} leading-none">{{ number_format($kamar->total) }}</div>
+                                            <div class="text-[10px] font-bold text-gray-400 mt-0.5">rata {{ number_format((float) $kamar->rata, 1) }}/25 · {{ $kamar->persen }}%</div>
+                                        @else
+                                            <div class="font-black text-base text-gray-400">Belum Dinilai</div>
+                                        @endif
                                     </td>
                                 </tr>
                                 @empty
-                                <tr><td colspan="4" class="text-center py-8 font-bold text-gray-400">Tidak ada data kamar putra.</td></tr>
+                                <tr><td colspan="6" class="text-center py-8 font-bold text-gray-400">Tidak ada data kamar putra.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -235,7 +269,7 @@
                                 <div class="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-2xl">🏆</div>
                                 <div>
                                     <h3 class="text-xl font-black text-gray-800">Top 3 Terbersih (Putri)</h3>
-                                    <p class="text-xs font-bold text-emerald-600">Rata-rata skor tertinggi</p>
+                                    <p class="text-xs font-bold text-emerald-600">Total skor capaian tertinggi bulan ini</p>
                                 </div>
                             </div>
                             
@@ -250,7 +284,8 @@
                                             <p class="text-[11px] font-bold text-gray-500 flex items-center gap-1">👤 {{ $k->nama_musyrif ?? '-' }}</p>
                                         </div>
                                         <div class="text-right bg-white px-3 py-1 rounded-xl shadow-sm border border-gray-100 group-hover:border-emerald-200">
-                                            <div class="font-black text-xl text-emerald-600">{{ number_format($k->rata_rata_skor, 1) }}</div>
+                                            <div class="font-black text-xl text-emerald-600 leading-none">{{ number_format($k->total) }}</div>
+                                            <div class="text-[10px] font-bold text-gray-400 mt-0.5">👑 {{ $k->menang }}× · rata {{ number_format((float) $k->rata, 1) }}</div>
                                         </div>
                                     </div>
                                 @empty
@@ -284,7 +319,8 @@
                                             <p class="text-[11px] font-bold text-gray-500 flex items-center gap-1">👤 {{ $k->nama_musyrif ?? '-' }}</p>
                                         </div>
                                         <div class="text-right bg-white px-3 py-1 rounded-xl shadow-sm border border-red-100 group-hover:border-red-300">
-                                            <div class="font-black text-xl text-red-600">{{ number_format($k->rata_rata_skor, 1) }}</div>
+                                            <div class="font-black text-xl text-red-600 leading-none">{{ number_format((float) $k->rata, 1) }}<span class="text-xs text-gray-400">/25</span></div>
+                                            <div class="text-[10px] font-bold text-gray-400 mt-0.5">{{ $k->persen }}% · total {{ number_format($k->total) }}</div>
                                         </div>
                                     </div>
                                 @empty
@@ -300,7 +336,7 @@
                 <!-- Tabel Putri Full -->
                 <div class="glass-card rounded-[2rem] overflow-hidden flex flex-col hover-lift">
                     <div class="bg-gradient-to-r from-rose-600 to-pink-800 p-5 flex items-center justify-between">
-                        <h3 class="text-white font-black text-lg tracking-wide">📊 Klasemen Seluruh Kamar Putri</h3>
+                        <h3 class="text-white font-black text-lg tracking-wide">📊 Klasemen Total Skor Bulan Ini — Kamar Putri</h3>
                     </div>
                     <div class="overflow-x-auto p-4 flex-1">
                         <table class="w-full text-left border-collapse">
@@ -308,8 +344,10 @@
                                 <tr class="border-b-2 border-gray-100">
                                     <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-center">Rank</th>
                                     <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider">Kamar & Musyrifah</th>
-                                    <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-center">Jumlah Sidak</th>
-                                    <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-right">Skor</th>
+                                    <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-center whitespace-nowrap hidden sm:table-cell">Sidak</th>
+                                    <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-center whitespace-nowrap">👑 Terbersih</th>
+                                    <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-center whitespace-nowrap hidden sm:table-cell">⚠️ Terkotor</th>
+                                    <th class="py-3 px-2 text-gray-400 font-extrabold text-xs uppercase tracking-wider text-right whitespace-nowrap">Total Skor</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
@@ -323,18 +361,44 @@
                                     <td class="py-4 px-2">
                                         <div class="font-black text-gray-800 text-base group-hover:text-rose-600 transition">{{ $kamar->nama_kamar }}</div>
                                         <div class="text-xs font-bold text-gray-400">👤 {{ $kamar->nama_musyrif ?? 'Belum Diatur' }}</div>
+                                        <div class="text-[10px] font-bold text-gray-400 sm:hidden mt-0.5">{{ $kamar->jumlah_sidak }}× sidak · ⚠️ {{ $kamar->kalah }}× terkotor</div>
+                                    </td>
+                                    <td class="py-4 px-2 text-center hidden sm:table-cell">
+                                        <span class="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg text-xs font-bold border border-gray-200">{{ $kamar->jumlah_sidak }}x</span>
                                     </td>
                                     <td class="py-4 px-2 text-center">
-                                        <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold border border-gray-200">{{ $kamar->jumlah_sidak }}x</span>
+                                        @if($kamar->menang > 0)
+                                            <span class="text-emerald-700 font-black">{{ $kamar->menang }}×</span>
+                                        @else
+                                            <span class="text-gray-300 font-bold">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-4 px-2 text-center hidden sm:table-cell">
+                                        @if($kamar->kalah > 0)
+                                            <span class="text-red-600 font-black">{{ $kamar->kalah }}×</span>
+                                        @else
+                                            <span class="text-gray-300 font-bold">—</span>
+                                        @endif
                                     </td>
                                     <td class="py-4 px-2 text-right">
-                                        <div class="font-black text-xl {{ $kamar->rata_rata_skor >= 80 ? 'text-emerald-600' : ($kamar->rata_rata_skor >= 60 ? 'text-amber-500' : 'text-red-500') }}">
-                                            {{ $kamar->jumlah_sidak > 0 ? number_format($kamar->rata_rata_skor, 1) : 'Belum Dinilai' }}
-                                        </div>
+                                        @if($kamar->jumlah_sidak > 0)
+                                            @php
+                                                $persenSkor = $kamar->persen;
+                                                $kelasSkor = $persenSkor === null
+                                                    ? 'text-gray-400'
+                                                    : ($persenSkor >= \App\Services\KlasemenKebersihan::AMBANG_HIJAU_PERSEN
+                                                        ? 'text-emerald-600'
+                                                        : ($persenSkor >= \App\Services\KlasemenKebersihan::BATAS_TERKOTOR_PERSEN ? 'text-amber-500' : 'text-red-500'));
+                                            @endphp
+                                            <div class="font-black text-xl {{ $kelasSkor }} leading-none">{{ number_format($kamar->total) }}</div>
+                                            <div class="text-[10px] font-bold text-gray-400 mt-0.5">rata {{ number_format((float) $kamar->rata, 1) }}/25 · {{ $kamar->persen }}%</div>
+                                        @else
+                                            <div class="font-black text-base text-gray-400">Belum Dinilai</div>
+                                        @endif
                                     </td>
                                 </tr>
                                 @empty
-                                <tr><td colspan="4" class="text-center py-8 font-bold text-gray-400">Tidak ada data kamar putri.</td></tr>
+                                <tr><td colspan="6" class="text-center py-8 font-bold text-gray-400">Tidak ada data kamar putri.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
